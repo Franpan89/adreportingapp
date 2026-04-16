@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx create-next-app@latest . --typescript --tailwind --eslint --app --src-dir --no-import-alias --yes)",
+      "Read(//c/Users/Usuario/OneDrive/Documentos/WMM/**)",
+      "Bash(npx create-next-app@latest report-app --typescript --tailwind --eslint --app --src-dir --no-import-alias --yes)"
+    ]
+  }
+}
