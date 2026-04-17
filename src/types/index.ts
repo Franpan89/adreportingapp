@@ -1,0 +1,146 @@
+/* =====================================================
+   Core domain types for the Ad Reporting App
+   ===================================================== */
+
+export type Channel = 'meta' | 'google' | 'tiktok';
+export type UserRole = 'admin' | 'client';
+
+/* ----- Auth ----- */
+export interface AppUser {
+  id: string;
+  email: string;
+  role: UserRole;
+  full_name: string | null;
+  avatar_url: string | null;
+}
+
+/* ----- Client ----- */
+export interface Client {
+  id: string;
+  name: string;
+  slug: string;
+  logo_url: string | null;
+  timezone: string;
+  is_active: boolean;
+  created_at: string;
+  channels?: Channel[];
+  sync_status?: Record<Channel, 'idle' | 'syncing' | 'success' | 'error'>;
+}
+
+/* ----- Metric definitions ----- */
+export type MetricUnit = 'currency' | 'percent' | 'integer' | 'decimal' | 'ratio';
+
+export interface MetricDefinition {
+  key: string;
+  label: string;
+  description?: string;
+  unit: MetricUnit;
+  channels: Channel[];
+  is_derived: boolean;
+  formula?: string;
+}
+
+export interface MetricConfig {
+  metric_key: string;
+  label: string;
+  unit: MetricUnit;
+  is_visible: boolean;
+  display_order: number;
+  show_in_kpi: boolean;
+  show_in_table: boolean;
+  show_in_chart: boolean;
+}
+
+/* ----- Credentials ----- */
+export interface ChannelCredential {
+  id: string;
+  client_id: string;
+  channel: Channel;
+  is_active: boolean;
+  last_synced_at: string | null;
+  sync_status: 'idle' | 'syncing' | 'success' | 'error' | null;
+  sync_error: string | null;
+}
+
+/* ----- Report data ----- */
+export interface MetricTotals {
+  impressions: number;
+  clicks: number;
+  spend: number;
+  conversions: number;
+  conversions_value: number;
+  reach: number;
+  video_views: number;
+  ctr: number;
+  cpc: number;
+  cpm: number;
+  roas: number;
+  cvr: number;
+  cpa: number;
+  [key: string]: number;
+}
+
+export interface DailyDataPoint {
+  date: string;
+  dayIndex?: number;
+  impressions?: number;
+  clicks?: number;
+  spend?: number;
+  conversions?: number;
+  conversions_value?: number;
+  reach?: number;
+  video_views?: number;
+  ctr?: number;
+  cpc?: number;
+  cpm?: number;
+  roas?: number;
+  cvr?: number;
+  cpa?: number;
+}
+
+export interface CampaignSummary {
+  id: string;
+  name: string;
+  channel: Channel;
+  status: string;
+  external_id: string;
+  impressions?: number;
+  clicks?: number;
+  spend?: number;
+  conversions?: number;
+  conversions_value?: number;
+  reach?: number;
+  video_views?: number;
+  ctr?: number;
+  cpc?: number;
+  cpm?: number;
+  roas?: number;
+  cvr?: number;
+  cpa?: number;
+}
+
+export interface PeriodReport {
+  totals: MetricTotals;
+  byDate: DailyDataPoint[];
+  byCampaign: CampaignSummary[];
+}
+
+export interface ReportResponse {
+  primary: PeriodReport;
+  comparison: PeriodReport | null;
+  deltas: Record<string, { absolute: number; percent: number; direction: 'up' | 'down' | 'flat' }> | null;
+  allowedMetrics: MetricConfig[];
+  syncStatus: Partial<Record<Channel, 'idle' | 'syncing' | 'success' | 'error'>>;
+}
+
+/* ----- Sync ----- */
+export interface SyncLog {
+  id: string;
+  client_id: string;
+  channel: Channel;
+  started_at: string;
+  finished_at: string | null;
+  status: 'running' | 'success' | 'partial' | 'error';
+  rows_upserted: number | null;
+  error_detail: string | null;
+}
