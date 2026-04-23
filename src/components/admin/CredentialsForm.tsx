@@ -21,21 +21,21 @@ const CHANNEL_LABELS: Record<Channel, string> = {
 
 const CHANNEL_FIELDS: Record<Channel, { key: string; label: string; placeholder: string; secret?: boolean }[]> = {
   meta: [
-    { key: 'access_token', label: 'Access Token', placeholder: 'EAAxxxxxx…', secret: true },
-    { key: 'account_id',   label: 'Ad Account ID', placeholder: 'act_123456789' },
-    { key: 'app_id',       label: 'App ID', placeholder: '1234567890' },
-    { key: 'app_secret',   label: 'App Secret', placeholder: 'abc123…', secret: true },
+    { key: 'access_token', label: 'Token de acceso', placeholder: 'EAAxxxxxx…', secret: true },
+    { key: 'account_id',   label: 'ID de cuenta publicitaria', placeholder: 'act_123456789' },
+    { key: 'app_id',       label: 'ID de aplicación', placeholder: '1234567890' },
+    { key: 'app_secret',   label: 'Secreto de aplicación', placeholder: 'abc123…', secret: true },
   ],
   google: [
-    { key: 'developer_token', label: 'Developer Token', placeholder: 'ABcde…', secret: true },
-    { key: 'client_id',       label: 'OAuth Client ID', placeholder: 'xxxx.apps.googleusercontent.com' },
-    { key: 'client_secret',   label: 'OAuth Client Secret', placeholder: 'GOCSPX-…', secret: true },
-    { key: 'refresh_token',   label: 'Refresh Token', placeholder: '1//xxx…', secret: true },
-    { key: 'customer_id',     label: 'Customer ID', placeholder: '123-456-7890' },
+    { key: 'developer_token', label: 'Token de desarrollador', placeholder: 'ABcde…', secret: true },
+    { key: 'client_id',       label: 'ID de cliente OAuth', placeholder: 'xxxx.apps.googleusercontent.com' },
+    { key: 'client_secret',   label: 'Secreto de cliente OAuth', placeholder: 'GOCSPX-…', secret: true },
+    { key: 'refresh_token',   label: 'Token de actualización', placeholder: '1//xxx…', secret: true },
+    { key: 'customer_id',     label: 'ID de cliente', placeholder: '123-456-7890' },
   ],
   tiktok: [
-    { key: 'access_token',   label: 'Access Token', placeholder: 'xxxxxx…', secret: true },
-    { key: 'advertiser_id',  label: 'Advertiser ID', placeholder: '7012345678901234567' },
+    { key: 'access_token',   label: 'Token de acceso', placeholder: 'xxxxxx…', secret: true },
+    { key: 'advertiser_id',  label: 'ID de anunciante', placeholder: '7012345678901234567' },
   ],
 };
 
@@ -90,10 +90,10 @@ export function CredentialsForm({ clientId, channel, existingStatus, lastSynced 
           {existingStatus === 'success' ? <CheckCircle className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
           <span>
             {existingStatus === 'success'
-              ? `Connected · Last synced ${lastSynced ? new Date(lastSynced).toLocaleString() : 'never'}`
+              ? `Conectado · Última sincronización: ${lastSynced ? new Date(lastSynced).toLocaleString() : 'nunca'}`
               : existingStatus === 'error'
-              ? 'Connection error — check credentials and retry'
-              : 'Not connected'}
+              ? 'Error de conexión — revisa las credenciales e intenta de nuevo'
+              : 'No conectado'}
           </span>
         </div>
       )}
@@ -120,14 +120,14 @@ export function CredentialsForm({ clientId, channel, existingStatus, lastSynced 
           testResult === 'success' ? 'bg-[#dcfce7] text-[#16A34A]' : 'bg-[#fee2e2] text-[#DC2626]'
         )}>
           {testResult === 'success'
-            ? <><CheckCircle className="w-4 h-4" /> Connection successful</>
-            : <><AlertCircle className="w-4 h-4" /> Connection failed — check your credentials</>}
+            ? <><CheckCircle className="w-4 h-4" /> Conexión exitosa</>
+            : <><AlertCircle className="w-4 h-4" /> Conexión fallida — revisa tus credenciales</>}
         </div>
       )}
 
       {saved && (
         <div className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm bg-[#dcfce7] text-[#16A34A]">
-          <CheckCircle className="w-4 h-4" /> Credentials saved securely
+          <CheckCircle className="w-4 h-4" /> Credenciales guardadas de forma segura
         </div>
       )}
 
@@ -135,10 +135,10 @@ export function CredentialsForm({ clientId, channel, existingStatus, lastSynced 
       <div className="flex items-center gap-2">
         <Button variant="outline" size="sm" loading={testing} onClick={handleTest}
           icon={testing ? undefined : <CheckCircle className="w-3.5 h-3.5" />}>
-          Test connection
+          Probar conexión
         </Button>
         <Button size="sm" loading={saving} onClick={handleSave}>
-          Save credentials
+          Guardar credenciales
         </Button>
       </div>
     </div>

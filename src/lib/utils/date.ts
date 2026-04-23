@@ -5,13 +5,13 @@ export type DateRange = { start: Date; end: Date };
 export type PresetKey = 'today' | '7d' | '30d' | '90d' | 'this_month' | 'last_month' | 'this_year' | 'custom';
 
 export const DATE_PRESETS: { key: PresetKey; label: string }[] = [
-  { key: 'today', label: 'Today' },
-  { key: '7d', label: 'Last 7 days' },
-  { key: '30d', label: 'Last 30 days' },
-  { key: '90d', label: 'Last 90 days' },
-  { key: 'this_month', label: 'This month' },
-  { key: 'last_month', label: 'Last month' },
-  { key: 'this_year', label: 'This year' },
+  { key: 'today', label: 'Hoy' },
+  { key: '7d', label: 'Últimos 7 días' },
+  { key: '30d', label: 'Últimos 30 días' },
+  { key: '90d', label: 'Últimos 90 días' },
+  { key: 'this_month', label: 'Este mes' },
+  { key: 'last_month', label: 'Mes anterior' },
+  { key: 'this_year', label: 'Este año' },
 ];
 
 export function getPresetRange(preset: PresetKey): DateRange {

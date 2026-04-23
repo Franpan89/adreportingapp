@@ -60,6 +60,7 @@ function SortableRow({ metric, onToggle }: {
       <div className="flex items-center gap-4">
         <div className="text-center">
           <p className="text-[10px] text-[#9CA3AF] mb-1">Visible</p>
+
           <Toggle
             size="sm"
             checked={metric.is_visible}
@@ -67,7 +68,7 @@ function SortableRow({ metric, onToggle }: {
           />
         </div>
         <div className="text-center">
-          <p className="text-[10px] text-[#9CA3AF] mb-1">KPI Card</p>
+          <p className="text-[10px] text-[#9CA3AF] mb-1">Tarjeta KPI</p>
           <Toggle
             size="sm"
             checked={metric.show_in_kpi}
@@ -76,7 +77,7 @@ function SortableRow({ metric, onToggle }: {
           />
         </div>
         <div className="text-center">
-          <p className="text-[10px] text-[#9CA3AF] mb-1">Table</p>
+          <p className="text-[10px] text-[#9CA3AF] mb-1">Tabla</p>
           <Toggle
             size="sm"
             checked={metric.show_in_table}
@@ -118,11 +119,11 @@ export function MetricConfigEditor({ metrics: initial, onSave, saving }: MetricC
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm font-medium text-[#374151]">Drag to reorder. Toggle visibility per column.</p>
-          <p className="text-xs text-[#9CA3AF] mt-0.5">Changes apply to the client&apos;s dashboard immediately on save.</p>
+          <p className="text-sm font-medium text-[#374151]">Arrastra para reordenar. Activa la visibilidad por columna.</p>
+          <p className="text-xs text-[#9CA3AF] mt-0.5">Los cambios se aplican al panel del cliente inmediatamente al guardar.</p>
         </div>
         <Button onClick={() => onSave(metrics)} loading={saving}>
-          Save changes
+          Guardar cambios
         </Button>
       </div>
 

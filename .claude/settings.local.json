@@ -1,9 +1,15 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npx create-next-app@latest . --typescript --tailwind --eslint --app --src-dir --no-import-alias --yes)",
-      "Read(//c/Users/Usuario/OneDrive/Documentos/WMM/**)",
-      "Bash(npx create-next-app@latest report-app --typescript --tailwind --eslint --app --src-dir --no-import-alias --yes)"
+      "Bash(git clone:*)",
+      "Bash(git -C \"C:\\\\Users\\\\fandr\\\\OneDrive\\\\Documentos\\\\WMM\\\\ads-reporting\" pull)",
+      "Bash(npm install:*)",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(node -e \"const p = require\\('./node_modules/@tailwindcss/postcss/package.json'\\); console.log\\(p.version\\)\")",
+      "Bash(node -e \"const p = require\\('./node_modules/tailwindcss/package.json'\\); console.log\\(p.version\\)\")",
+      "Bash(node -e \"const p = require\\('./node_modules/next/package.json'\\); console.log\\(p.version\\)\")",
+      "Bash(Remove-Item -Recurse -Force \"C:\\\\Users\\\\fandr\\\\OneDrive\\\\Documentos\\\\WMM\\\\ads-reporting\\\\.next\" -ErrorAction SilentlyContinue)",
+      "Bash(Write-Host \"Cache cleared\")"
     ]
   }
 }

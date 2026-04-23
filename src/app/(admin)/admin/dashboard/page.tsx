@@ -27,16 +27,16 @@ export default function AdminDashboardPage() {
       <div className="border-b border-[#E5E7EB] bg-white px-6 py-4">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-bold text-[#111827] font-[Oswald] tracking-wide">Agency Overview</h1>
-            <p className="text-sm text-[#9CA3AF] mt-0.5">All clients · Last 30 days</p>
+            <h1 className="text-xl font-bold text-[#111827] font-[Oswald] tracking-wide">Resumen de Agencia</h1>
+            <p className="text-sm text-[#9CA3AF] mt-0.5">Todos los clientes · Últimos 30 días</p>
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" icon={<RefreshCw className="w-3.5 h-3.5" />}>
-              Sync all
+              Sincronizar
             </Button>
             <Link href="/admin/clients/new">
               <Button size="sm" icon={<Plus className="w-3.5 h-3.5" />}>
-                Add client
+                Agregar cliente
               </Button>
             </Link>
           </div>
@@ -47,10 +47,10 @@ export default function AdminDashboardPage() {
         {/* Aggregate KPIs */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {[
-            { label: 'Total Spend', value: formatCurrency(AGGREGATE.totalSpend), icon: DollarSign, color: '#00BD7D' },
-            { label: 'Avg. ROAS',   value: `${AGGREGATE.totalRoas.toFixed(2)}x`, icon: TrendingUp,  color: '#1877F2' },
-            { label: 'Active Clients', value: String(AGGREGATE.activeClients), icon: Users, color: '#D97706' },
-            { label: 'Active Channels', value: String(AGGREGATE.activeChannels), icon: Zap,  color: '#16A34A' },
+            { label: 'Inversión Total', value: formatCurrency(AGGREGATE.totalSpend), icon: DollarSign, color: '#00BD7D' },
+            { label: 'ROAS Prom.',      value: `${AGGREGATE.totalRoas.toFixed(2)}x`, icon: TrendingUp,  color: '#1877F2' },
+            { label: 'Clientes Activos', value: String(AGGREGATE.activeClients), icon: Users, color: '#D97706' },
+            { label: 'Canales Activos', value: String(AGGREGATE.activeChannels), icon: Zap,  color: '#16A34A' },
           ].map(stat => (
             <div key={stat.label} className="bg-white border border-[#E5E7EB] rounded-xl p-4 shadow-[var(--shadow-perspective-sm)] hover:-translate-y-0.5 hover:shadow-[var(--shadow-perspective-md)] transition-all duration-150">
               <div className="flex items-center gap-2.5 mb-3">
@@ -70,9 +70,9 @@ export default function AdminDashboardPage() {
         {/* Clients grid */}
         <div>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-base font-semibold text-[#111827]">Clients</h2>
+            <h2 className="text-base font-semibold text-[#111827]">Clientes</h2>
             <Link href="/admin/clients" className="text-xs text-[#00BD7D] hover:underline">
-              View all →
+              Ver todos →
             </Link>
           </div>
 

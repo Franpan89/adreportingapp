@@ -40,7 +40,9 @@ export async function proxy(request: NextRequest) {
         .select('role')
         .eq('id', user.id)
         .single();
-      const dest = profile?.role === 'admin' ? '/admin/dashboard' : '/dashboard';
+      const dest = profile?.role === 'super_admin' ? '/superadmin/dashboard'
+        : profile?.role === 'admin' ? '/admin/dashboard'
+        : '/dashboard';
       return NextResponse.redirect(new URL(dest, request.url));
     }
     return supabaseResponse;
@@ -62,9 +64,21 @@ export async function proxy(request: NextRequest) {
 
   // Root → redirect based on role
   if (path === '/') {
-    return NextResponse.redirect(
-      new URL(role === 'admin' ? '/admin/dashboard' : '/dashboard', request.url)
-    );
+    const dest = role === 'super_admin' ? '/superadmin/dashboard'
+      : role === 'admin' ? '/admin/dashboard'
+      : '/dashboard';
+    return NextResponse.redirect(new URL(dest, request.url));
+  }
+
+  // Super admin trying to access other areas
+  if (role === 'super_admin' && !path.startsWith('/superadmin')) {
+    return NextResponse.redirect(new URL('/superadmin/dashboard', request.url));
+  }
+
+  // Non-super-admin trying to access /superadmin
+  if (role !== 'super_admin' && path.startsWith('/superadmin')) {
+    const dest = role === 'admin' ? '/admin/dashboard' : '/dashboard';
+    return NextResponse.redirect(new URL(dest, request.url));
   }
 
   // Admin trying to access client area (redirect to admin)

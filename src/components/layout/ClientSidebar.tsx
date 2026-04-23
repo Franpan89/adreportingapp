@@ -31,7 +31,7 @@ export function ClientSidebar({ clientName = 'My Dashboard', channels = [] }: Cl
           </div>
           <div className="min-w-0">
             <p className="text-white font-semibold text-sm leading-none truncate">{clientName}</p>
-            <p className="text-white/40 text-[10px] mt-0.5">Performance Report</p>
+            <p className="text-white/40 text-[10px] mt-0.5">Reporte de Rendimiento</p>
           </div>
         </div>
       </div>
@@ -43,7 +43,7 @@ export function ClientSidebar({ clientName = 'My Dashboard', channels = [] }: Cl
           className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium bg-[#00BD7D] text-white shadow-[2px_3px_0px_rgba(0,0,0,0.2)]"
         >
           <LayoutDashboard className="w-4 h-4 shrink-0" />
-          Dashboard
+          Panel
         </Link>
       </nav>
 
@@ -51,7 +51,7 @@ export function ClientSidebar({ clientName = 'My Dashboard', channels = [] }: Cl
       {channels.length > 0 && (
         <div className="px-3 mb-4">
           <p className="text-[10px] text-white/30 uppercase tracking-wider px-3 mb-2">
-            Active Channels
+            Canales Activos
           </p>
           <div className="space-y-0.5">
             {channels.map(ch => (
@@ -72,7 +72,7 @@ export function ClientSidebar({ clientName = 'My Dashboard', channels = [] }: Cl
       {/* Powered-by badge */}
       <div className="mx-3 mb-3 px-3 py-2.5 rounded-lg bg-white/5 border border-white/10">
         <p className="text-[10px] text-white/30 text-center">
-          Powered by <span className="text-white/50 font-semibold">AdPulse</span>
+          Desarrollado por <span className="text-white/50 font-semibold">AdPulse</span>
         </p>
       </div>
 
@@ -83,7 +83,7 @@ export function ClientSidebar({ clientName = 'My Dashboard', channels = [] }: Cl
           className="w-full flex items-center gap-3 px-5 py-4 text-sm text-white/40 hover:text-white/70 hover:bg-white/5 transition-colors border-t border-white/10"
         >
           <LogOut className="w-4 h-4" />
-          Sign out
+          Cerrar sesión
         </button>
       </form>
     </aside>

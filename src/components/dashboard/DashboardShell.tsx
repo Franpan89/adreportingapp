@@ -79,7 +79,7 @@ export function DashboardShell({
             <h1 className="text-lg font-bold text-[#111827] font-[Oswald] tracking-wide">
               {clientName}
             </h1>
-            <p className="text-xs text-[#9CA3AF]">Campaign performance overview</p>
+            <p className="text-xs text-[#9CA3AF]">Resumen de rendimiento de campañas</p>
           </div>
           <div className="flex items-center gap-2">
             <TimeRangeSelector
@@ -91,7 +91,7 @@ export function DashboardShell({
             />
             {isAdmin && (
               <Button variant="ghost" size="sm" icon={<RefreshCw className="w-3.5 h-3.5" />}>
-                Sync
+                Sincronizar
               </Button>
             )}
           </div>
@@ -127,7 +127,7 @@ export function DashboardShell({
           {/* Main trend chart — 2/3 width */}
           <Card depth="flat" padding={false} className="lg:col-span-2 p-5">
             <CardHeader>
-              <CardTitle>Performance Over Time</CardTitle>
+              <CardTitle>Rendimiento en el Tiempo</CardTitle>
               <div className="flex items-center gap-2">
                 {compareEnabled && (
                   <div className="flex items-center gap-1 bg-[#F3F4F6] p-0.5 rounded-lg">
@@ -157,7 +157,7 @@ export function DashboardShell({
             {compareEnabled && compareMode === 'side-by-side' ? (
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-xs font-medium text-[#374151] mb-2">Current period</p>
+                  <p className="text-xs font-medium text-[#374151] mb-2">Período actual</p>
                   <LineAreaChart
                     data={report.primary.byDate}
                     metric={chartMetric}
@@ -166,7 +166,7 @@ export function DashboardShell({
                   />
                 </div>
                 <div>
-                  <p className="text-xs font-medium text-[#6B7280] mb-2">Previous period</p>
+                  <p className="text-xs font-medium text-[#6B7280] mb-2">Período anterior</p>
                   <LineAreaChart
                     data={report.comparison?.byDate ?? []}
                     metric={chartMetric}
@@ -191,7 +191,7 @@ export function DashboardShell({
           {/* Spend by channel donut — 1/3 */}
           <Card depth="flat" padding={false} className="p-5">
             <CardHeader>
-              <CardTitle>Spend by Channel</CardTitle>
+              <CardTitle>Inversión por Canal</CardTitle>
             </CardHeader>
             <DonutChart data={donutData} height={160} />
           </Card>
@@ -201,7 +201,7 @@ export function DashboardShell({
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <Card depth="flat" padding={false} className="p-5">
             <CardHeader>
-              <CardTitle>Top Campaigns by Spend</CardTitle>
+              <CardTitle>Top Campañas por Inversión</CardTitle>
             </CardHeader>
             <CampaignBarChart
               campaigns={report.primary.byCampaign}
@@ -211,7 +211,7 @@ export function DashboardShell({
           </Card>
           <Card depth="flat" padding={false} className="p-5">
             <CardHeader>
-              <CardTitle>Top Campaigns by ROAS</CardTitle>
+              <CardTitle>Top Campañas por ROAS</CardTitle>
             </CardHeader>
             <CampaignBarChart
               campaigns={report.primary.byCampaign}
@@ -224,8 +224,8 @@ export function DashboardShell({
         {/* Campaign table */}
         <Card depth="flat" padding={false} className="p-5">
           <CardHeader>
-            <CardTitle>Campaign Breakdown</CardTitle>
-            <p className="text-xs text-[#9CA3AF]">{report.primary.byCampaign.length} active campaigns</p>
+            <CardTitle>Desglose de Campañas</CardTitle>
+            <p className="text-xs text-[#9CA3AF]">{report.primary.byCampaign.length} campañas activas</p>
           </CardHeader>
           <CampaignTable
             campaigns={report.primary.byCampaign}

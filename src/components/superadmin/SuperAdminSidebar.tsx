@@ -3,29 +3,29 @@ import { cn } from '@/lib/utils/cn';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  LayoutDashboard, Users, Settings, LogOut, BarChart3, ChevronRight, Zap
+  LayoutDashboard, Key, Building2, LogOut, BarChart3, ChevronRight, Shield,
 } from 'lucide-react';
 
 const nav = [
-  { href: '/admin/dashboard', label: 'Resumen',       icon: LayoutDashboard },
-  { href: '/admin/clients',   label: 'Clientes',      icon: Users },
-  { href: '/admin/settings',  label: 'Configuración', icon: Settings },
+  { href: '/superadmin/dashboard', label: 'Panel',      icon: LayoutDashboard },
+  { href: '/superadmin/licencias', label: 'Licencias',  icon: Key },
+  { href: '/superadmin/agencias',  label: 'Agencias',   icon: Building2 },
 ];
 
-export function AdminSidebar() {
+export function SuperAdminSidebar() {
   const path = usePathname();
 
   return (
-    <aside className="w-60 shrink-0 flex flex-col bg-[#111827] min-h-screen">
+    <aside className="w-60 shrink-0 flex flex-col bg-[#111827] min-h-screen border-r border-[#7C3AED]/20">
       {/* Logo */}
       <div className="px-5 py-5 border-b border-white/10">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-[#00BD7D] flex items-center justify-center shadow-[2px_3px_0_rgba(0,0,0,0.3)]">
+          <div className="w-8 h-8 rounded-lg bg-[#7C3AED] flex items-center justify-center shadow-[2px_3px_0_rgba(0,0,0,0.3)]">
             <BarChart3 className="w-4 h-4 text-white" />
           </div>
           <div>
             <p className="text-white font-semibold text-sm leading-none">AdPulse</p>
-            <p className="text-white/40 text-[10px] mt-0.5">Panel de Agencia</p>
+            <p className="text-[#7C3AED]/80 text-[10px] mt-0.5 font-medium">HQ · Super Admin</p>
           </div>
         </div>
       </div>
@@ -41,7 +41,7 @@ export function AdminSidebar() {
               className={cn(
                 'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150',
                 active
-                  ? 'bg-[#00BD7D] text-white shadow-[2px_3px_0px_rgba(0,0,0,0.2)]'
+                  ? 'bg-[#7C3AED] text-white shadow-[2px_3px_0px_rgba(0,0,0,0.2)]'
                   : 'text-white/60 hover:text-white hover:bg-white/10'
               )}
             >
@@ -53,13 +53,13 @@ export function AdminSidebar() {
         })}
       </nav>
 
-      {/* Pro badge */}
-      <div className="mx-3 mb-3 px-3 py-3 rounded-lg bg-[#00BD7D]/10 border border-[#00BD7D]/20">
-        <div className="flex items-center gap-2 text-[#00BD7D]">
-          <Zap className="w-3.5 h-3.5" />
-          <span className="text-xs font-semibold">Agencia Pro</span>
+      {/* HQ Badge */}
+      <div className="mx-3 mb-3 px-3 py-3 rounded-lg bg-[#7C3AED]/10 border border-[#7C3AED]/20">
+        <div className="flex items-center gap-2 text-[#7C3AED]">
+          <Shield className="w-3.5 h-3.5" />
+          <span className="text-xs font-semibold">AdPulse HQ</span>
         </div>
-        <p className="text-[10px] text-white/40 mt-1">4 clientes · Todos los canales activos</p>
+        <p className="text-[10px] text-white/40 mt-1">Panel de Administración</p>
       </div>
 
       {/* Logout */}

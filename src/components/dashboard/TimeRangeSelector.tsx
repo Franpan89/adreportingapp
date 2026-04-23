@@ -65,7 +65,7 @@ export function TimeRangeSelector({
                 onClick={() => { setShowCustom(true); onPresetChange('custom'); setOpen(false); }}
                 className="w-full flex items-center px-3 py-2 rounded-lg text-sm text-[#374151] hover:bg-[#F9FAFB] text-left"
               >
-                Custom range…
+                Rango personalizado…
               </button>
             </div>
           </div>
@@ -108,7 +108,7 @@ export function TimeRangeSelector({
           size="sm"
           checked={compareEnabled}
           onChange={onCompareToggle}
-          label="Compare"
+          label="Comparar"
         />
       </div>
 
@@ -116,7 +116,7 @@ export function TimeRangeSelector({
       {compareEnabled && (
         <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-[#F3F4F6] rounded-lg text-xs text-[#6B7280]">
           <span className="w-2 h-0.5 bg-[#6B7280] opacity-60 inline-block" style={{ borderBottom: '1.5px dashed' }} />
-          vs {formatRangeLabel(effectiveCompare)}
+          vs. {formatRangeLabel(effectiveCompare)}
         </div>
       )}
     </div>

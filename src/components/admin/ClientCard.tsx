@@ -51,7 +51,7 @@ export function ClientCard({ client }: ClientCardProps) {
           </div>
         </div>
         <Badge variant={client.is_active ? 'success' : 'default'} size="sm" dot>
-          {client.is_active ? 'Active' : 'Paused'}
+          {client.is_active ? 'Activo' : 'Pausado'}
         </Badge>
       </div>
 
@@ -60,7 +60,7 @@ export function ClientCard({ client }: ClientCardProps) {
         <div className="grid grid-cols-2 gap-2 mb-4">
           {client.spend !== undefined && (
             <div className="bg-[#F9FAFB] rounded-lg p-2.5">
-              <p className="text-[10px] text-[#9CA3AF]">30d Spend</p>
+              <p className="text-[10px] text-[#9CA3AF]">Inversión 30d</p>
               <p className="text-sm font-bold text-[#111827] mt-0.5">{formatCurrency(client.spend)}</p>
             </div>
           )}
@@ -98,7 +98,7 @@ export function ClientCard({ client }: ClientCardProps) {
         href={`/admin/clients/${client.id}`}
         className="flex items-center justify-between w-full px-3 py-2 bg-[#F9FAFB] rounded-lg text-xs font-medium text-[#374151] hover:bg-[#F0FDF8] hover:text-[#00BD7D] transition-colors group"
       >
-        View dashboard
+        Ver panel
         <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
       </Link>
     </div>

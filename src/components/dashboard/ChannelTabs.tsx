@@ -9,7 +9,7 @@ interface ChannelTabsProps {
 }
 
 const CHANNEL_CONFIG = {
-  all:    { label: 'All Channels', color: '#111827' },
+  all:    { label: 'Todos los canales', color: '#111827' },
   meta:   { label: 'Meta',         color: '#1877F2' },
   google: { label: 'Google',       color: '#EA4335' },
   tiktok: { label: 'TikTok',       color: '#010101' },

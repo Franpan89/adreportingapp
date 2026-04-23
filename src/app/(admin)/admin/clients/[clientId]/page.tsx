@@ -20,7 +20,7 @@ export default async function AdminClientDetailPage({ params }: PageProps) {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Link href="/admin/clients" className="flex items-center gap-1.5 text-sm text-[#9CA3AF] hover:text-[#111827]">
-              <ArrowLeft className="w-3.5 h-3.5" /> Clients
+              <ArrowLeft className="w-3.5 h-3.5" /> Clientes
             </Link>
             <span className="text-[#E5E7EB]">/</span>
             <span className="text-sm font-medium text-[#111827]">{client.name}</span>
@@ -28,12 +28,12 @@ export default async function AdminClientDetailPage({ params }: PageProps) {
           <div className="flex items-center gap-2">
             <Link href={`/admin/clients/${clientId}/metrics`}>
               <Button variant="outline" size="sm" icon={<Settings2 className="w-3.5 h-3.5" />}>
-                Metric config
+                Config. métricas
               </Button>
             </Link>
             <Link href={`/admin/clients/${clientId}/credentials`}>
               <Button variant="outline" size="sm" icon={<Key className="w-3.5 h-3.5" />}>
-                Credentials
+                Credenciales
               </Button>
             </Link>
           </div>

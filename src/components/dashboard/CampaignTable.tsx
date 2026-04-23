@@ -57,7 +57,7 @@ export function CampaignTable({ campaigns, compareCampaigns, allowedMetrics, sho
         <input
           value={search}
           onChange={e => setSearch(e.target.value)}
-          placeholder="Search campaigns…"
+          placeholder="Buscar campañas…"
           className="w-full pl-9 pr-3 py-2 bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg text-sm outline-none focus:border-[#00BD7D] focus:ring-2 focus:ring-[#00BD7D]/20 text-[#111827] placeholder:text-[#9CA3AF]"
         />
       </div>
@@ -68,13 +68,13 @@ export function CampaignTable({ campaigns, compareCampaigns, allowedMetrics, sho
           <thead>
             <tr className="border-b border-[#E5E7EB] bg-[#F9FAFB]">
               <th className="text-left px-4 py-3 text-xs font-semibold text-[#6B7280] uppercase tracking-wide whitespace-nowrap">
-                Campaign
+                Campaña
               </th>
               <th className="text-left px-3 py-3 text-xs font-semibold text-[#6B7280] uppercase tracking-wide">
-                Channel
+                Canal
               </th>
               <th className="text-left px-3 py-3 text-xs font-semibold text-[#6B7280] uppercase tracking-wide">
-                Status
+                Estado
               </th>
               {tableMetrics.map(m => (
                 <th
@@ -137,14 +137,14 @@ export function CampaignTable({ campaigns, compareCampaigns, allowedMetrics, sho
             {sorted.length === 0 && (
               <tr>
                 <td colSpan={3 + tableMetrics.length} className="py-12 text-center text-[#9CA3AF] text-sm">
-                  No campaigns found
+                  No se encontraron campañas
                 </td>
               </tr>
             )}
           </tbody>
         </table>
       </div>
-      <p className="text-xs text-[#9CA3AF] mt-2 text-right">{sorted.length} campaigns</p>
+      <p className="text-xs text-[#9CA3AF] mt-2 text-right">{sorted.length} campañas</p>
     </div>
   );
 }

@@ -17,11 +17,11 @@ export default function ClientsPage() {
       <div className="border-b border-[#E5E7EB] bg-white px-6 py-4">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-bold text-[#111827] font-[Oswald] tracking-wide">Clients</h1>
-            <p className="text-sm text-[#9CA3AF] mt-0.5">{MOCK_CLIENTS.length} clients managed</p>
+            <h1 className="text-xl font-bold text-[#111827] font-[Oswald] tracking-wide">Clientes</h1>
+            <p className="text-sm text-[#9CA3AF] mt-0.5">{MOCK_CLIENTS.length} clientes gestionados</p>
           </div>
           <Link href="/admin/clients/new">
-            <Button size="sm" icon={<Plus className="w-3.5 h-3.5" />}>Add client</Button>
+            <Button size="sm" icon={<Plus className="w-3.5 h-3.5" />}>Agregar cliente</Button>
           </Link>
         </div>
       </div>

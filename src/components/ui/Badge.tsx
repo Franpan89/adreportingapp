@@ -51,10 +51,10 @@ export function ChannelBadge({ channel }: { channel: 'meta' | 'google' | 'tiktok
 
 export function StatusBadge({ status }: { status: string }) {
   const map: Record<string, { label: string; variant: Variant }> = {
-    ACTIVE:  { label: 'Active',  variant: 'success' },
-    PAUSED:  { label: 'Paused',  variant: 'warning' },
-    DELETED: { label: 'Deleted', variant: 'danger'  },
-    ENDED:   { label: 'Ended',   variant: 'default' },
+    ACTIVE:  { label: 'Activo',    variant: 'success' },
+    PAUSED:  { label: 'Pausado',   variant: 'warning' },
+    DELETED: { label: 'Eliminado', variant: 'danger'  },
+    ENDED:   { label: 'Finalizado', variant: 'default' },
   };
   const cfg = map[status?.toUpperCase()] ?? { label: status, variant: 'default' as Variant };
   return <Badge variant={cfg.variant} dot>{cfg.label}</Badge>;

@@ -3,7 +3,36 @@
    ===================================================== */
 
 export type Channel = 'meta' | 'google' | 'tiktok';
-export type UserRole = 'admin' | 'client';
+export type UserRole = 'admin' | 'client' | 'super_admin';
+
+/* ----- SaaS / Licencias ----- */
+export type PlanId = 'starter' | 'pro' | 'enterprise';
+export type LicenseStatus = 'active' | 'suspended' | 'expired' | 'trial';
+
+export interface Plan {
+  id: PlanId;
+  name: string;
+  price_monthly: number;
+  max_clients: number | null; // null = ilimitado
+  max_channels: number;
+  features: string[];
+  color: string;
+}
+
+export interface License {
+  id: string;
+  agency_id: string;
+  agency_name: string;
+  agency_email: string;
+  plan_id: PlanId;
+  status: LicenseStatus;
+  created_at: string;
+  expires_at: string | null;
+  activated_at: string | null;
+  notes: string | null;
+  clients_count: number;
+  temp_password: string | null;
+}
 
 /* ----- Auth ----- */
 export interface AppUser {
