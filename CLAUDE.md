@@ -1,3 +1,5 @@
+@AGENTS.md
+
 # {{APP_NAME}} — Claude Code Conventions
 
 > **WMM Standalone App** — Part of the Web My Money ecosystem.
