@@ -39,7 +39,7 @@ export function SuperAdminBarChart({ data, height = 180 }: SuperAdminBarChartPro
           }}
           labelStyle={{ color: 'rgba(255,255,255,0.6)' }}
           cursor={{ fill: 'rgba(124,58,237,0.08)' }}
-          formatter={(value: number) => [`${value} nueva${value !== 1 ? 's' : ''}`, 'Licencias']}
+          formatter={(value) => [`${value ?? 0} nueva${Number(value) !== 1 ? 's' : ''}`, 'Licencias']}
         />
         <Bar dataKey="cantidad" radius={[6, 6, 0, 0]}>
           {data.map((_, i) => (

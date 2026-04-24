@@ -13,7 +13,6 @@ function generatePassword(): string {
   return Array.from({ length: 12 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
 }
 
-/* ── Dark input style ───────────────────────────────── */
 const inputCls = 'w-full bg-[#111827] border border-white/10 rounded-lg px-3 py-2.5 text-sm text-white placeholder:text-white/25 outline-none focus:border-[#7C3AED] focus:ring-2 focus:ring-[#7C3AED]/20 transition-colors';
 const labelCls = 'block text-xs font-medium text-white/60 mb-1.5';
 
@@ -28,10 +27,10 @@ export default function NuevaLicenciaPage() {
     notes: '',
   });
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [createdLicense, setCreatedLicense] = useState<License | null>(null);
   const [copied, setCopied] = useState(false);
 
-  // Auto-generate password on mount
   useEffect(() => {
     setForm(f => ({ ...f, temp_password: generatePassword() }));
   }, []);
@@ -44,25 +43,28 @@ export default function NuevaLicenciaPage() {
     e.preventDefault();
     if (!form.plan_id) return;
     setLoading(true);
-    await new Promise(r => setTimeout(r, 700));
-
-    const license: License = {
-      id: `lic-${Date.now()}`,
-      agency_id: `ag-${Date.now()}`,
-      agency_name: form.agency_name,
-      agency_email: form.agency_email,
-      plan_id: form.plan_id,
-      status: 'trial',
-      created_at: new Date().toISOString(),
-      expires_at: form.expires_at || null,
-      activated_at: new Date().toISOString(),
-      notes: form.notes || null,
-      clients_count: 0,
-      temp_password: form.temp_password,
-    };
-
-    setLoading(false);
-    setCreatedLicense(license);
+    setError(null);
+    try {
+      const res = await fetch('/api/licenses', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          agency_name:   form.agency_name,
+          agency_email:  form.agency_email,
+          plan_id:       form.plan_id,
+          temp_password: form.temp_password,
+          expires_at:    form.expires_at || null,
+          notes:         form.notes || null,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'Error al crear licencia');
+      setCreatedLicense(data.license as License);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error inesperado');
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function handleCopy() {
@@ -99,6 +101,14 @@ URL:        https://adpulse.com/login
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-5xl">
           {/* Form — 2/3 */}
           <form onSubmit={handleSubmit} className="lg:col-span-2 space-y-6">
+            {/* Error banner */}
+            {error && (
+              <div className="flex items-center gap-2 px-4 py-2.5 bg-[#fee2e2] border border-[#DC2626]/20 rounded-lg text-sm text-[#DC2626]">
+                <X className="w-4 h-4 shrink-0" />
+                {error}
+              </div>
+            )}
+
             {/* Datos de la agencia */}
             <div className="bg-[#1F2937] border border-white/10 rounded-xl p-5">
               <h2 className="text-sm font-semibold text-white mb-4">Datos de la agencia</h2>
@@ -195,9 +205,7 @@ URL:        https://adpulse.com/login
                 disabled={!isComplete || loading}
                 className="flex items-center gap-2 px-5 py-2.5 bg-[#7C3AED] hover:bg-[#6D28D9] disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-lg shadow-[2px_3px_0_rgba(0,0,0,0.3)] transition-colors"
               >
-                {loading ? (
-                  <RefreshCw className="w-4 h-4 animate-spin" />
-                ) : null}
+                {loading && <RefreshCw className="w-4 h-4 animate-spin" />}
                 {loading ? 'Creando...' : 'Crear licencia'}
               </button>
               <Link
@@ -254,7 +262,6 @@ URL:        https://adpulse.com/login
                     </p>
                   </div>
                 </div>
-
                 {isComplete && (
                   <div className="mt-4 pt-4 border-t border-white/10">
                     <div className="flex items-center gap-1.5 text-[10px] text-[#16A34A]">
@@ -273,7 +280,6 @@ URL:        https://adpulse.com/login
       {createdLicense && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-[#1F2937] border border-[#7C3AED]/30 rounded-2xl p-6 max-w-md w-full shadow-[6px_10px_0_rgba(0,0,0,0.4)]">
-            {/* Header */}
             <div className="flex items-start justify-between mb-5">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-[#dcfce7] flex items-center justify-center">
@@ -286,14 +292,13 @@ URL:        https://adpulse.com/login
               </div>
               <button
                 type="button"
-                onClick={() => setCreatedLicense(null)}
+                onClick={() => { setCreatedLicense(null); router.push('/superadmin/licencias'); }}
                 className="text-white/30 hover:text-white/60 transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Credentials block */}
             <div className="bg-[#111827] rounded-xl p-4 font-mono text-xs text-white/80 mb-4 border border-white/5 space-y-1.5">
               <div><span className="text-white/40">Agencia:    </span>{createdLicense.agency_name}</div>
               <div><span className="text-white/40">Email:      </span>{createdLicense.agency_email}</div>
@@ -307,7 +312,6 @@ URL:        https://adpulse.com/login
               </div>
             </div>
 
-            {/* Actions */}
             <div className="space-y-2">
               <button
                 type="button"
@@ -329,6 +333,7 @@ URL:        https://adpulse.com/login
                   onClick={() => {
                     setCreatedLicense(null);
                     setForm({ agency_name: '', agency_email: '', temp_password: generatePassword(), plan_id: '', expires_at: '', notes: '' });
+                    setError(null);
                   }}
                   className="flex items-center justify-center px-4 py-2.5 text-white/50 hover:text-white text-sm transition-colors"
                 >

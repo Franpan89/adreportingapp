@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { Plus } from 'lucide-react';
 import { LicenseTable } from './_components/LicenseTable';
-import { MOCK_LICENSES } from '@/lib/data/licenses';
+import { getLicenses } from '@/lib/supabase/licenses';
 import { cn } from '@/lib/utils/cn';
 import type { LicenseStatus } from '@/types';
 
@@ -21,9 +21,10 @@ export default async function LicenciasPage({ searchParams }: PageProps) {
   const { status } = await searchParams;
   const activeTab = status ?? 'all';
 
+  const allLicenses = await getLicenses();
   const filtered = activeTab === 'all'
-    ? MOCK_LICENSES
-    : MOCK_LICENSES.filter(l => l.status === activeTab);
+    ? allLicenses
+    : allLicenses.filter(l => l.status === activeTab);
 
   return (
     <div className="flex-1 flex flex-col">
@@ -34,7 +35,7 @@ export default async function LicenciasPage({ searchParams }: PageProps) {
             <h1 className="text-xl font-bold text-white" style={{ fontFamily: 'Oswald, sans-serif', letterSpacing: '0.05em' }}>
               Licencias
             </h1>
-            <p className="text-sm text-white/40 mt-0.5">{MOCK_LICENSES.length} licencias registradas</p>
+            <p className="text-sm text-white/40 mt-0.5">{allLicenses.length} licencias registradas</p>
           </div>
           <Link
             href="/superadmin/licencias/nueva"
@@ -65,7 +66,7 @@ export default async function LicenciasPage({ searchParams }: PageProps) {
                 'ml-1.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full',
                 activeTab === tab.key ? 'bg-white/20 text-white' : 'bg-white/10 text-white/40'
               )}>
-                {tab.key === 'all' ? MOCK_LICENSES.length : MOCK_LICENSES.filter(l => l.status === tab.key).length}
+                {tab.key === 'all' ? allLicenses.length : allLicenses.filter(l => l.status === tab.key).length}
               </span>
             </Link>
           ))}

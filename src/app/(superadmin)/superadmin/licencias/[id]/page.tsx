@@ -1,7 +1,8 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ArrowLeft, Building2, Mail, Calendar, FileText, Users } from 'lucide-react';
-import { MOCK_LICENSES, getPlanById, PLANS } from '@/lib/data/licenses';
+import { getLicenseById, PLANS } from '@/lib/supabase/licenses';
+import { getPlanById } from '@/lib/data/licenses';
 import { LicenseStatusBadge, PlanBadge } from '@/components/superadmin/LicenseBadge';
 import { LicenseActions } from './_components/LicenseActions';
 
@@ -11,7 +12,7 @@ interface PageProps {
 
 export default async function LicenseDetailPage({ params }: PageProps) {
   const { id } = await params;
-  const license = MOCK_LICENSES.find(l => l.id === id);
+  const license = await getLicenseById(id);
 
   if (!license) notFound();
 

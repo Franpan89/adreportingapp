@@ -1,21 +1,26 @@
 import Link from 'next/link';
-import {
-  DollarSign, Building2, AlertTriangle, Zap, Plus,
-} from 'lucide-react';
+import { DollarSign, Building2, AlertTriangle, Zap, Plus } from 'lucide-react';
 import { StatsCard } from '@/components/superadmin/StatsCard';
 import { PlanBadge, LicenseStatusBadge } from '@/components/superadmin/LicenseBadge';
 import { SuperAdminBarChart } from '@/components/superadmin/SuperAdminBarChart';
 import {
-  getMRR, getLicensesByStatus, getExpiringLicenses, getRecentLicenses, MONTHLY_NEW_LICENSES,
-} from '@/lib/data/licenses';
+  getMRRAsync,
+  getLicensesByStatusAsync,
+  getExpiringLicensesAsync,
+  getRecentLicensesAsync,
+  getMonthlyLicenseCounts,
+} from '@/lib/supabase/licenses';
 import { formatCurrency } from '@/lib/utils/format';
 
-export default function SuperAdminDashboard() {
-  const mrr = getMRR();
-  const activeCount = getLicensesByStatus('active').length;
-  const expiringCount = getExpiringLicenses(30).length;
-  const trialCount = getLicensesByStatus('trial').length;
-  const recentLicenses = getRecentLicenses(5);
+export default async function SuperAdminDashboard() {
+  const [mrr, active, expiring, trials, recent, monthly] = await Promise.all([
+    getMRRAsync(),
+    getLicensesByStatusAsync('active'),
+    getExpiringLicensesAsync(30),
+    getLicensesByStatusAsync('trial'),
+    getRecentLicensesAsync(5),
+    getMonthlyLicenseCounts(),
+  ]);
 
   return (
     <div className="flex-1 flex flex-col">
@@ -49,20 +54,20 @@ export default function SuperAdminDashboard() {
           />
           <StatsCard
             label="Agencias Activas"
-            value={String(activeCount)}
+            value={String(active.length)}
             Icon={Building2}
             sublabel="licencias en estado activo"
           />
           <StatsCard
             label="Por Vencer (30d)"
-            value={String(expiringCount)}
+            value={String(expiring.length)}
             Icon={AlertTriangle}
             sublabel="licencias próximas a vencer"
-            accent={expiringCount > 0 ? '#D97706' : '#7C3AED'}
+            accent={expiring.length > 0 ? '#D97706' : '#7C3AED'}
           />
           <StatsCard
             label="Trials Activos"
-            value={String(trialCount)}
+            value={String(trials.length)}
             Icon={Zap}
             sublabel="agencias en período de prueba"
             accent="#6366F1"
@@ -79,7 +84,7 @@ export default function SuperAdminDashboard() {
                 <p className="text-xs text-white/40 mt-0.5">Últimos 6 meses</p>
               </div>
             </div>
-            <SuperAdminBarChart data={MONTHLY_NEW_LICENSES} height={180} />
+            <SuperAdminBarChart data={monthly} height={180} />
           </div>
 
           {/* Recent licenses */}
@@ -91,7 +96,7 @@ export default function SuperAdminDashboard() {
               </Link>
             </div>
             <div className="space-y-3">
-              {recentLicenses.map(lic => (
+              {recent.map(lic => (
                 <Link
                   key={lic.id}
                   href={`/superadmin/licencias/${lic.id}`}

@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Check, AlertTriangle, X, RefreshCw } from 'lucide-react';
 import type { LicenseStatus } from '@/types';
 
@@ -10,6 +11,7 @@ interface LicenseActionsProps {
 }
 
 export function LicenseActions({ licenseId, initialStatus, agencyName }: LicenseActionsProps) {
+  const router = useRouter();
   const [status, setStatus] = useState<LicenseStatus>(initialStatus);
   const [loading, setLoading] = useState(false);
   const [showRevokeModal, setShowRevokeModal] = useState(false);
@@ -18,19 +20,37 @@ export function LicenseActions({ licenseId, initialStatus, agencyName }: License
 
   async function changeStatus(newStatus: LicenseStatus) {
     setLoading(true);
-    await new Promise(r => setTimeout(r, 600));
-    setStatus(newStatus);
-    setLoading(false);
-    showBanner(`Estado cambiado a: ${newStatus}`);
+    try {
+      const res = await fetch(`/api/licenses/${licenseId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (!res.ok) throw new Error('Error al cambiar estado');
+      setStatus(newStatus);
+      showBanner(`Estado cambiado a: ${newStatus}`);
+      router.refresh();
+    } catch {
+      showBanner('Error al cambiar estado');
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function handleRevoke() {
     setLoading(true);
-    await new Promise(r => setTimeout(r, 800));
-    setRevoked(true);
-    setLoading(false);
-    setShowRevokeModal(false);
-    showBanner('Licencia revocada (modo demo — no persistido)');
+    try {
+      const res = await fetch(`/api/licenses/${licenseId}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Error al revocar');
+      setRevoked(true);
+      setShowRevokeModal(false);
+      router.refresh();
+    } catch {
+      showBanner('Error al revocar licencia');
+      setShowRevokeModal(false);
+    } finally {
+      setLoading(false);
+    }
   }
 
   function showBanner(msg: string) {
