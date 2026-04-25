@@ -1,6 +1,8 @@
 'use client';
 import Link from 'next/link';
-import { LayoutDashboard, LogOut, BarChart3 } from 'lucide-react';
+import { usePathname } from 'next/navigation';
+import { LayoutDashboard, LogOut, BarChart3, FileText } from 'lucide-react';
+import { cn } from '@/lib/utils/cn';
 
 interface ClientSidebarProps {
   clientName?: string;
@@ -21,6 +23,11 @@ const CHANNEL_LABELS: Record<string, string> = {
 };
 
 export function ClientSidebar({ clientName = 'My Dashboard', channels = [] }: ClientSidebarProps) {
+  const path = usePathname();
+  const nav = [
+    { href: '/dashboard', label: 'Panel',    icon: LayoutDashboard },
+    { href: '/reportes',  label: 'Reportes', icon: FileText },
+  ];
   return (
     <aside className="w-60 shrink-0 flex flex-col bg-[#111827] min-h-screen">
       {/* Logo */}
@@ -36,15 +43,26 @@ export function ClientSidebar({ clientName = 'My Dashboard', channels = [] }: Cl
         </div>
       </div>
 
-      {/* Nav — read-only, single destination */}
-      <nav className="flex-1 px-3 py-4">
-        <Link
-          href="/dashboard"
-          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium bg-[#00BD7D] text-white shadow-[2px_3px_0px_rgba(0,0,0,0.2)]"
-        >
-          <LayoutDashboard className="w-4 h-4 shrink-0" />
-          Panel
-        </Link>
+      {/* Nav */}
+      <nav className="flex-1 px-3 py-4 space-y-0.5">
+        {nav.map(({ href, label, icon: Icon }) => {
+          const active = path === href || path.startsWith(href + '/');
+          return (
+            <Link
+              key={href}
+              href={href}
+              className={cn(
+                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
+                active
+                  ? 'bg-[#00BD7D] text-white shadow-[2px_3px_0px_rgba(0,0,0,0.2)]'
+                  : 'text-white/60 hover:text-white hover:bg-white/10'
+              )}
+            >
+              <Icon className="w-4 h-4 shrink-0" />
+              {label}
+            </Link>
+          );
+        })}
       </nav>
 
       {/* Connected channels */}

@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ArrowLeft, Settings2, Key } from 'lucide-react';
+import { ArrowLeft, Settings2, Key, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { DashboardShell } from '@/components/dashboard/DashboardShell';
 import { MOCK_CLIENTS } from '@/lib/reports/mock';
@@ -26,6 +26,11 @@ export default async function AdminClientDetailPage({ params }: PageProps) {
             <span className="text-sm font-medium text-[#111827]">{client.name}</span>
           </div>
           <div className="flex items-center gap-2">
+            <Link href={`/admin/clients/${clientId}/reportes`}>
+              <Button variant="outline" size="sm" icon={<FileText className="w-3.5 h-3.5" />}>
+                Reportes
+              </Button>
+            </Link>
             <Link href={`/admin/clients/${clientId}/metrics`}>
               <Button variant="outline" size="sm" icon={<Settings2 className="w-3.5 h-3.5" />}>
                 Config. métricas
