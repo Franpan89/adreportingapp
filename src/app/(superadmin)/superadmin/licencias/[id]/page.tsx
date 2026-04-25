@@ -25,7 +25,7 @@ export default async function LicenseDetailPage({ params }: PageProps) {
       <div className="border-b border-white/10 bg-[#1F2937] px-6 py-4">
         <Link
           href="/superadmin/licencias"
-          className="flex items-center gap-1.5 text-sm text-white/40 hover:text-white mb-2 w-fit transition-colors"
+          className="flex items-center gap-1.5 text-sm text-white/55 hover:text-white mb-2 w-fit transition-colors"
         >
           <ArrowLeft className="w-3.5 h-3.5" /> Volver a licencias
         </Link>
@@ -40,7 +40,7 @@ export default async function LicenseDetailPage({ params }: PageProps) {
               </h1>
               <LicenseStatusBadge status={license.status} />
             </div>
-            <p className="text-sm text-white/40 mt-0.5">{license.agency_email}</p>
+            <p className="text-sm text-white/55 mt-0.5">{license.agency_email}</p>
           </div>
           <PlanBadge planId={license.plan_id} />
         </div>
@@ -121,7 +121,7 @@ export default async function LicenseDetailPage({ params }: PageProps) {
                           </span>
                         )}
                       </div>
-                      <p className="text-lg font-bold text-white">${p.price_monthly}<span className="text-xs text-white/40 font-normal">/mes</span></p>
+                      <p className="text-lg font-bold text-white">${p.price_monthly}<span className="text-xs text-white/55 font-normal">/mes</span></p>
                       <ul className="mt-2 space-y-1">
                         {p.features.map(f => (
                           <li key={f} className="text-[11px] text-white/50 flex items-center gap-1.5">
@@ -150,7 +150,7 @@ export default async function LicenseDetailPage({ params }: PageProps) {
 
             {/* Meta info */}
             <div className="bg-[#1F2937] border border-white/10 rounded-xl p-5 space-y-3">
-              <p className="text-xs font-medium text-white/40 uppercase tracking-wider">Metadata</p>
+              <p className="text-xs font-medium text-white/55 uppercase tracking-wider">Metadata</p>
               <MetaRow label="ID licencia" value={license.id} mono />
               <MetaRow label="ID agencia" value={license.agency_id} mono />
               {license.activated_at && (
@@ -181,7 +181,7 @@ function DetailRow({
 }) {
   return (
     <div className={fullWidth ? 'sm:col-span-2' : ''}>
-      <div className="flex items-center gap-1.5 text-white/40 mb-1">
+      <div className="flex items-center gap-1.5 text-white/55 mb-1">
         <span className="w-4 h-4">{icon}</span>
         <p className="text-[10px] font-medium uppercase tracking-wider">{label}</p>
       </div>

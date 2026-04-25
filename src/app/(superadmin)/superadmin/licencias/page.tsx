@@ -35,7 +35,7 @@ export default async function LicenciasPage({ searchParams }: PageProps) {
             <h1 className="text-xl font-bold text-white" style={{ fontFamily: 'Oswald, sans-serif', letterSpacing: '0.05em' }}>
               Licencias
             </h1>
-            <p className="text-sm text-white/40 mt-0.5">{allLicenses.length} licencias registradas</p>
+            <p className="text-sm text-white/55 mt-0.5">{allLicenses.length} licencias registradas</p>
           </div>
           <Link
             href="/superadmin/licencias/nueva"
@@ -64,7 +64,7 @@ export default async function LicenciasPage({ searchParams }: PageProps) {
               {tab.label}
               <span className={cn(
                 'ml-1.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full',
-                activeTab === tab.key ? 'bg-white/20 text-white' : 'bg-white/10 text-white/40'
+                activeTab === tab.key ? 'bg-white/20 text-white' : 'bg-white/10 text-white/55'
               )}>
                 {tab.key === 'all' ? allLicenses.length : allLicenses.filter(l => l.status === tab.key).length}
               </span>

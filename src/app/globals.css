@@ -130,3 +130,45 @@ body {
 .channel-meta { color: var(--color-meta); background: var(--color-meta-light); }
 .channel-google { color: var(--color-google); background: var(--color-google-light); }
 .channel-tiktok { color: var(--color-tiktok); background: var(--color-tiktok-light); }
+
+/* =====================================================
+   Print styles — used by the client Reportes detail page
+   to let the browser's "Save as PDF" produce a clean file
+   ===================================================== */
+@media print {
+  @page {
+    size: A4;
+    margin: 12mm 10mm;
+  }
+
+  html, body {
+    background: #ffffff !important;
+    color: #111827 !important;
+  }
+
+  /* Hide every chrome element that isn't inside the report */
+  body > div > div > aside,        /* sidebar */
+  .print\:hidden,
+  nav[role="navigation"] {
+    display: none !important;
+  }
+
+  /* Let the report stretch full-width */
+  main {
+    padding: 0 !important;
+  }
+
+  .report {
+    max-width: 100% !important;
+    box-shadow: none !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+  }
+
+  /* Avoid cutting a section across two pages */
+  .report section,
+  .report header,
+  .report footer {
+    break-inside: avoid;
+  }
+}

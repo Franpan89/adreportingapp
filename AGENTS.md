@@ -154,6 +154,7 @@ Boris Cherny (creator of Claude Code) keeps his team's file around 100 lines. Un
 - UI: React 19.2.4, Tailwind CSS v4 (`@tailwindcss/postcss`)
 - Auth / DB: Supabase (`@supabase/ssr` ^0.10.2, `@supabase/supabase-js` ^2.103.2)
 - Icons: lucide-react ^1.8.0
+- Fonts: Poppins (body), Oswald (display/headings), JetBrains Mono (code) — loaded via Google Fonts import in `src/app/globals.css`
 - Charts: recharts ^3.8.1 — must be wrapped in `'use client'` components
 - DnD: @dnd-kit/core, @dnd-kit/sortable
 - Package manager: **npm only** (no yarn/pnpm/bun)

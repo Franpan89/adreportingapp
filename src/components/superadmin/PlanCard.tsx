@@ -15,9 +15,9 @@ export function PlanCard({ plan, selected, onSelect }: PlanCardProps) {
       type="button"
       onClick={onSelect}
       className={cn(
-        'relative w-full text-left cursor-pointer rounded-xl p-4 border-2 transition-all duration-150',
+        'relative w-full text-left cursor-pointer rounded-xl p-4 border transition-all duration-150',
         selected
-          ? 'border-[#7C3AED] bg-[#7C3AED]/10 shadow-[0_0_0_1px_#7C3AED]'
+          ? 'border-transparent bg-[#7C3AED]/10 ring-2 ring-[#7C3AED]'
           : 'border-white/10 bg-[#1F2937] hover:border-[#7C3AED]/40 hover:bg-[#7C3AED]/5'
       )}
     >
@@ -34,7 +34,7 @@ export function PlanCard({ plan, selected, onSelect }: PlanCardProps) {
         </p>
         <div className="flex items-baseline gap-1">
           <span className="text-2xl font-bold text-white">${plan.price_monthly}</span>
-          <span className="text-xs text-white/40">/mes</span>
+          <span className="text-xs text-white/55">/mes</span>
         </div>
       </div>
 

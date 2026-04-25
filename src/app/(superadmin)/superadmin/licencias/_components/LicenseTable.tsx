@@ -11,7 +11,7 @@ export function LicenseTable({ licenses }: LicenseTableProps) {
   if (licenses.length === 0) {
     return (
       <div className="bg-[#1F2937] border border-white/10 rounded-xl py-16 text-center">
-        <p className="text-white/40 text-sm">No hay licencias en esta categoría</p>
+        <p className="text-white/55 text-sm">No hay licencias en esta categoría</p>
       </div>
     );
   }
@@ -22,19 +22,19 @@ export function LicenseTable({ licenses }: LicenseTableProps) {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-white/10 bg-[#0D1117]">
-              <th className="text-left px-5 py-3 text-[10px] font-semibold text-white/40 uppercase tracking-wider">
+              <th className="text-left px-5 py-3 text-[10px] font-semibold text-white/55 uppercase tracking-wider">
                 Agencia
               </th>
-              <th className="text-left px-4 py-3 text-[10px] font-semibold text-white/40 uppercase tracking-wider">
+              <th className="text-left px-4 py-3 text-[10px] font-semibold text-white/55 uppercase tracking-wider">
                 Plan
               </th>
-              <th className="text-left px-4 py-3 text-[10px] font-semibold text-white/40 uppercase tracking-wider">
+              <th className="text-left px-4 py-3 text-[10px] font-semibold text-white/55 uppercase tracking-wider">
                 Estado
               </th>
-              <th className="text-left px-4 py-3 text-[10px] font-semibold text-white/40 uppercase tracking-wider">
+              <th className="text-left px-4 py-3 text-[10px] font-semibold text-white/55 uppercase tracking-wider">
                 Clientes
               </th>
-              <th className="text-left px-4 py-3 text-[10px] font-semibold text-white/40 uppercase tracking-wider">
+              <th className="text-left px-4 py-3 text-[10px] font-semibold text-white/55 uppercase tracking-wider">
                 Vencimiento
               </th>
               <th className="px-4 py-3" />
@@ -51,7 +51,7 @@ export function LicenseTable({ licenses }: LicenseTableProps) {
                 >
                   <td className="px-5 py-4">
                     <p className="font-medium text-white text-sm">{lic.agency_name}</p>
-                    <p className="text-[11px] text-white/40 mt-0.5">{lic.agency_email}</p>
+                    <p className="text-[11px] text-white/55 mt-0.5">{lic.agency_email}</p>
                   </td>
                   <td className="px-4 py-4">
                     <PlanBadge planId={lic.plan_id} />

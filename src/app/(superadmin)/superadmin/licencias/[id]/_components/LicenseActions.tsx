@@ -62,7 +62,7 @@ export function LicenseActions({ licenseId, initialStatus, agencyName }: License
     return (
       <div className="bg-[#1F2937] border border-[#DC2626]/30 rounded-xl p-5">
         <p className="text-sm text-[#DC2626] font-medium">Licencia revocada</p>
-        <p className="text-xs text-white/40 mt-1">El acceso de la agencia ha sido eliminado.</p>
+        <p className="text-xs text-white/55 mt-1">El acceso de la agencia ha sido eliminado.</p>
       </div>
     );
   }
@@ -71,7 +71,7 @@ export function LicenseActions({ licenseId, initialStatus, agencyName }: License
     <>
       {/* Success banner */}
       {banner && (
-        <div className="mb-3 flex items-center gap-2 px-4 py-2.5 bg-[#dcfce7] border border-[#16A34A]/20 rounded-lg text-sm text-[#16A34A]">
+        <div role="status" aria-live="polite" className="mb-3 flex items-center gap-2 px-4 py-2.5 bg-[#dcfce7] border border-[#16A34A]/20 rounded-lg text-sm text-[#16A34A]">
           <Check className="w-4 h-4 shrink-0" />
           {banner}
         </div>
@@ -80,7 +80,7 @@ export function LicenseActions({ licenseId, initialStatus, agencyName }: License
       {/* Status card */}
       <div className="bg-[#1F2937] border border-white/10 rounded-xl p-5 space-y-4">
         <div>
-          <p className="text-xs font-medium text-white/40 uppercase tracking-wider mb-2">Estado actual</p>
+          <p className="text-xs font-medium text-white/55 uppercase tracking-wider mb-2">Estado actual</p>
           <StatusDisplay status={status} />
         </div>
 
@@ -135,7 +135,7 @@ export function LicenseActions({ licenseId, initialStatus, agencyName }: License
           <AlertTriangle className="w-4 h-4" />
           <p className="text-sm font-semibold">Zona de peligro</p>
         </div>
-        <p className="text-xs text-white/40 mb-4">
+        <p className="text-xs text-white/55 mb-4">
           Esta acción eliminará el acceso de la agencia permanentemente y no se puede deshacer.
         </p>
         <button
@@ -155,7 +155,7 @@ export function LicenseActions({ licenseId, initialStatus, agencyName }: License
               <div className="w-10 h-10 rounded-full bg-[#fee2e2] flex items-center justify-center shrink-0">
                 <AlertTriangle className="w-5 h-5 text-[#DC2626]" />
               </div>
-              <button type="button" onClick={() => setShowRevokeModal(false)} className="text-white/30 hover:text-white/60">
+              <button type="button" onClick={() => setShowRevokeModal(false)} aria-label="Cerrar modal" className="text-white/30 hover:text-white/60">
                 <X className="w-5 h-5" />
               </button>
             </div>

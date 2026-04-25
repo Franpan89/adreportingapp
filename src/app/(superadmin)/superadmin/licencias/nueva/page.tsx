@@ -88,13 +88,13 @@ URL:        https://adpulse.com/login
     <div className="flex-1 flex flex-col">
       {/* Header */}
       <div className="border-b border-white/10 bg-[#1F2937] px-6 py-4">
-        <Link href="/superadmin/licencias" className="flex items-center gap-1.5 text-sm text-white/40 hover:text-white mb-2 w-fit">
+        <Link href="/superadmin/licencias" className="flex items-center gap-1.5 text-sm text-white/55 hover:text-white mb-2 w-fit">
           <ArrowLeft className="w-3.5 h-3.5" /> Volver a licencias
         </Link>
         <h1 className="text-xl font-bold text-white" style={{ fontFamily: 'Oswald, sans-serif', letterSpacing: '0.05em' }}>
           Nueva Licencia
         </h1>
-        <p className="text-sm text-white/40 mt-0.5">Crea una cuenta de agencia y asigna un plan</p>
+        <p className="text-sm text-white/55 mt-0.5">Crea una cuenta de agencia y asigna un plan</p>
       </div>
 
       <div className="flex-1 px-6 py-5">
@@ -224,19 +224,19 @@ URL:        https://adpulse.com/login
                 <h2 className="text-sm font-semibold text-white mb-4">Resumen</h2>
                 <div className="space-y-3 text-xs">
                   <div>
-                    <p className="text-white/40 mb-0.5">Agencia</p>
+                    <p className="text-white/55 mb-0.5">Agencia</p>
                     <p className={form.agency_name ? 'text-white font-medium' : 'text-white/20 italic'}>
                       {form.agency_name || 'Sin nombre'}
                     </p>
                   </div>
                   <div>
-                    <p className="text-white/40 mb-0.5">Email</p>
+                    <p className="text-white/55 mb-0.5">Email</p>
                     <p className={form.agency_email ? 'text-white' : 'text-white/20 italic'}>
                       {form.agency_email || 'Sin email'}
                     </p>
                   </div>
                   <div>
-                    <p className="text-white/40 mb-1">Plan</p>
+                    <p className="text-white/55 mb-1">Plan</p>
                     {form.plan_id ? (
                       <span
                         className="inline-flex items-center font-semibold rounded-full px-2.5 py-1 text-xs"
@@ -254,7 +254,7 @@ URL:        https://adpulse.com/login
                     )}
                   </div>
                   <div>
-                    <p className="text-white/40 mb-0.5">Vencimiento</p>
+                    <p className="text-white/55 mb-0.5">Vencimiento</p>
                     <p className={form.expires_at ? 'text-white' : 'text-white/30 italic'}>
                       {form.expires_at
                         ? new Date(form.expires_at).toLocaleDateString('es-MX', { day: '2-digit', month: 'long', year: 'numeric' })
@@ -287,7 +287,7 @@ URL:        https://adpulse.com/login
                 </div>
                 <div>
                   <h3 className="text-white font-semibold text-base">¡Licencia creada!</h3>
-                  <p className="text-white/40 text-xs mt-0.5">Comparte estas credenciales con la agencia</p>
+                  <p className="text-white/55 text-xs mt-0.5">Comparte estas credenciales con la agencia</p>
                 </div>
               </div>
               <button
@@ -300,14 +300,14 @@ URL:        https://adpulse.com/login
             </div>
 
             <div className="bg-[#111827] rounded-xl p-4 font-mono text-xs text-white/80 mb-4 border border-white/5 space-y-1.5">
-              <div><span className="text-white/40">Agencia:    </span>{createdLicense.agency_name}</div>
-              <div><span className="text-white/40">Email:      </span>{createdLicense.agency_email}</div>
-              <div><span className="text-white/40">Contraseña: </span>
+              <div><span className="text-white/55">Agencia:    </span>{createdLicense.agency_name}</div>
+              <div><span className="text-white/55">Email:      </span>{createdLicense.agency_email}</div>
+              <div><span className="text-white/55">Contraseña: </span>
                 <span className="text-[#7C3AED] font-semibold">{createdLicense.temp_password}</span>
               </div>
-              <div><span className="text-white/40">Plan:       </span>{createdLicense.plan_id.toUpperCase()}</div>
+              <div><span className="text-white/55">Plan:       </span>{createdLicense.plan_id.toUpperCase()}</div>
               <div className="pt-1 border-t border-white/5">
-                <span className="text-white/40">URL:        </span>
+                <span className="text-white/55">URL:        </span>
                 <span className="text-[#00BD7D]">https://adpulse.com/login</span>
               </div>
             </div>

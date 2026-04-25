@@ -31,7 +31,7 @@ export default async function SuperAdminDashboard() {
             <h1 className="text-xl font-bold text-white" style={{ fontFamily: 'Oswald, sans-serif', letterSpacing: '0.05em' }}>
               Panel General
             </h1>
-            <p className="text-sm text-white/40 mt-0.5">Vista global de AdPulse SaaS</p>
+            <p className="text-sm text-white/55 mt-0.5">Vista global de AdPulse SaaS</p>
           </div>
           <Link
             href="/superadmin/licencias/nueva"
@@ -81,7 +81,7 @@ export default async function SuperAdminDashboard() {
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h2 className="text-sm font-semibold text-white">Licencias Nuevas</h2>
-                <p className="text-xs text-white/40 mt-0.5">Últimos 6 meses</p>
+                <p className="text-xs text-white/55 mt-0.5">Últimos 6 meses</p>
               </div>
             </div>
             <SuperAdminBarChart data={monthly} height={180} />
@@ -106,7 +106,7 @@ export default async function SuperAdminDashboard() {
                     <p className="text-xs font-medium text-white truncate group-hover:text-[#7C3AED] transition-colors">
                       {lic.agency_name}
                     </p>
-                    <p className="text-[10px] text-white/40 mt-0.5">
+                    <p className="text-[10px] text-white/55 mt-0.5">
                       {new Date(lic.created_at).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })}
                     </p>
                   </div>

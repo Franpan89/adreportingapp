@@ -19,7 +19,7 @@ export default async function AgenciasPage() {
             >
               Agencias
             </h1>
-            <p className="text-sm text-white/40 mt-0.5">{agencies.length} agencias registradas</p>
+            <p className="text-sm text-white/55 mt-0.5">{agencies.length} agencias registradas</p>
           </div>
           <Link
             href="/superadmin/licencias/nueva"
@@ -57,7 +57,7 @@ export default async function AgenciasPage() {
                   {/* Agency name + email */}
                   <div className="min-w-0">
                     <p className="font-semibold text-white text-sm truncate">{agency.agency_name}</p>
-                    <p className="text-[11px] text-white/40 mt-0.5 truncate">{agency.agency_email}</p>
+                    <p className="text-[11px] text-white/55 mt-0.5 truncate">{agency.agency_email}</p>
                   </div>
 
                   {/* Plan badge */}
@@ -66,7 +66,7 @@ export default async function AgenciasPage() {
                   {/* Client usage */}
                   <div>
                     <div className="flex items-center justify-between mb-1.5">
-                      <div className="flex items-center gap-1.5 text-white/40">
+                      <div className="flex items-center gap-1.5 text-white/55">
                         <Users className="w-3.5 h-3.5" />
                         <span className="text-xs">Clientes</span>
                       </div>
@@ -97,7 +97,7 @@ export default async function AgenciasPage() {
                     </span>
                     <Link
                       href={`/superadmin/licencias/${agency.id}`}
-                      className="flex items-center gap-1 text-xs text-white/40 hover:text-[#7C3AED] transition-colors"
+                      className="flex items-center gap-1 text-xs text-white/55 hover:text-[#7C3AED] transition-colors"
                     >
                       Ver licencia
                       <ExternalLink className="w-3 h-3" />
@@ -110,7 +110,7 @@ export default async function AgenciasPage() {
         ) : (
           <div className="bg-[#1F2937] border border-white/10 rounded-xl py-20 text-center">
             <Building2 className="w-8 h-8 text-white/20 mx-auto mb-3" />
-            <p className="text-white/40 text-sm">No hay agencias registradas</p>
+            <p className="text-white/55 text-sm">No hay agencias registradas</p>
             <Link
               href="/superadmin/licencias/nueva"
               className="inline-flex items-center gap-2 mt-4 px-4 py-2 bg-[#7C3AED] hover:bg-[#6D28D9] text-white text-sm font-medium rounded-lg transition-colors"
