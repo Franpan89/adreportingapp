@@ -133,6 +133,7 @@ export interface CampaignSummary {
   channel: Channel;
   status: string;
   external_id: string;
+  objective?: string | null;
   impressions?: number;
   clicks?: number;
   spend?: number;
@@ -140,6 +141,7 @@ export interface CampaignSummary {
   conversions_value?: number;
   reach?: number;
   video_views?: number;
+  link_clicks?: number;
   ctr?: number;
   cpc?: number;
   cpm?: number;
@@ -226,4 +228,12 @@ export interface SyncLog {
   status: 'running' | 'success' | 'partial' | 'error';
   rows_upserted: number | null;
   error_detail: string | null;
+}
+
+/* ----- Agency Meta Connection ----- */
+export interface AdAccount {
+  id: string;          // e.g. "act_123456789"
+  name: string;
+  account_status: number; // 1 = ACTIVE
+  currency: string;
 }
