@@ -52,9 +52,15 @@ export function MetaConnector() {
   async function handleDisconnect() {
     if (!confirm('¿Desconectar Meta? Los clientes que usen el token de agencia no podrán sincronizar.')) return;
     setDisconnecting(true);
-    await fetch('/api/agency/meta-connection', { method: 'DELETE' });
-    setStatus({ connected: false });
-    setDisconnecting(false);
+    try {
+      const res = await fetch('/api/agency/meta-connection', { method: 'DELETE' });
+      if (!res.ok) throw new Error('Error al desconectar');
+      setStatus({ connected: false });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al desconectar');
+    } finally {
+      setDisconnecting(false);
+    }
   }
 
   if (status === null) {

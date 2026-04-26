@@ -44,7 +44,8 @@ export async function POST(request: NextRequest) {
 
   // Verify the token works before saving
   const verifyRes = await fetch(
-    `https://graph.facebook.com/v21.0/me/adaccounts?fields=id&limit=1&access_token=${encodeURIComponent(access_token)}`,
+    'https://graph.facebook.com/v21.0/me/adaccounts?fields=id&limit=1',
+    { headers: { Authorization: `Bearer ${access_token}` } },
   );
   const verifyData = await verifyRes.json();
   if (verifyData.error) {

@@ -26,10 +26,11 @@ export async function GET() {
   const params = new URLSearchParams({
     fields: 'id,name,account_status,currency',
     limit: '200',
-    access_token,
   });
 
-  const res = await fetch(`https://graph.facebook.com/v21.0/me/adaccounts?${params}`);
+  const res = await fetch(`https://graph.facebook.com/v21.0/me/adaccounts?${params}`, {
+    headers: { Authorization: `Bearer ${access_token}` },
+  });
   const json = await res.json();
 
   if (json.error) {
@@ -37,7 +38,7 @@ export async function GET() {
   }
 
   const accounts: AdAccount[] = (json.data ?? [])
-    .filter((a: AdAccount) => a.account_status === 1)
+    .filter((a: AdAccount) => a.account_status === 1) // 1 = ACTIVE in Meta's account_status enum
     .map((a: AdAccount) => ({
       id: a.id,
       name: a.name,

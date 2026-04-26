@@ -4,12 +4,20 @@ import { createClient as createSupabase } from '@/lib/supabase/server';
 import { encrypt } from '@/lib/utils/encrypt';
 
 export async function GET() {
+  const supabase = await createSupabase();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+
   const clients = await getClients();
   return NextResponse.json({ clients });
 }
 
 export async function POST(request: NextRequest) {
   try {
+    const supabase = await createSupabase();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+
     const body = await request.json();
     const { name, slug, timezone, meta_account_id } = body as {
       name: string;
@@ -25,7 +33,6 @@ export async function POST(request: NextRequest) {
     const client = await createClient({ name, slug, timezone });
 
     if (meta_account_id) {
-      const supabase = await createSupabase();
       let credentials_enc: string;
       try {
         credentials_enc = encrypt(JSON.stringify({ account_id: meta_account_id }));

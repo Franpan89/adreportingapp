@@ -45,12 +45,8 @@ function resolveObjectiveKey(campaign: any): string {
   return isMessaging ? 'OUTCOME_ENGAGEMENT_CONVERSATIONS' : base;
 }
 
-async function resolveMetaToken(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  supabase: any,
-  userId: string,
-  clientCreds: Record<string, string>,
-): Promise<string> {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function resolveMetaToken(supabase: any, userId: string, clientCreds: Record<string, string>): Promise<string> {
   if (clientCreds.access_token) return clientCreds.access_token;
 
   const { data } = await supabase
@@ -65,7 +61,6 @@ async function resolveMetaToken(
     );
   }
 
-  const { decrypt } = await import('@/lib/utils/encrypt');
   return decrypt(data.access_token_enc);
 }
 
