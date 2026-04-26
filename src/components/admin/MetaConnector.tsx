@@ -1,7 +1,8 @@
 'use client';
-import { useState, useEffect } from 'react';
-import { CheckCircle, Link2, Unlink, Eye, EyeOff } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { CheckCircle, Link2, Unlink, Eye, EyeOff, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import type { AdAccount } from '@/types';
 
 interface ConnectionStatus {
   connected: boolean;
@@ -11,6 +12,8 @@ interface ConnectionStatus {
 
 export function MetaConnector() {
   const [status, setStatus] = useState<ConnectionStatus | null>(null);
+  const [accounts, setAccounts] = useState<AdAccount[] | null>(null);
+  const [loadingAccounts, setLoadingAccounts] = useState(false);
   const [token, setToken] = useState('');
   const [showToken, setShowToken] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -18,12 +21,28 @@ export function MetaConnector() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
+  const fetchAccounts = useCallback(async () => {
+    setLoadingAccounts(true);
+    try {
+      const res = await fetch('/api/agency/meta-connection/accounts');
+      const data = await res.json();
+      setAccounts(data.accounts ?? []);
+    } catch {
+      setAccounts([]);
+    } finally {
+      setLoadingAccounts(false);
+    }
+  }, []);
+
   useEffect(() => {
     fetch('/api/agency/meta-connection')
       .then(r => r.json())
-      .then(setStatus)
+      .then((s: ConnectionStatus) => {
+        setStatus(s);
+        if (s.connected) fetchAccounts();
+      })
       .catch(() => setStatus({ connected: false }));
-  }, []);
+  }, [fetchAccounts]);
 
   async function handleConnect(e: React.FormEvent) {
     e.preventDefault();
@@ -42,6 +61,7 @@ export function MetaConnector() {
       setSuccess(true);
       const s = await fetch('/api/agency/meta-connection').then(r => r.json());
       setStatus(s);
+      fetchAccounts();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error inesperado');
     } finally {
@@ -86,9 +106,66 @@ export function MetaConnector() {
             )}
           </div>
 
-          <p className="text-xs text-[#6B7280]">
-            Al crear un cliente, podrás seleccionar la cuenta publicitaria desde la lista de cuentas accesibles con este token.
-          </p>
+          {/* Ad accounts list */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs font-semibold text-[#374151] uppercase tracking-wide">
+                Cuentas publicitarias
+                {accounts !== null && (
+                  <span className="ml-1.5 text-[#9CA3AF] font-normal normal-case">
+                    ({accounts.length} activa{accounts.length !== 1 ? 's' : ''})
+                  </span>
+                )}
+              </p>
+              <button
+                type="button"
+                onClick={fetchAccounts}
+                disabled={loadingAccounts}
+                className="text-[#9CA3AF] hover:text-[#6B7280] disabled:opacity-40 transition-colors"
+                title="Actualizar lista"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${loadingAccounts ? 'animate-spin' : ''}`} />
+              </button>
+            </div>
+
+            {loadingAccounts && accounts === null && (
+              <div className="space-y-1.5">
+                {[1, 2, 3].map(i => (
+                  <div key={i} className="h-9 bg-[#F3F4F6] rounded-lg animate-pulse" />
+                ))}
+              </div>
+            )}
+
+            {!loadingAccounts && accounts !== null && accounts.length === 0 && (
+              <p className="text-xs text-[#9CA3AF] italic">No se encontraron cuentas activas.</p>
+            )}
+
+            {accounts !== null && accounts.length > 0 && (
+              <div className="border border-[#E5E7EB] rounded-lg overflow-hidden">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="bg-[#F9FAFB] border-b border-[#E5E7EB]">
+                      <th className="text-left px-3 py-2 font-semibold text-[#6B7280] uppercase tracking-wide">Nombre</th>
+                      <th className="text-left px-3 py-2 font-semibold text-[#6B7280] uppercase tracking-wide">ID</th>
+                      <th className="text-right px-3 py-2 font-semibold text-[#6B7280] uppercase tracking-wide">Moneda</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {accounts.map((a, i) => (
+                      <tr
+                        key={a.id}
+                        className={`border-b border-[#F3F4F6] last:border-0 ${i % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFA]'}`}
+                      >
+                        <td className="px-3 py-2 font-medium text-[#111827]">{a.name}</td>
+                        <td className="px-3 py-2 text-[#6B7280] font-mono">{a.id}</td>
+                        <td className="px-3 py-2 text-right text-[#6B7280]">{a.currency}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
 
           <Button
             variant="outline"
