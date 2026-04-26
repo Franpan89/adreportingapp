@@ -14,6 +14,7 @@ export function MetaConnector() {
   const [status, setStatus] = useState<ConnectionStatus | null>(null);
   const [accounts, setAccounts] = useState<AdAccount[] | null>(null);
   const [loadingAccounts, setLoadingAccounts] = useState(false);
+  const [accountsError, setAccountsError] = useState<string | null>(null);
   const [token, setToken] = useState('');
   const [showToken, setShowToken] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -23,12 +24,15 @@ export function MetaConnector() {
 
   const fetchAccounts = useCallback(async () => {
     setLoadingAccounts(true);
+    setAccountsError(null);
     try {
       const res = await fetch('/api/agency/meta-connection/accounts');
       const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'Error al cargar cuentas');
       setAccounts(data.accounts ?? []);
-    } catch {
-      setAccounts([]);
+    } catch (err) {
+      setAccountsError(err instanceof Error ? err.message : 'Error al cargar cuentas');
+      setAccounts(null);
     } finally {
       setLoadingAccounts(false);
     }
@@ -127,6 +131,12 @@ export function MetaConnector() {
                 <RefreshCw className={`w-3.5 h-3.5 ${loadingAccounts ? 'animate-spin' : ''}`} />
               </button>
             </div>
+
+            {accountsError && (
+              <p className="text-xs text-[#DC2626] bg-[#fee2e2] border border-[#DC2626]/20 rounded-lg px-3 py-2">
+                {accountsError}
+              </p>
+            )}
 
             {loadingAccounts && accounts === null && (
               <div className="space-y-1.5">

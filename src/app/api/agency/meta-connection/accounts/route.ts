@@ -26,11 +26,10 @@ export async function GET() {
   const params = new URLSearchParams({
     fields: 'id,name,account_status,currency',
     limit: '200',
+    access_token,
   });
 
-  const res = await fetch(`https://graph.facebook.com/v21.0/me/adaccounts?${params}`, {
-    headers: { Authorization: `Bearer ${access_token}` },
-  });
+  const res = await fetch(`https://graph.facebook.com/v21.0/me/adaccounts?${params}`);
   const json = await res.json();
 
   if (json.error) {
