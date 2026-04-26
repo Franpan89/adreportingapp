@@ -1,4 +1,5 @@
 import { Card, CardHeader, CardTitle } from '@/components/ui/Card';
+import { MetaConnector } from '@/components/admin/MetaConnector';
 
 export default function SettingsPage() {
   return (
@@ -8,6 +9,18 @@ export default function SettingsPage() {
         <p className="text-sm text-[#9CA3AF] mt-0.5">Configuración general de la agencia</p>
       </div>
       <div className="flex-1 px-6 py-5 max-w-xl space-y-4">
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <span className="w-5 h-5 rounded flex items-center justify-center bg-[#1877F2]">
+                <span className="text-white text-[10px] font-black leading-none">f</span>
+              </span>
+              <CardTitle>Conector Meta Ads</CardTitle>
+            </div>
+          </CardHeader>
+          <MetaConnector />
+        </Card>
+
         <Card>
           <CardHeader><CardTitle>Perfil de Agencia</CardTitle></CardHeader>
           <p className="text-sm text-[#6B7280]">Configuración del perfil de agencia próximamente.</p>
