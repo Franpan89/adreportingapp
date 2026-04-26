@@ -1,8 +1,10 @@
 import Link from 'next/link';
+import { notFound } from 'next/navigation';
 import { ArrowLeft, Settings2, Key, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { DashboardShell } from '@/components/dashboard/DashboardShell';
-import { MOCK_CLIENTS } from '@/lib/reports/mock';
+import { DeleteClientButton } from './_components/DeleteClientButton';
+import { getClientById } from '@/lib/supabase/clients';
 import type { Channel } from '@/types';
 
 interface PageProps {
@@ -11,11 +13,12 @@ interface PageProps {
 
 export default async function AdminClientDetailPage({ params }: PageProps) {
   const { clientId } = await params;
-  const client = MOCK_CLIENTS.find(c => c.id === clientId) ?? MOCK_CLIENTS[0];
+  const client = await getClientById(clientId);
+
+  if (!client) notFound();
 
   return (
     <div className="flex-1 flex flex-col">
-      {/* Breadcrumb header */}
       <div className="border-b border-[#E5E7EB] bg-white px-6 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -41,15 +44,15 @@ export default async function AdminClientDetailPage({ params }: PageProps) {
                 Credenciales
               </Button>
             </Link>
+            <DeleteClientButton clientId={clientId} clientName={client.name} />
           </div>
         </div>
       </div>
 
-      {/* Reuse the full dashboard shell — admin has sync access */}
       <DashboardShell
         clientId={clientId}
         clientName={client.name}
-        availableChannels={[...(client.channels ?? [])] as Channel[]}
+        availableChannels={client.channels as Channel[]}
         isAdmin={true}
       />
     </div>
