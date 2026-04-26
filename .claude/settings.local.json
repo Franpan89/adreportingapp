@@ -1,15 +1,30 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git clone:*)",
-      "Bash(git -C \"C:\\\\Users\\\\fandr\\\\OneDrive\\\\Documentos\\\\WMM\\\\ads-reporting\" pull)",
+      "Bash(npx create-next-app@latest . --typescript --tailwind --eslint --app --src-dir --no-import-alias --yes)",
+      "Read(//c/Users/Usuario/OneDrive/Documentos/WMM/**)",
+      "Bash(npx create-next-app@latest report-app --typescript --tailwind --eslint --app --src-dir --no-import-alias --yes)",
       "Bash(npm install:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npm run:*)",
+      "Bash(mkdir -p \"/c/Users/Usuario/OneDrive/Documentos/WMM/report-app/src/app/\\(admin\\)/admin/clients/[clientId]/metrics\")",
+      "Bash(mkdir -p \"/c/Users/Usuario/OneDrive/Documentos/WMM/report-app/src/app/\\(admin\\)/admin/clients/[clientId]/credentials\")",
+      "Bash(cp \"/c/Users/Usuario/OneDrive/Documentos/WMM/report-app/src/app/\\(admin\\)/clients/[clientId]/page.tsx\" \"/c/Users/Usuario/OneDrive/Documentos/WMM/report-app/src/app/\\(admin\\)/admin/clients/[clientId]/page.tsx\")",
+      "Bash(cp \"/c/Users/Usuario/OneDrive/Documentos/WMM/report-app/src/app/\\(admin\\)/clients/[clientId]/metrics/page.tsx\" \"/c/Users/Usuario/OneDrive/Documentos/WMM/report-app/src/app/\\(admin\\)/admin/clients/[clientId]/metrics/page.tsx\")",
+      "Bash(cp \"/c/Users/Usuario/OneDrive/Documentos/WMM/report-app/src/app/\\(admin\\)/clients/[clientId]/credentials/page.tsx\" \"/c/Users/Usuario/OneDrive/Documentos/WMM/report-app/src/app/\\(admin\\)/admin/clients/[clientId]/credentials/page.tsx\")",
       "mcp__Claude_Preview__preview_start",
-      "Bash(node -e \"const p = require\\('./node_modules/@tailwindcss/postcss/package.json'\\); console.log\\(p.version\\)\")",
-      "Bash(node -e \"const p = require\\('./node_modules/tailwindcss/package.json'\\); console.log\\(p.version\\)\")",
-      "Bash(node -e \"const p = require\\('./node_modules/next/package.json'\\); console.log\\(p.version\\)\")",
-      "Bash(Remove-Item -Recurse -Force \"C:\\\\Users\\\\fandr\\\\OneDrive\\\\Documentos\\\\WMM\\\\ads-reporting\\\\.next\" -ErrorAction SilentlyContinue)",
-      "Bash(Write-Host \"Cache cleared\")"
+      "Bash(taskkill /PID 32436 /F)",
+      "Bash(cmd /c \"taskkill /PID 32436 /F\")",
+      "Read(//c/Users/Usuario/.claude/projects/C--Users-Usuario-OneDrive-Documentos-WMM-Report-app/memory//**)",
+      "Read(//c/Users/Usuario/.claude/projects/C--Users-Usuario-OneDrive-Documentos-WMM-Report-app/memory/**)",
+      "Bash(git remote:*)",
+      "Bash(git add:*)",
+      "Bash(echo \"exit: $?\")",
+      "Bash(git commit -m ':*)",
+      "Bash(git push:*)",
+      "Bash(git fetch:*)",
+      "Bash(git rebase:*)",
+      "Bash(git stash:*)"
     ]
   }
 }
