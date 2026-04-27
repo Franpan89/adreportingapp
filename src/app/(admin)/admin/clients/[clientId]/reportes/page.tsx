@@ -1,6 +1,7 @@
 import Link from 'next/link';
+import { notFound } from 'next/navigation';
 import { ArrowLeft, FileText, Calendar, ExternalLink } from 'lucide-react';
-import { MOCK_CLIENTS } from '@/lib/reports/mock';
+import { getClientById } from '@/lib/supabase/clients';
 import { listAllReportsForClient } from '@/lib/supabase/reports';
 import { GenerateReportButton } from './_components/GenerateReportButton';
 import { ReportRowActions } from './_components/ReportRowActions';
@@ -11,12 +12,15 @@ interface PageProps {
 
 export default async function AdminClientReportesPage({ params }: PageProps) {
   const { clientId } = await params;
-  const client = MOCK_CLIENTS.find(c => c.id === clientId) ?? MOCK_CLIENTS[0];
-  const reports = await listAllReportsForClient(clientId);
+  const [client, reports] = await Promise.all([
+    getClientById(clientId),
+    listAllReportsForClient(clientId),
+  ]);
+
+  if (!client) notFound();
 
   return (
     <div className="flex-1 flex flex-col">
-      {/* Breadcrumb */}
       <div className="border-b border-[#E5E7EB] bg-white px-6 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -47,7 +51,7 @@ export default async function AdminClientReportesPage({ params }: PageProps) {
           <div className="bg-white border border-[#E5E7EB] rounded-xl py-20 text-center">
             <FileText className="w-8 h-8 text-[#9CA3AF] mx-auto mb-3" />
             <p className="text-[#6B7280] text-sm">Aún no hay reportes para este cliente.</p>
-            <p className="text-[#9CA3AF] text-xs mt-1">Usá el botón “Generar reporte” para crear el primero.</p>
+            <p className="text-[#9CA3AF] text-xs mt-1">Usá el botón &quot;Generar reporte&quot; para crear el primero.</p>
           </div>
         ) : (
           <div className="bg-white border border-[#E5E7EB] rounded-xl overflow-hidden">

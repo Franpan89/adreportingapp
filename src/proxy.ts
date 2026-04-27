@@ -48,6 +48,12 @@ export async function proxy(request: NextRequest) {
     return supabaseResponse;
   }
 
+  // API and auth routes handle their own logic — skip role redirects
+  if (path.startsWith('/api/') || path.startsWith('/auth/')) {
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return supabaseResponse;
+  }
+
   // Unauthenticated → login
   if (!user) {
     return NextResponse.redirect(new URL('/login', request.url));

@@ -3,8 +3,9 @@
   "configurations": [
     {
       "name": "adpulse-dev",
-      "runtimeExecutable": "npm",
+      "runtimeExecutable": "npm.cmd",
       "runtimeArgs": ["run", "dev"],
+      "cwd": ".",
       "port": 3000,
       "autoPort": true
     }

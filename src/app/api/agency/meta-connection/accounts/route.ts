@@ -32,16 +32,17 @@ export async function GET() {
   const res = await fetch(`https://graph.facebook.com/v21.0/me/adaccounts?${params}`);
   const json = await res.json();
 
+  console.log('[meta-accounts] raw response:', JSON.stringify(json).slice(0, 500));
+
   if (json.error) {
     return NextResponse.json({ error: json.error.message }, { status: 400 });
   }
 
   const accounts: AdAccount[] = (json.data ?? [])
-    .filter((a: AdAccount) => a.account_status === 1) // 1 = ACTIVE in Meta's account_status enum
     .map((a: AdAccount) => ({
       id: a.id,
       name: a.name,
-      account_status: a.account_status,
+      account_status: Number(a.account_status),
       currency: a.currency,
     }));
 

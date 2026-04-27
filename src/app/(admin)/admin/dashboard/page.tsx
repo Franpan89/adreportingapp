@@ -1,34 +1,21 @@
 import Link from 'next/link';
 import { ClientCard } from '@/components/admin/ClientCard';
 import { Button } from '@/components/ui/Button';
-import { MOCK_CLIENTS } from '@/lib/reports/mock';
+import { getClients } from '@/lib/supabase/clients';
 import { Plus, RefreshCw, Users, TrendingUp, DollarSign, Zap } from 'lucide-react';
-import { formatCurrency } from '@/lib/utils/format';
 
-// Mock aggregate stats across all clients
-const AGGREGATE = {
-  totalSpend: 42180,
-  totalRoas: 4.82,
-  activeClients: 3,
-  activeChannels: 7,
-};
+export default async function AdminDashboardPage() {
+  const clients = await getClients();
+  const activeClients = clients.filter(c => c.is_active);
+  const activeChannels = new Set(clients.flatMap(c => c.channels)).size;
 
-const CLIENTS_WITH_STATS = MOCK_CLIENTS.map((c, i) => ({
-  ...c,
-  channels: [...c.channels],
-  spend: [18760, 12340, 8920, 2160][i],
-  roas: [5.12, 4.21, 3.87, 6.40][i],
-}));
-
-export default function AdminDashboardPage() {
   return (
     <div className="flex-1 flex flex-col">
-      {/* Header */}
       <div className="border-b border-[#E5E7EB] bg-white px-6 py-4">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-xl font-bold text-[#111827] font-[Oswald] tracking-wide">Resumen de Agencia</h1>
-            <p className="text-sm text-[#9CA3AF] mt-0.5">Todos los clientes · Últimos 30 días</p>
+            <p className="text-sm text-[#9CA3AF] mt-0.5">Todos los clientes</p>
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" icon={<RefreshCw className="w-3.5 h-3.5" />}>
@@ -44,13 +31,12 @@ export default function AdminDashboardPage() {
       </div>
 
       <div className="flex-1 px-6 py-5 space-y-6">
-        {/* Aggregate KPIs */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {[
-            { label: 'Inversión Total', value: formatCurrency(AGGREGATE.totalSpend), icon: DollarSign, color: '#00BD7D' },
-            { label: 'ROAS Prom.',      value: `${AGGREGATE.totalRoas.toFixed(2)}x`, icon: TrendingUp,  color: '#1877F2' },
-            { label: 'Clientes Activos', value: String(AGGREGATE.activeClients), icon: Users, color: '#D97706' },
-            { label: 'Canales Activos', value: String(AGGREGATE.activeChannels), icon: Zap,  color: '#16A34A' },
+            { label: 'Inversión Total',   value: '—',                         icon: DollarSign, color: '#00BD7D' },
+            { label: 'ROAS Prom.',        value: '—',                         icon: TrendingUp,  color: '#1877F2' },
+            { label: 'Clientes Activos',  value: String(activeClients.length), icon: Users,       color: '#D97706' },
+            { label: 'Canales Activos',   value: String(activeChannels),       icon: Zap,         color: '#16A34A' },
           ].map(stat => (
             <div key={stat.label} className="bg-white border border-[#E5E7EB] rounded-xl p-4 shadow-[var(--shadow-perspective-sm)] hover:-translate-y-0.5 hover:shadow-[var(--shadow-perspective-md)] transition-all duration-150">
               <div className="flex items-center gap-2.5 mb-3">
@@ -67,7 +53,6 @@ export default function AdminDashboardPage() {
           ))}
         </div>
 
-        {/* Clients grid */}
         <div>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-base font-semibold text-[#111827]">Clientes</h2>
@@ -76,11 +61,20 @@ export default function AdminDashboardPage() {
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {CLIENTS_WITH_STATS.map(client => (
-              <ClientCard key={client.id} client={client as Parameters<typeof ClientCard>[0]['client']} />
-            ))}
-          </div>
+          {clients.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-40 bg-white border border-[#E5E7EB] rounded-xl text-center">
+              <p className="text-[#6B7280] text-sm mb-2">No hay clientes aún.</p>
+              <Link href="/admin/clients/new">
+                <Button size="sm" icon={<Plus className="w-3.5 h-3.5" />}>Agregar primer cliente</Button>
+              </Link>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {clients.map(client => (
+                <ClientCard key={client.id} client={client as Parameters<typeof ClientCard>[0]['client']} />
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

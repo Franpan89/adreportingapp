@@ -157,6 +157,7 @@ export function MetaConnector() {
                     <tr className="bg-[#F9FAFB] border-b border-[#E5E7EB]">
                       <th className="text-left px-3 py-2 font-semibold text-[#6B7280] uppercase tracking-wide">Nombre</th>
                       <th className="text-left px-3 py-2 font-semibold text-[#6B7280] uppercase tracking-wide">ID</th>
+                      <th className="text-center px-3 py-2 font-semibold text-[#6B7280] uppercase tracking-wide">Estado</th>
                       <th className="text-right px-3 py-2 font-semibold text-[#6B7280] uppercase tracking-wide">Moneda</th>
                     </tr>
                   </thead>
@@ -168,6 +169,12 @@ export function MetaConnector() {
                       >
                         <td className="px-3 py-2 font-medium text-[#111827]">{a.name}</td>
                         <td className="px-3 py-2 text-[#6B7280] font-mono">{a.id}</td>
+                        <td className="px-3 py-2 text-center">
+                          {a.account_status === 1
+                            ? <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-[#dcfce7] text-[#16A34A] font-medium">● Activa</span>
+                            : <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-[#F3F4F6] text-[#6B7280] font-medium">{a.account_status}</span>
+                          }
+                        </td>
                         <td className="px-3 py-2 text-right text-[#6B7280]">{a.currency}</td>
                       </tr>
                     ))}

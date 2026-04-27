@@ -1,23 +1,10 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils/cn';
 import { Input } from '@/components/ui/Select';
 import { Button } from '@/components/ui/Button';
-import { Badge } from '@/components/ui/Badge';
-import { CheckCircle, AlertCircle, Loader2, ExternalLink } from 'lucide-react';
+import { CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import type { Channel } from '@/types';
-
-interface ChannelCredentialFields {
-  meta: { access_token: string; account_id: string; app_id: string; app_secret: string };
-  google: { developer_token: string; client_id: string; client_secret: string; refresh_token: string; customer_id: string };
-  tiktok: { access_token: string; advertiser_id: string };
-}
-
-const CHANNEL_LABELS: Record<Channel, string> = {
-  meta:   'Meta Ads',
-  google: 'Google Ads',
-  tiktok: 'TikTok Ads',
-};
 
 const CHANNEL_FIELDS: Record<Channel, { key: string; label: string; placeholder: string; secret?: boolean }[]> = {
   meta: [
@@ -43,101 +30,157 @@ interface CredentialsFormProps {
   clientId: string;
   channel: Channel;
   existingStatus?: 'idle' | 'success' | 'error' | null;
-  lastSynced?: string | null;
 }
 
-export function CredentialsForm({ clientId, channel, existingStatus, lastSynced }: CredentialsFormProps) {
-  const [values, setValues] = useState<Record<string, string>>({});
-  const [saving, setSaving] = useState(false);
-  const [testing, setTesting] = useState(false);
-  const [testResult, setTestResult] = useState<'success' | 'error' | null>(null);
-  const [saved, setSaved] = useState(false);
+export function CredentialsForm({ clientId, channel, existingStatus }: CredentialsFormProps) {
+  const [values, setValues]             = useState<Record<string, string>>({});
+  const [loadedStatus, setLoadedStatus] = useState<'idle' | 'success' | 'error' | null>(existingStatus ?? null);
+  const [lastSynced, setLastSynced]     = useState<string | null>(null);
+  const [loadingFields, setLoadingFields] = useState(true);
+  const [saving, setSaving]             = useState(false);
+  const [testing, setTesting]           = useState(false);
+  const [saveMsg, setSaveMsg]           = useState<{ ok: boolean; text: string } | null>(null);
+  const [testMsg, setTestMsg]           = useState<{ ok: boolean; text: string } | null>(null);
 
   const fields = CHANNEL_FIELDS[channel];
 
+  useEffect(() => {
+    setValues({});
+    setSaveMsg(null);
+    setTestMsg(null);
+    setLoadingFields(true);
+
+    fetch(`/api/clients/${clientId}/credentials?channel=${channel}`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.fields) setValues(data.fields);
+        if (data.status) setLoadedStatus(data.status);
+        if (data.last_synced_at) setLastSynced(data.last_synced_at);
+      })
+      .catch(() => {})
+      .finally(() => setLoadingFields(false));
+  }, [clientId, channel]);
+
   function handleChange(key: string, value: string) {
     setValues(prev => ({ ...prev, [key]: value }));
-    setTestResult(null);
-    setSaved(false);
+    setSaveMsg(null);
+    setTestMsg(null);
   }
 
   async function handleTest() {
     setTesting(true);
-    // Simulate test
-    await new Promise(r => setTimeout(r, 1500));
-    setTestResult('success');
-    setTesting(false);
+    setTestMsg(null);
+    try {
+      const res = await fetch(`/api/clients/${clientId}/credentials/test`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ channel, fields: values }),
+      });
+      const data = await res.json();
+      setTestMsg({ ok: data.ok, text: data.message ?? (data.ok ? 'Conexión exitosa' : 'Error de conexión') });
+      if (data.ok) setLoadedStatus('success');
+      else setLoadedStatus('error');
+    } catch {
+      setTestMsg({ ok: false, text: 'Error de red al probar conexión' });
+    } finally {
+      setTesting(false);
+    }
   }
 
   async function handleSave() {
     setSaving(true);
-    // Simulate save
-    await new Promise(r => setTimeout(r, 800));
-    setSaving(false);
-    setSaved(true);
+    setSaveMsg(null);
+    try {
+      const res = await fetch(`/api/clients/${clientId}/credentials`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ channel, fields: values }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setSaveMsg({ ok: false, text: data.error ?? 'Error al guardar' });
+      } else {
+        setSaveMsg({ ok: true, text: 'Credenciales guardadas de forma segura' });
+      }
+    } catch {
+      setSaveMsg({ ok: false, text: 'Error de red al guardar' });
+    } finally {
+      setSaving(false);
+    }
   }
+
+  const hasValues = fields.some(f => values[f.key]);
 
   return (
     <div className="space-y-5">
-      {/* Status banner */}
-      {existingStatus && (
-        <div className={cn(
-          'flex items-center gap-2.5 px-4 py-3 rounded-lg text-sm',
-          existingStatus === 'success' ? 'bg-[#dcfce7] text-[#16A34A]' :
-          existingStatus === 'error'   ? 'bg-[#fee2e2] text-[#DC2626]' :
-          'bg-[#F3F4F6] text-[#6B7280]'
-        )}>
-          {existingStatus === 'success' ? <CheckCircle className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
-          <span>
-            {existingStatus === 'success'
-              ? `Conectado · Última sincronización: ${lastSynced ? new Date(lastSynced).toLocaleString() : 'nunca'}`
-              : existingStatus === 'error'
-              ? 'Error de conexión — revisa las credenciales e intenta de nuevo'
-              : 'No conectado'}
-          </span>
+      {/* Sync status (only show success — error means last sync failed, not that credentials are wrong) */}
+      {loadedStatus === 'success' && !testMsg && (
+        <div className="flex items-center gap-2.5 px-4 py-3 rounded-lg text-sm bg-[#dcfce7] text-[#16A34A]">
+          <CheckCircle className="w-4 h-4" />
+          <span>Sincronizado · {lastSynced ? new Date(lastSynced).toLocaleString('es') : ''}</span>
         </div>
       )}
 
       {/* Fields */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {fields.map(f => (
-          <Input
-            key={f.key}
-            label={f.label}
-            type={f.secret ? 'password' : 'text'}
-            placeholder={f.placeholder}
-            value={values[f.key] ?? ''}
-            onChange={e => handleChange(f.key, e.target.value)}
-            autoComplete="off"
-          />
-        ))}
-      </div>
+      {loadingFields ? (
+        <div className="flex items-center gap-2 py-6 text-sm text-[#9CA3AF]">
+          <Loader2 className="w-4 h-4 animate-spin" /> Cargando credenciales…
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {fields.map(f => (
+            <Input
+              key={f.key}
+              label={f.label}
+              type={f.secret ? 'password' : 'text'}
+              placeholder={f.placeholder}
+              value={values[f.key] ?? ''}
+              onChange={e => handleChange(f.key, e.target.value)}
+              autoComplete="off"
+            />
+          ))}
+        </div>
+      )}
 
       {/* Test result */}
-      {testResult && (
+      {testMsg && (
         <div className={cn(
           'flex items-center gap-2 px-3 py-2 rounded-lg text-sm',
-          testResult === 'success' ? 'bg-[#dcfce7] text-[#16A34A]' : 'bg-[#fee2e2] text-[#DC2626]'
+          testMsg.ok ? 'bg-[#dcfce7] text-[#16A34A]' : 'bg-[#fee2e2] text-[#DC2626]'
         )}>
-          {testResult === 'success'
-            ? <><CheckCircle className="w-4 h-4" /> Conexión exitosa</>
-            : <><AlertCircle className="w-4 h-4" /> Conexión fallida — revisa tus credenciales</>}
+          {testMsg.ok ? <CheckCircle className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
+          {testMsg.text}
         </div>
       )}
 
-      {saved && (
-        <div className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm bg-[#dcfce7] text-[#16A34A]">
-          <CheckCircle className="w-4 h-4" /> Credenciales guardadas de forma segura
+      {/* Save feedback */}
+      {saveMsg && (
+        <div className={cn(
+          'flex items-center gap-2 px-3 py-2 rounded-lg text-sm',
+          saveMsg.ok ? 'bg-[#dcfce7] text-[#16A34A]' : 'bg-[#fee2e2] text-[#DC2626]'
+        )}>
+          {saveMsg.ok ? <CheckCircle className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
+          {saveMsg.text}
         </div>
       )}
 
-      {/* Actions */}
       <div className="flex items-center gap-2">
-        <Button variant="outline" size="sm" loading={testing} onClick={handleTest}
-          icon={testing ? undefined : <CheckCircle className="w-3.5 h-3.5" />}>
+        <Button
+          variant="outline"
+          size="sm"
+          loading={testing}
+          disabled={!hasValues || loadingFields}
+          onClick={handleTest}
+          icon={!testing ? <CheckCircle className="w-3.5 h-3.5" /> : undefined}
+        >
           Probar conexión
         </Button>
-        <Button size="sm" loading={saving} onClick={handleSave}>
+        <Button
+          size="sm"
+          loading={saving}
+          disabled={!hasValues || loadingFields}
+          onClick={handleSave}
+        >
           Guardar credenciales
         </Button>
       </div>

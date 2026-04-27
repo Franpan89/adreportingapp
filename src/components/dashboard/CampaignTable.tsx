@@ -4,7 +4,8 @@ import { cn } from '@/lib/utils/cn';
 import { ArrowUpDown, ArrowUp, ArrowDown, Search } from 'lucide-react';
 import { ChannelBadge, StatusBadge } from '@/components/ui/Badge';
 import { formatMetric, formatDelta } from '@/lib/utils/format';
-import type { CampaignSummary, MetricConfig, ReportResponse } from '@/types';
+import { getObjectiveMeta } from '@/lib/utils/objectives';
+import type { CampaignSummary, MetricConfig } from '@/types';
 
 interface CampaignTableProps {
   campaigns: CampaignSummary[];
@@ -15,6 +16,15 @@ interface CampaignTableProps {
 
 type SortKey = string;
 type SortDir = 'asc' | 'desc';
+
+function ObjectiveBadge({ objective }: { objective?: string | null }) {
+  const meta = getObjectiveMeta(objective);
+  return (
+    <span className={cn('inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium whitespace-nowrap', meta.color, meta.textColor)}>
+      {meta.label}
+    </span>
+  );
+}
 
 export function CampaignTable({ campaigns, compareCampaigns, allowedMetrics, showComparison }: CampaignTableProps) {
   const [sortKey, setSortKey] = useState<SortKey>('spend');
@@ -76,6 +86,9 @@ export function CampaignTable({ campaigns, compareCampaigns, allowedMetrics, sho
               <th className="text-left px-3 py-3 text-xs font-semibold text-[#6B7280] uppercase tracking-wide">
                 Estado
               </th>
+              <th className="text-left px-3 py-3 text-xs font-semibold text-[#6B7280] uppercase tracking-wide whitespace-nowrap">
+                Objetivo
+              </th>
               {tableMetrics.map(m => (
                 <th
                   key={m.metric_key}
@@ -111,15 +124,26 @@ export function CampaignTable({ campaigns, compareCampaigns, allowedMetrics, sho
                   <td className="px-3 py-3">
                     <StatusBadge status={campaign.status} />
                   </td>
+                  <td className="px-3 py-3">
+                    <ObjectiveBadge objective={campaign.objective} />
+                  </td>
                   {tableMetrics.map(m => {
                     const val = campaign[m.metric_key as keyof CampaignSummary] as number ?? 0;
                     const cmpVal = compare?.[m.metric_key as keyof CampaignSummary] as number;
                     const pct = cmpVal && cmpVal !== 0 ? ((val - cmpVal) / Math.abs(cmpVal)) * 100 : null;
+                    const meta = getObjectiveMeta(campaign.objective);
+                    const convLabel = m.metric_key === 'conversions' ? meta.convLabel : null;
+                    const cpaLabel  = m.metric_key === 'cpa'         ? meta.cpaLabel  : null;
                     return (
                       <td key={m.metric_key} className="px-3 py-3 text-right">
                         <span className="font-medium text-[#111827]">
                           {formatMetric(val, m.unit)}
                         </span>
+                        {(convLabel || cpaLabel) && (
+                          <span className="block text-[10px] mt-0.5 text-[#9CA3AF]">
+                            {convLabel ?? cpaLabel}
+                          </span>
+                        )}
                         {showComparison && pct !== null && (
                           <span className={cn(
                             'block text-[10px] mt-0.5',
@@ -136,7 +160,7 @@ export function CampaignTable({ campaigns, compareCampaigns, allowedMetrics, sho
             })}
             {sorted.length === 0 && (
               <tr>
-                <td colSpan={3 + tableMetrics.length} className="py-12 text-center text-[#9CA3AF] text-sm">
+                <td colSpan={4 + tableMetrics.length} className="py-12 text-center text-[#9CA3AF] text-sm">
                   No se encontraron campañas
                 </td>
               </tr>

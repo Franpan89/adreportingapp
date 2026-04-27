@@ -1,21 +1,21 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
+import { createClient } from '@/lib/supabase/server';
 
-export async function POST() {
+async function signout(request: NextRequest) {
   const cookieStore = await cookies();
   cookieStore.delete('demo_role');
 
-  return NextResponse.redirect(new URL('/login', process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'), {
-    status: 303,
-  });
+  const supabase = await createClient();
+  await supabase.auth.signOut();
+
+  return NextResponse.redirect(new URL('/login', request.url), { status: 303 });
 }
 
-// Also handle GET in case someone navigates directly
-export async function GET() {
-  const cookieStore = await cookies();
-  cookieStore.delete('demo_role');
+export async function POST(request: NextRequest) {
+  return signout(request);
+}
 
-  return NextResponse.redirect(new URL('/login', process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'), {
-    status: 303,
-  });
+export async function GET(request: NextRequest) {
+  return signout(request);
 }

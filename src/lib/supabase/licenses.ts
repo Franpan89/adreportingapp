@@ -125,6 +125,7 @@ export interface CreateLicenseInput {
   temp_password: string;
   expires_at?: string | null;
   notes?: string | null;
+  agency_user_id?: string | null;
 }
 
 export async function createLicense(input: CreateLicenseInput): Promise<License> {
@@ -150,14 +151,15 @@ export async function createLicense(input: CreateLicenseInput): Promise<License>
   const { data, error } = await supabase
     .from('licenses')
     .insert({
-      agency_name:  input.agency_name,
-      agency_email: input.agency_email,
-      plan_id:      input.plan_id,
-      temp_password: input.temp_password,
-      expires_at:   input.expires_at ?? null,
-      notes:        input.notes ?? null,
-      status:       'trial',
-      activated_at: new Date().toISOString(),
+      agency_name:    input.agency_name,
+      agency_email:   input.agency_email,
+      plan_id:        input.plan_id,
+      temp_password:  input.temp_password,
+      expires_at:     input.expires_at ?? null,
+      notes:          input.notes ?? null,
+      status:         'trial',
+      activated_at:   new Date().toISOString(),
+      agency_user_id: input.agency_user_id ?? null,
     })
     .select()
     .single();
