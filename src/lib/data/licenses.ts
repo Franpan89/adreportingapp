@@ -67,6 +67,7 @@ export const MOCK_LICENSES: License[] = [
     notes: 'Cliente referido por Pancho.',
     clients_count: 3,
     temp_password: null,
+    addons: {},
   },
   {
     id: 'lic-002',
@@ -81,6 +82,7 @@ export const MOCK_LICENSES: License[] = [
     notes: '30 días de prueba gratuita.',
     clients_count: 0,
     temp_password: null,
+    addons: {},
   },
   {
     id: 'lic-003',
@@ -95,6 +97,7 @@ export const MOCK_LICENSES: License[] = [
     notes: null,
     clients_count: 8,
     temp_password: null,
+    addons: {},
   },
   {
     id: 'lic-004',
@@ -109,6 +112,7 @@ export const MOCK_LICENSES: License[] = [
     notes: 'No renovó. Contactar para reactivar.',
     clients_count: 1,
     temp_password: null,
+    addons: {},
   },
   {
     id: 'lic-005',
@@ -123,6 +127,7 @@ export const MOCK_LICENSES: License[] = [
     notes: 'Suspendida por falta de pago mes de marzo.',
     clients_count: 2,
     temp_password: null,
+    addons: {},
   },
 ];
 

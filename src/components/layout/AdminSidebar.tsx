@@ -3,17 +3,20 @@ import { cn } from '@/lib/utils/cn';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  LayoutDashboard, Users, Settings, LogOut, BarChart3, ChevronRight, Zap
+  LayoutDashboard, Users, Settings, LogOut, BarChart3, ChevronRight, Zap, Sparkles
 } from 'lucide-react';
 
-const nav = [
+const baseNav = [
   { href: '/admin/dashboard', label: 'Resumen',       icon: LayoutDashboard },
   { href: '/admin/clients',   label: 'Clientes',      icon: Users },
   { href: '/admin/settings',  label: 'Configuración', icon: Settings },
 ];
 
-export function AdminSidebar() {
+const storyEngineNav = { href: '/admin/story-engine', label: 'Story Engine', icon: Sparkles };
+
+export function AdminSidebar({ storyEngineEnabled = false }: { storyEngineEnabled?: boolean }) {
   const path = usePathname();
+  const nav = storyEngineEnabled ? [...baseNav, storyEngineNav] : baseNav;
 
   return (
     <aside className="w-60 shrink-0 flex flex-col bg-[#111827] min-h-screen">
@@ -34,6 +37,7 @@ export function AdminSidebar() {
       <nav className="flex-1 px-3 py-4 space-y-0.5">
         {nav.map(({ href, label, icon: Icon }) => {
           const active = path === href || path.startsWith(href + '/');
+          const isStoryEngine = href === '/admin/story-engine';
           return (
             <Link
               key={href}
@@ -41,8 +45,12 @@ export function AdminSidebar() {
               className={cn(
                 'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150',
                 active
-                  ? 'bg-[#00BD7D] text-white shadow-[2px_3px_0px_rgba(0,0,0,0.2)]'
-                  : 'text-white/60 hover:text-white hover:bg-white/10'
+                  ? isStoryEngine
+                    ? 'bg-[#7C3AED] text-white shadow-[2px_3px_0px_rgba(0,0,0,0.2)]'
+                    : 'bg-[#00BD7D] text-white shadow-[2px_3px_0px_rgba(0,0,0,0.2)]'
+                  : isStoryEngine
+                    ? 'text-[#A78BFA] hover:text-white hover:bg-[#7C3AED]/20'
+                    : 'text-white/60 hover:text-white hover:bg-white/10'
               )}
             >
               <Icon className="w-4 h-4 shrink-0" />

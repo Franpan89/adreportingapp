@@ -19,6 +19,10 @@ export interface Plan {
   color: string;
 }
 
+export interface LicenseAddons {
+  story_engine?: boolean;
+}
+
 export interface License {
   id: string;
   agency_id: string;
@@ -32,6 +36,7 @@ export interface License {
   notes: string | null;
   clients_count: number;
   temp_password: string | null;
+  addons: LicenseAddons;
 }
 
 /* ----- Auth ----- */
