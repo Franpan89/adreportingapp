@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { ArrowLeft, Settings2, Key, FileText } from 'lucide-react';
+import { ArrowLeft, Settings2, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { DashboardShell } from '@/components/dashboard/DashboardShell';
 import { DeleteClientButton } from './_components/DeleteClientButton';
@@ -39,12 +39,7 @@ export default async function AdminClientDetailPage({ params }: PageProps) {
                 Config. métricas
               </Button>
             </Link>
-            <Link href={`/admin/clients/${clientId}/credentials`}>
-              <Button variant="outline" size="sm" icon={<Key className="w-3.5 h-3.5" />}>
-                Credenciales
-              </Button>
-            </Link>
-            <DeleteClientButton clientId={clientId} clientName={client.name} />
+<DeleteClientButton clientId={clientId} clientName={client.name} />
           </div>
         </div>
       </div>

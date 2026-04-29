@@ -1,10 +1,29 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
+const DEMO_ROLE_ROUTES: Record<string, string> = {
+  admin: '/admin/dashboard',
+  client: '/dashboard',
+  super_admin: '/superadmin/dashboard',
+};
+
 export async function proxy(request: NextRequest) {
   // Dev bypass: if Supabase is not configured (placeholder URL), allow all access
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
   if (!supabaseUrl || supabaseUrl.includes('placeholder')) {
+    return NextResponse.next({ request });
+  }
+
+  // Demo mode bypass: cookie set by login page
+  const demoRole = request.cookies.get('demo_role')?.value;
+  if (demoRole && DEMO_ROLE_ROUTES[demoRole]) {
+    const path = request.nextUrl.pathname;
+    if (path === '/login') {
+      return NextResponse.redirect(new URL(DEMO_ROLE_ROUTES[demoRole], request.url));
+    }
+    if (path.startsWith('/api/') || path.startsWith('/auth/')) {
+      return NextResponse.next({ request });
+    }
     return NextResponse.next({ request });
   }
 
