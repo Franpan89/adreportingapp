@@ -1,9 +1,12 @@
 import type { ClientReport, TopCreative, SpendResult, AudienceSegment, SocialGrowthMetric, Channel } from '@/types';
 
 const CHANNEL_META: Record<Channel, { label: string; color: string; bg: string }> = {
-  meta:   { label: 'Meta Ads',   color: '#1877F2', bg: '#EBF3FF' },
-  google: { label: 'Google Ads', color: '#EA4335', bg: '#FEECEB' },
-  tiktok: { label: 'TikTok Ads', color: '#010101', bg: '#F0F0F0' },
+  meta:       { label: 'Meta Ads',     color: '#1877F2', bg: '#EBF3FF' },
+  google:     { label: 'Google Ads',   color: '#EA4335', bg: '#FEECEB' },
+  google_ads: { label: 'Google Ads',   color: '#EA4335', bg: '#FEECEB' },
+  tiktok:     { label: 'TikTok Ads',   color: '#010101', bg: '#F0F0F0' },
+  ga4:        { label: 'Analytics',    color: '#F9AB00', bg: '#FEF3CD' },
+  gsc:        { label: 'Search',       color: '#4285F4', bg: '#E8F0FE' },
 };
 
 const PLATFORM_LABELS: Record<SocialGrowthMetric['platform'], string> = {

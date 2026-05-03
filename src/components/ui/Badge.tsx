@@ -1,7 +1,7 @@
 import { cn } from '@/lib/utils/cn';
 import type { HTMLAttributes } from 'react';
 
-type Variant = 'default' | 'primary' | 'success' | 'warning' | 'danger' | 'meta' | 'google' | 'tiktok';
+type Variant = 'default' | 'primary' | 'success' | 'warning' | 'danger' | 'meta' | 'google' | 'tiktok' | 'ga4' | 'gsc' | 'google_ads';
 type Size = 'sm' | 'md';
 
 interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
@@ -11,14 +11,17 @@ interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
 }
 
 const variants: Record<Variant, string> = {
-  default:  'bg-[#F3F4F6] text-[#374151]',
-  primary:  'bg-[#e6f9f4] text-[#00BD7D]',
-  success:  'bg-[#dcfce7] text-[#16A34A]',
-  warning:  'bg-[#fef3c7] text-[#D97706]',
-  danger:   'bg-[#fee2e2] text-[#DC2626]',
-  meta:     'bg-[#EBF3FF] text-[#1877F2]',
-  google:   'bg-[#FEECEB] text-[#EA4335]',
-  tiktok:   'bg-[#F0F0F0] text-[#010101]',
+  default:    'bg-[#F3F4F6] text-[#374151]',
+  primary:    'bg-[#e6f9f4] text-[#00BD7D]',
+  success:    'bg-[#dcfce7] text-[#16A34A]',
+  warning:    'bg-[#fef3c7] text-[#D97706]',
+  danger:     'bg-[#fee2e2] text-[#DC2626]',
+  meta:       'bg-[#EBF3FF] text-[#1877F2]',
+  google:     'bg-[#FEECEB] text-[#EA4335]',
+  google_ads: 'bg-[#FEECEB] text-[#EA4335]',
+  tiktok:     'bg-[#F0F0F0] text-[#010101]',
+  ga4:        'bg-[#FEF3CD] text-[#F9AB00]',
+  gsc:        'bg-[#E8F0FE] text-[#4285F4]',
 };
 
 const sizes: Record<Size, string> = {
@@ -43,10 +46,19 @@ export function Badge({ variant = 'default', size = 'md', dot, className, childr
   );
 }
 
-export function ChannelBadge({ channel }: { channel: 'meta' | 'google' | 'tiktok' }) {
-  const labels = { meta: 'Meta', google: 'Google', tiktok: 'TikTok' };
-  const variants_map = { meta: 'meta', google: 'google', tiktok: 'tiktok' } as const;
-  return <Badge variant={variants_map[channel]}>{labels[channel]}</Badge>;
+import type { Channel } from '@/types';
+
+const CHANNEL_LABELS: Record<Channel, string> = {
+  meta:       'Meta',
+  google:     'Google',
+  google_ads: 'Google Ads',
+  tiktok:     'TikTok',
+  ga4:        'GA4',
+  gsc:        'Search',
+};
+
+export function ChannelBadge({ channel }: { channel: Channel }) {
+  return <Badge variant={channel}>{CHANNEL_LABELS[channel]}</Badge>;
 }
 
 export function StatusBadge({ status }: { status: string }) {
