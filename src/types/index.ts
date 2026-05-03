@@ -2,7 +2,7 @@
    Core domain types for the Ad Reporting App
    ===================================================== */
 
-export type Channel = 'meta' | 'google' | 'tiktok';
+export type Channel = 'meta' | 'google' | 'tiktok' | 'ga4' | 'gsc' | 'google_ads';
 export type UserRole = 'admin' | 'client' | 'super_admin';
 
 /* ----- SaaS / Licencias ----- */
@@ -58,7 +58,7 @@ export interface Client {
   is_active: boolean;
   created_at: string;
   channels?: Channel[];
-  sync_status?: Record<Channel, 'idle' | 'syncing' | 'success' | 'error'>;
+  sync_status?: Partial<Record<Channel, 'idle' | 'syncing' | 'success' | 'error'>>;
 }
 
 /* ----- Metric definitions ----- */
@@ -111,7 +111,16 @@ export interface MetricTotals {
   roas: number;
   cvr: number;
   cpa: number;
-  [key: string]: number;
+  link_clicks?: number;
+  // GA4 (organic / sessions)
+  sessions?: number;
+  organic_users?: number;
+  // GSC (organic search)
+  organic_clicks?: number;
+  organic_impressions?: number;
+  organic_position?: number;
+  organic_ctr?: number;
+  [key: string]: number | undefined;
 }
 
 export interface DailyDataPoint {
