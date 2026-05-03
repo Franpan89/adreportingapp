@@ -1,7 +1,7 @@
 -- =====================================================
 -- wmm-client-reporting — expand channel CHECK constraints
 -- =====================================================
--- The original AdPulse schema only allowed channel IN ('meta','google','tiktok').
+-- The initial schema (0001) only allowed channel IN ('meta','google','tiktok').
 -- Consolidation adds:
 --   ga4         — Google Analytics 4 (organic + paid sessions)
 --   gsc         — Google Search Console (organic search)

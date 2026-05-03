@@ -1,6 +1,7 @@
 -- =====================================================
--- AdPulse — Initial Schema
+-- wmm-client-reporting — Initial Schema
 -- =====================================================
+-- Tables in this migration are renamed to the cr_ prefix in 0008.
 
 -- ---- profiles ----
 create table public.profiles (

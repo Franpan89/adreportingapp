@@ -1,5 +1,5 @@
 -- =====================================================
--- AdPulse — Row Level Security Policies
+-- wmm-client-reporting — Row Level Security Policies
 -- =====================================================
 
 -- Helper function: check if current user is admin

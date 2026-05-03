@@ -1,5 +1,5 @@
 -- =====================================================
--- AdPulse — Seed metric definitions
+-- wmm-client-reporting — Seed metric definitions
 -- =====================================================
 insert into public.metric_definitions (key, label, description, unit, channels, is_derived, formula) values
   ('impressions',       'Impressions',         'Total times ads were shown',           'integer',  '{meta,google,tiktok}', false, null),
