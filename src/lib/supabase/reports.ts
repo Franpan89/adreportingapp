@@ -59,7 +59,7 @@ export async function listReportsForClient(clientId: string): Promise<ClientRepo
   if (!isSupabaseConfigured()) return mockGetReportsForClient(clientId);
   const supabase = await getSupabase();
   const { data, error } = await supabase
-    .from('reports')
+    .from('cr_reports')
     .select('*')
     .eq('client_id', clientId)
     .eq('status', 'published')
@@ -76,7 +76,7 @@ export async function listAllReportsForClient(clientId: string): Promise<ClientR
   if (!isSupabaseConfigured()) return mockGetAllReportsForClient(clientId);
   const supabase = await getSupabase();
   const { data, error } = await supabase
-    .from('reports')
+    .from('cr_reports')
     .select('*')
     .eq('client_id', clientId)
     .order('created_at', { ascending: false });
@@ -91,7 +91,7 @@ export async function getReport(id: string): Promise<ClientReport | null> {
   if (!isSupabaseConfigured()) return mockGetReportById(id);
   const supabase = await getSupabase();
   const { data, error } = await supabase
-    .from('reports')
+    .from('cr_reports')
     .select('*')
     .eq('id', id)
     .single();
@@ -115,7 +115,7 @@ export async function createReport(input: CreateReportInput): Promise<ClientRepo
   }
   const supabase = await getSupabase();
   const { data, error } = await supabase
-    .from('reports')
+    .from('cr_reports')
     .insert({
       client_id: input.client_id,
       title: input.title,
@@ -145,7 +145,7 @@ export async function updateReportStatus(
   const supabase = await getSupabase();
   const update: Record<string, unknown> = { status };
   if (status === 'published') update.published_at = new Date().toISOString();
-  const { error } = await supabase.from('reports').update(update).eq('id', id);
+  const { error } = await supabase.from('cr_reports').update(update).eq('id', id);
   if (error) throw new Error(error.message);
 }
 
@@ -156,6 +156,6 @@ export async function deleteReport(id: string): Promise<void> {
     return;
   }
   const supabase = await getSupabase();
-  const { error } = await supabase.from('reports').delete().eq('id', id);
+  const { error } = await supabase.from('cr_reports').delete().eq('id', id);
   if (error) throw new Error(error.message);
 }

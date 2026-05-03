@@ -89,7 +89,7 @@ async function syncMeta(supabase: any, userId: string, clientId: string, creds: 
   }
 
   // 2. Batch upsert campaigns — objective key is resolved from adset optimization_goal
-  await supabase.from('campaigns').upsert(
+  await supabase.from('cr_campaigns').upsert(
     metaCampaigns.map(c => ({
       client_id: clientId,
       channel: 'meta',
@@ -104,7 +104,7 @@ async function syncMeta(supabase: any, userId: string, clientId: string, creds: 
 
   // 3. Build external_id → db_id map AND objective map
   const { data: dbCamps } = await supabase
-    .from('campaigns')
+    .from('cr_campaigns')
     .select('id, external_id, objective')
     .eq('client_id', clientId)
     .eq('channel', 'meta');
@@ -167,7 +167,7 @@ async function syncMeta(supabase: any, userId: string, clientId: string, creds: 
   // 6. Batch upsert in chunks of 500
   for (let i = 0; i < statsRows.length; i += 500) {
     const { error } = await supabase
-      .from('daily_stats')
+      .from('cr_daily_stats')
       .upsert(statsRows.slice(i, i + 500), { onConflict: 'campaign_id,date' });
     if (error) throw new Error(`Error guardando stats: ${error.message}`);
   }
@@ -201,7 +201,7 @@ export async function POST(
 
   // Load & decrypt credentials
   const { data: credRow } = await supabase
-    .from('channel_credentials')
+    .from('cr_channel_credentials')
     .select('credentials_enc')
     .eq('client_id', clientId)
     .eq('channel', channel)
@@ -220,7 +220,7 @@ export async function POST(
   }
 
   await supabase
-    .from('channel_credentials')
+    .from('cr_channel_credentials')
     .update({ sync_status: 'syncing' })
     .eq('client_id', clientId)
     .eq('channel', channel);
@@ -235,7 +235,7 @@ export async function POST(
     }
 
     await supabase
-      .from('channel_credentials')
+      .from('cr_channel_credentials')
       .update({ sync_status: result.ok ? 'success' : 'error', last_synced_at: new Date().toISOString(), sync_error: null })
       .eq('client_id', clientId)
       .eq('channel', channel);
@@ -244,7 +244,7 @@ export async function POST(
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Error desconocido';
     await supabase
-      .from('channel_credentials')
+      .from('cr_channel_credentials')
       .update({ sync_status: 'error', sync_error: message })
       .eq('client_id', clientId)
       .eq('channel', channel);

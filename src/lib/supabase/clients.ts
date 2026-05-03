@@ -17,7 +17,7 @@ type ClientRow = Client & {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapRow(row: any): ClientRow {
-  const creds: any[] = row.channel_credentials ?? [];
+  const creds: any[] = row.cr_channel_credentials ?? [];
   const channels = creds.filter(c => c.is_active).map(c => c.channel as Channel);
   const sync_status: Record<string, 'idle' | 'syncing' | 'success' | 'error'> = {};
   creds.forEach(c => { sync_status[c.channel] = c.sync_status ?? 'idle'; });
@@ -34,13 +34,13 @@ function mapRow(row: any): ClientRow {
   };
 }
 
-const SELECT = '*, channel_credentials(channel, sync_status, is_active)';
+const SELECT = '*, cr_channel_credentials(channel, sync_status, is_active)';
 
 export async function getClients(): Promise<ClientRow[]> {
   if (!isSupabaseConfigured()) return [];
   const supabase = await getSupabase();
   const { data, error } = await supabase
-    .from('clients')
+    .from('cr_clients')
     .select(SELECT)
     .order('created_at', { ascending: false });
   if (error || !data) {
@@ -54,7 +54,7 @@ export async function getClientById(id: string): Promise<ClientRow | null> {
   if (!isSupabaseConfigured()) return null;
   const supabase = await getSupabase();
   const { data, error } = await supabase
-    .from('clients')
+    .from('cr_clients')
     .select(SELECT)
     .eq('id', id)
     .single();
@@ -82,7 +82,7 @@ export async function createClient(input: {
   }
   const supabase = await getSupabase();
   const { data, error } = await supabase
-    .from('clients')
+    .from('cr_clients')
     .insert({ name: input.name, slug: input.slug, timezone: input.timezone ?? 'UTC' })
     .select(SELECT)
     .single();

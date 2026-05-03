@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
       }
 
       await supabase
-        .from('channel_credentials')
+        .from('cr_channel_credentials')
         .upsert(
           {
             client_id: client.id,

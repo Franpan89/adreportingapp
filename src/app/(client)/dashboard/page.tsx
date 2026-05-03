@@ -9,8 +9,8 @@ export default async function ClientDashboardPage() {
   if (!user) redirect('/login');
 
   const { data: clientUser } = await supabase
-    .from('client_users')
-    .select('client_id, clients(name, channel_credentials(channel))')
+    .from('cr_client_users')
+    .select('client_id, cr_clients(name, cr_channel_credentials(channel))')
     .eq('user_id', user.id)
     .single();
 
@@ -26,9 +26,9 @@ export default async function ClientDashboardPage() {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const clientData = clientUser.clients as any;
+  const clientData = clientUser.cr_clients as any;
   const clientName: string = clientData?.name ?? 'Dashboard';
-  const channels: Channel[] = (clientData?.channel_credentials ?? []).map((c: any) => c.channel as Channel);
+  const channels: Channel[] = (clientData?.cr_channel_credentials ?? []).map((c: any) => c.channel as Channel);
 
   return (
     <DashboardShell
