@@ -23,7 +23,7 @@ export function ReportView({ report }: { report: ClientReport }) {
     <article className="report max-w-4xl mx-auto bg-white border border-[#E5E7EB] rounded-xl shadow-[0_4px_16px_rgba(0,0,0,0.04)] print:shadow-none print:border-0 print:rounded-none print:max-w-none">
       {/* Cover */}
       <header className="px-10 py-10 border-b border-[#E5E7EB] print:break-after-page">
-        <p className="text-xs font-semibold uppercase tracking-[0.15em] text-[#00BD7D]">AdPulse Report</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.15em] text-[#00BD7D]">Reporte de Cliente</p>
         <h1
           className="mt-2 text-3xl font-bold text-[#111827] leading-tight"
           style={{ fontFamily: 'Oswald, sans-serif', letterSpacing: '0.02em' }}
@@ -115,7 +115,7 @@ export function ReportView({ report }: { report: ClientReport }) {
 
       {/* Footer */}
       <footer className="px-10 py-6 border-t border-[#E5E7EB] text-[11px] text-[#9CA3AF] flex items-center justify-between">
-        <span>AdPulse — Reporte generado automáticamente</span>
+        <span>Web My Money — Reporte generado automáticamente</span>
         <span>ID: {report.id}</span>
       </footer>
     </article>

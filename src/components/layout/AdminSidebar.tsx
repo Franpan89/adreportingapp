@@ -27,7 +27,7 @@ export function AdminSidebar({ storyEngineEnabled = false }: { storyEngineEnable
             <BarChart3 className="w-4 h-4 text-white" />
           </div>
           <div>
-            <p className="text-white font-semibold text-sm leading-none">AdPulse</p>
+            <p className="text-white font-semibold text-sm leading-none">Client Reporting</p>
             <p className="text-white/40 text-[10px] mt-0.5">Panel de Agencia</p>
           </div>
         </div>
