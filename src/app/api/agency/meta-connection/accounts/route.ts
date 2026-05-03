@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { getAuthUser } from '@/lib/supabase/auth';
 import { decrypt } from '@/lib/utils/encrypt';
-import type { AdAccount } from '@/types';
+import { fetchMetaAdAccounts } from '@/lib/connectors/meta';
 
 export async function GET() {
   const user = await getAuthUser();
@@ -24,28 +24,11 @@ export async function GET() {
     return NextResponse.json({ error: 'No se pudo descifrar el token' }, { status: 500 });
   }
 
-  const params = new URLSearchParams({
-    fields: 'id,name,account_status,currency',
-    limit: '200',
-    access_token,
-  });
-
-  const res = await fetch(`https://graph.facebook.com/v21.0/me/adaccounts?${params}`);
-  const json = await res.json();
-
-  console.log('[meta-accounts] raw response:', JSON.stringify(json).slice(0, 500));
-
-  if (json.error) {
-    return NextResponse.json({ error: json.error.message }, { status: 400 });
+  try {
+    const accounts = await fetchMetaAdAccounts(access_token);
+    return NextResponse.json({ accounts });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Error desconocido';
+    return NextResponse.json({ error: message }, { status: 400 });
   }
-
-  const accounts: AdAccount[] = (json.data ?? [])
-    .map((a: AdAccount) => ({
-      id: a.id,
-      name: a.name,
-      account_status: Number(a.account_status),
-      currency: a.currency,
-    }));
-
-  return NextResponse.json({ accounts });
 }

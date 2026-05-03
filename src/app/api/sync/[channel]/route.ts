@@ -2,48 +2,18 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { decrypt } from '@/lib/utils/encrypt';
 import { getConversionActionTypes, getRevenueActionTypes } from '@/lib/utils/objectives';
+import {
+  fetchMetaCampaigns,
+  fetchMetaInsights,
+  resolveObjectiveKey,
+  sumActions,
+  type MetaCampaign,
+  type MetaInsightRow,
+} from '@/lib/connectors/meta';
 
-// ─── Meta ─────────────────────────────────────────────────────────────────────
-
-function sumActions(
-  arr: { action_type: string; value: string }[] | undefined,
-  types: string[],
-): number {
-  if (!arr) return 0;
-  return arr
-    .filter(a => types.includes(a.action_type))
-    .reduce((s, a) => s + parseFloat(a.value ?? '0'), 0);
-}
-
-async function fetchAllMeta(url: string): Promise<unknown[]> {
-  const results: unknown[] = [];
-  let next: string | null = url;
-  while (next) {
-    const res = await fetch(next);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const data: any = await res.json();
-    if (data.error) throw new Error(`Meta API: ${data.error.message}`);
-    results.push(...(data.data ?? []));
-    next = data.paging?.next ?? null;
-  }
-  return results;
-}
-
-const MESSAGING_OPTIMIZATION_GOALS = new Set([
-  'CONVERSATIONS', 'REPLY_MESSAGING', 'MESSAGING_APPOINTMENT_CONVERSION', 'MESSAGING_PURCHASE_CONVERSION',
-]);
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function resolveObjectiveKey(campaign: any): string {
-  const base: string = campaign.objective ?? '';
-  if (base !== 'OUTCOME_ENGAGEMENT') return base;
-  const adsets: any[] = campaign.adsets?.data ?? [];
-  const isMessaging = adsets.some(
-    a => MESSAGING_OPTIMIZATION_GOALS.has(a.optimization_goal ?? '') ||
-         ['MESSENGER', 'WHATSAPP', 'INSTAGRAM_DIRECT'].includes(a.destination_type ?? ''),
-  );
-  return isMessaging ? 'OUTCOME_ENGAGEMENT_CONVERSATIONS' : base;
-}
+// ─── Meta sync orchestration ──────────────────────────────────────────────────
+// The connector handles Meta wire protocol; this function maps Meta payloads
+// to cr_campaigns / cr_daily_stats rows and resolves the right token.
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function resolveMetaToken(supabase: any, userId: string, clientCreds: Record<string, string>): Promise<string> {
@@ -71,24 +41,15 @@ async function syncMeta(supabase: any, userId: string, clientId: string, creds: 
 
   const access_token = await resolveMetaToken(supabase, userId, creds);
 
-  const actId = account_id.startsWith('act_') ? account_id : `act_${account_id}`;
-  const BASE = 'https://graph.facebook.com/v21.0';
-
-  // 1. Fetch campaigns with adset optimization_goal to detect messaging campaigns
-  const campParams = new URLSearchParams({
-    fields: 'id,name,status,objective,adsets{optimization_goal,destination_type}',
-    limit: '500',
-    access_token,
-  });
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const metaCampaigns = (await fetchAllMeta(`${BASE}/${actId}/campaigns?${campParams}`)) as any[];
+  // 1. Fetch campaigns with adset signals for objective resolution.
+  const metaCampaigns: MetaCampaign[] = await fetchMetaCampaigns(account_id, access_token);
   console.log(`[sync:meta] campaigns fetched: ${metaCampaigns.length}`);
 
   if (metaCampaigns.length === 0) {
     return { ok: true, rows_upserted: 0, message: 'Sin campañas activas en la cuenta' };
   }
 
-  // 2. Batch upsert campaigns — objective key is resolved from adset optimization_goal
+  // 2. Batch upsert campaigns — objective key resolved from adset optimization_goal.
   await supabase.from('cr_campaigns').upsert(
     metaCampaigns.map(c => ({
       client_id: clientId,
@@ -102,7 +63,7 @@ async function syncMeta(supabase: any, userId: string, clientId: string, creds: 
     { onConflict: 'client_id,channel,external_id' },
   );
 
-  // 3. Build external_id → db_id map AND objective map
+  // 3. Build external_id → db_id and external_id → objective maps.
   const { data: dbCamps } = await supabase
     .from('cr_campaigns')
     .select('id, external_id, objective')
@@ -116,25 +77,15 @@ async function syncMeta(supabase: any, userId: string, clientId: string, creds: 
     (dbCamps ?? []).map((c: { external_id: string; objective: string }) => [c.external_id, c.objective ?? '']),
   );
 
-  // 4. Fetch insights — campaign level, 1 row per day
-  //    Note: "video_views" is NOT a valid Insights API field; use video_thruplay_watched_actions via actions
-  const insightParams = new URLSearchParams({
-    fields: 'campaign_id,impressions,clicks,spend,reach,actions,action_values',
-    level: 'campaign',
-    time_range: JSON.stringify({ since, until }),
-    time_increment: '1',
-    limit: '500',
-    access_token,
-  });
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const insights = (await fetchAllMeta(`${BASE}/${actId}/insights?${insightParams}`)) as any[];
+  // 4. Fetch insights — campaign level, 1 row per day.
+  const insights: MetaInsightRow[] = await fetchMetaInsights(account_id, access_token, since, until);
   console.log(`[sync:meta] insight rows fetched: ${insights.length}`);
 
   if (insights.length === 0) {
     return { ok: true, rows_upserted: 0, message: 'Sin datos en el rango de fechas seleccionado' };
   }
 
-  // 5. Build daily_stats rows — use objective-specific action types per campaign
+  // 5. Build cr_daily_stats rows — objective-specific action types per campaign.
   const videoTypes = ['video_view', 'video_thruplay_watched_actions'];
 
   const statsRows = insights
@@ -164,7 +115,7 @@ async function syncMeta(supabase: any, userId: string, clientId: string, creds: 
     })
     .filter(Boolean);
 
-  // 6. Batch upsert in chunks of 500
+  // 6. Batch upsert in chunks of 500.
   for (let i = 0; i < statsRows.length; i += 500) {
     const { error } = await supabase
       .from('cr_daily_stats')
