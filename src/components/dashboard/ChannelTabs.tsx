@@ -16,6 +16,9 @@ const CHANNEL_CONFIG: Record<Channel | 'all', { label: string; color: string }> 
   tiktok:     { label: 'TikTok',            color: '#010101' },
   ga4:        { label: 'GA4',               color: '#F9AB00' },
   gsc:        { label: 'Search',            color: '#4285F4' },
+  gtm:        { label: 'GTM',               color: '#34A853' },
+  shopify:    { label: 'Shopify',           color: '#95BF47' },
+  ghl:        { label: 'GHL',               color: '#312E81' },
 };
 
 const CHANNEL_ICONS: Record<string, React.ReactNode> = {

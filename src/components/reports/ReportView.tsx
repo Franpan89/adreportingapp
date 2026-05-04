@@ -7,6 +7,9 @@ const CHANNEL_META: Record<Channel, { label: string; color: string; bg: string }
   tiktok:     { label: 'TikTok Ads',   color: '#010101', bg: '#F0F0F0' },
   ga4:        { label: 'Analytics',    color: '#F9AB00', bg: '#FEF3CD' },
   gsc:        { label: 'Search',       color: '#4285F4', bg: '#E8F0FE' },
+  gtm:        { label: 'Tag Manager',  color: '#34A853', bg: '#E6F4EA' },
+  shopify:    { label: 'Shopify',      color: '#95BF47', bg: '#F1F8E9' },
+  ghl:        { label: 'GoHighLevel',  color: '#312E81', bg: '#E0E7FF' },
 };
 
 const PLATFORM_LABELS: Record<SocialGrowthMetric['platform'], string> = {

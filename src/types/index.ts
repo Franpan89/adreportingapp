@@ -2,7 +2,16 @@
    Core domain types for the Ad Reporting App
    ===================================================== */
 
-export type Channel = 'meta' | 'google' | 'tiktok' | 'ga4' | 'gsc' | 'google_ads';
+export type Channel =
+  | 'meta'
+  | 'google'        // legacy — to be migrated to 'google_ads'
+  | 'google_ads'
+  | 'tiktok'
+  | 'ga4'
+  | 'gsc'
+  | 'gtm'
+  | 'shopify'
+  | 'ghl';
 export type UserRole = 'admin' | 'client' | 'super_admin';
 
 /* ----- SaaS / Licencias ----- */

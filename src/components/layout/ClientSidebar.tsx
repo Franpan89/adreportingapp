@@ -18,6 +18,9 @@ const CHANNEL_COLORS: Record<Channel, string> = {
   tiktok:     '#010101',
   ga4:        '#F9AB00',
   gsc:        '#4285F4',
+  gtm:        '#34A853',
+  shopify:    '#95BF47',
+  ghl:        '#312E81',
 };
 
 const CHANNEL_LABELS: Record<Channel, string> = {
@@ -27,6 +30,9 @@ const CHANNEL_LABELS: Record<Channel, string> = {
   tiktok:     'TikTok Ads',
   ga4:        'Analytics (GA4)',
   gsc:        'Search Console',
+  gtm:        'Tag Manager',
+  shopify:    'Shopify',
+  ghl:        'GoHighLevel',
 };
 
 export function ClientSidebar({ clientName = 'My Dashboard', channels = [] }: ClientSidebarProps) {

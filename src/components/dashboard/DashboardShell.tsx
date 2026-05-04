@@ -24,6 +24,9 @@ const CHANNEL_COLORS: Record<Channel, string> = {
   tiktok:     '#010101',
   ga4:        '#F9AB00',
   gsc:        '#4285F4',
+  gtm:        '#34A853',
+  shopify:    '#95BF47',
+  ghl:        '#312E81',
 };
 
 interface DashboardShellProps {
