@@ -4,7 +4,6 @@
 
 export type Channel =
   | 'meta'
-  | 'google'        // legacy — to be migrated to 'google_ads'
   | 'google_ads'
   | 'tiktok'
   | 'ga4'

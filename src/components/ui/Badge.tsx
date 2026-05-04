@@ -1,7 +1,7 @@
 import { cn } from '@/lib/utils/cn';
 import type { HTMLAttributes } from 'react';
 
-type Variant = 'default' | 'primary' | 'success' | 'warning' | 'danger' | 'meta' | 'google' | 'tiktok' | 'ga4' | 'gsc' | 'google_ads' | 'gtm' | 'shopify' | 'ghl';
+type Variant = 'default' | 'primary' | 'success' | 'warning' | 'danger' | 'meta' | 'google_ads' | 'tiktok' | 'ga4' | 'gsc' | 'gtm' | 'shopify' | 'ghl';
 type Size = 'sm' | 'md';
 
 interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
@@ -17,7 +17,6 @@ const variants: Record<Variant, string> = {
   warning:    'bg-[#fef3c7] text-[#D97706]',
   danger:     'bg-[#fee2e2] text-[#DC2626]',
   meta:       'bg-[#EBF3FF] text-[#1877F2]',
-  google:     'bg-[#FEECEB] text-[#EA4335]',
   google_ads: 'bg-[#FEECEB] text-[#EA4335]',
   tiktok:     'bg-[#F0F0F0] text-[#010101]',
   ga4:        'bg-[#FEF3CD] text-[#F9AB00]',
@@ -53,7 +52,6 @@ import type { Channel } from '@/types';
 
 const CHANNEL_LABELS: Record<Channel, string> = {
   meta:       'Meta',
-  google:     'Google',
   google_ads: 'Google Ads',
   tiktok:     'TikTok',
   ga4:        'GA4',

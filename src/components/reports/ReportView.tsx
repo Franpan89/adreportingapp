@@ -2,7 +2,6 @@ import type { ClientReport, TopCreative, SpendResult, AudienceSegment, SocialGro
 
 const CHANNEL_META: Record<Channel, { label: string; color: string; bg: string }> = {
   meta:       { label: 'Meta Ads',     color: '#1877F2', bg: '#EBF3FF' },
-  google:     { label: 'Google Ads',   color: '#EA4335', bg: '#FEECEB' },
   google_ads: { label: 'Google Ads',   color: '#EA4335', bg: '#FEECEB' },
   tiktok:     { label: 'TikTok Ads',   color: '#010101', bg: '#F0F0F0' },
   ga4:        { label: 'Analytics',    color: '#F9AB00', bg: '#FEF3CD' },

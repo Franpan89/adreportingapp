@@ -11,7 +11,6 @@ interface ChannelTabsProps {
 const CHANNEL_CONFIG: Record<Channel | 'all', { label: string; color: string }> = {
   all:        { label: 'Todos los canales', color: '#111827' },
   meta:       { label: 'Meta',              color: '#1877F2' },
-  google:     { label: 'Google',            color: '#EA4335' },
   google_ads: { label: 'Google Ads',        color: '#EA4335' },
   tiktok:     { label: 'TikTok',            color: '#010101' },
   ga4:        { label: 'GA4',               color: '#F9AB00' },

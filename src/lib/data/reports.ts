@@ -22,12 +22,12 @@ export const MOCK_REPORTS: ClientReport[] = [
     top_creatives: [
       { name: 'Video Primavera Luxe · 30s', channel: 'meta',   spend: 4210, impressions: 620000, ctr: 2.8, conversions: 142 },
       { name: 'Carrusel · Skincare Kit',    channel: 'meta',   spend: 2890, impressions: 410000, ctr: 2.1, conversions: 88 },
-      { name: 'Search · Luxe Cosmetics',    channel: 'google', spend: 3480, impressions: 185000, ctr: 6.4, conversions: 96 },
-      { name: 'YouTube Shorts · Brand',     channel: 'google', spend: 1620, impressions: 720000, ctr: 1.2, conversions: 34 },
+      { name: 'Search · Luxe Cosmetics',    channel: 'google_ads', spend: 3480, impressions: 185000, ctr: 6.4, conversions: 96 },
+      { name: 'YouTube Shorts · Brand',     channel: 'google_ads', spend: 1620, impressions: 720000, ctr: 1.2, conversions: 34 },
     ],
     spend_vs_results: [
       { channel: 'meta',   spend: 9820, conversions: 244, cpa: 40.25, roas: 3.8 },
-      { channel: 'google', spend: 8600, conversions: 168, cpa: 51.19, roas: 2.9 },
+      { channel: 'google_ads', spend: 8600, conversions: 168, cpa: 51.19, roas: 2.9 },
     ],
     audiences: [
       { name: 'Lookalike 1% compradores (LTV alto)', reach: 340000, engagement_rate: 4.1, notes: 'Mejor performer del mes' },
@@ -141,11 +141,11 @@ export function createDemoReport(clientId: string, title: string, periodStart: s
     top_creatives: [
       { name: 'Creativo A · Video 30s',    channel: 'meta',   spend: 3200, impressions: 520000, ctr: 2.6, conversions: 118 },
       { name: 'Creativo B · Carrusel',     channel: 'meta',   spend: 1800, impressions: 310000, ctr: 2.0, conversions: 64 },
-      { name: 'Search · Brand Keywords',   channel: 'google', spend: 2400, impressions: 140000, ctr: 6.1, conversions: 82 },
+      { name: 'Search · Brand Keywords',   channel: 'google_ads', spend: 2400, impressions: 140000, ctr: 6.1, conversions: 82 },
     ],
     spend_vs_results: [
       { channel: 'meta',   spend: 5000, conversions: 182, cpa: 27.47, roas: 3.6 },
-      { channel: 'google', spend: 3400, conversions: 98,  cpa: 34.69, roas: 2.9 },
+      { channel: 'google_ads', spend: 3400, conversions: 98,  cpa: 34.69, roas: 2.9 },
     ],
     audiences: [
       { name: 'Lookalike 1% compradores', reach: 260000, engagement_rate: 3.9 },

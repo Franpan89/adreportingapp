@@ -15,7 +15,6 @@ interface CampaignBarChartProps {
 
 const CHANNEL_COLORS: Record<Channel, string> = {
   meta:       '#1877F2',
-  google:     '#EA4335',
   google_ads: '#EA4335',
   tiktok:     '#010101',
   ga4:        '#F9AB00',
