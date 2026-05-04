@@ -10,6 +10,8 @@ import {
   type MetaCampaign,
   type MetaInsightRow,
 } from '@/lib/connectors/meta';
+import { syncGoogleAds, type GoogleAdsCredentials } from '@/lib/connectors/google-ads';
+import { syncTikTok, type TikTokCredentials } from '@/lib/connectors/tiktok';
 
 // ─── Meta sync orchestration ──────────────────────────────────────────────────
 // The connector handles Meta wire protocol; this function maps Meta payloads
@@ -131,6 +133,165 @@ async function syncMeta(supabase: any, userId: string, clientId: string, creds: 
   };
 }
 
+// ─── Google Ads sync orchestration ────────────────────────────────────────────
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function syncGoogleAdsChannel(supabase: any, clientId: string, creds: Record<string, string>, since: string, until: string) {
+  const required = ['customerId', 'developerToken', 'clientId', 'clientSecret', 'refreshToken'] as const;
+  for (const key of required) {
+    if (!creds[key]) throw new Error(`Falta ${key} en las credenciales del cliente para Google Ads`);
+  }
+  const dayStats = await syncGoogleAds(creds as unknown as GoogleAdsCredentials, since, until);
+  console.log(`[sync:google_ads] day stats fetched: ${dayStats.length}`);
+
+  if (dayStats.length === 0) {
+    return { ok: true, rows_upserted: 0, message: 'Sin datos en el rango de fechas seleccionado' };
+  }
+
+  // Distinct campaigns from the day stats (Google Ads returns one row per campaign per day).
+  const campSeen = new Map<string, { name: string; status: string }>();
+  for (const r of dayStats) {
+    if (!campSeen.has(r.campaignId)) campSeen.set(r.campaignId, { name: r.campaignName, status: r.status });
+  }
+
+  await supabase.from('cr_campaigns').upsert(
+    Array.from(campSeen, ([extId, c]) => ({
+      client_id: clientId,
+      channel: 'google_ads',
+      external_id: extId,
+      name: c.name || 'Sin nombre',
+      status: c.status,
+      objective: null,
+      updated_at: new Date().toISOString(),
+    })),
+    { onConflict: 'client_id,channel,external_id' },
+  );
+
+  const { data: dbCamps } = await supabase
+    .from('cr_campaigns')
+    .select('id, external_id')
+    .eq('client_id', clientId)
+    .eq('channel', 'google_ads');
+
+  const campMap = new Map<string, string>(
+    (dbCamps ?? []).map((c: { id: string; external_id: string }) => [c.external_id, c.id]),
+  );
+
+  const statsRows = dayStats
+    .map(r => {
+      const dbCampId = campMap.get(r.campaignId);
+      if (!dbCampId) return null;
+      return {
+        client_id: clientId,
+        campaign_id: dbCampId,
+        channel: 'google_ads',
+        date: r.date,
+        impressions:        r.impressions,
+        clicks:             r.clicks,
+        spend:              r.spend,
+        conversions:        r.conversions,
+        conversions_value:  r.conversionsValue,
+        ctr:                r.ctr,
+        cpc:                r.cpc,
+        cpm:                r.cpm,
+      };
+    })
+    .filter(Boolean);
+
+  for (let i = 0; i < statsRows.length; i += 500) {
+    const { error } = await supabase
+      .from('cr_daily_stats')
+      .upsert(statsRows.slice(i, i + 500), { onConflict: 'campaign_id,date' });
+    if (error) throw new Error(`Error guardando stats: ${error.message}`);
+  }
+
+  console.log(`[sync:google_ads] stats rows upserted: ${statsRows.length}`);
+  return {
+    ok: true,
+    rows_upserted: statsRows.length,
+    message: `${campSeen.size} campañas, ${statsRows.length} registros diarios importados`,
+  };
+}
+
+// ─── TikTok sync orchestration ────────────────────────────────────────────────
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function syncTikTokChannel(supabase: any, clientId: string, creds: Record<string, string>, since: string, until: string) {
+  if (!creds.advertiserId) throw new Error('Falta advertiserId en las credenciales del cliente para TikTok');
+  if (!creds.accessToken)  throw new Error('Falta accessToken en las credenciales del cliente para TikTok');
+
+  const dayStats = await syncTikTok(creds as unknown as TikTokCredentials, since, until);
+  console.log(`[sync:tiktok] day stats fetched: ${dayStats.length}`);
+
+  if (dayStats.length === 0) {
+    return { ok: true, rows_upserted: 0, message: 'Sin datos en el rango de fechas seleccionado' };
+  }
+
+  const campSeen = new Map<string, { name: string }>();
+  for (const r of dayStats) {
+    if (!campSeen.has(r.campaignId)) campSeen.set(r.campaignId, { name: r.campaignName });
+  }
+
+  await supabase.from('cr_campaigns').upsert(
+    Array.from(campSeen, ([extId, c]) => ({
+      client_id: clientId,
+      channel: 'tiktok',
+      external_id: extId,
+      name: c.name || 'Sin nombre',
+      status: 'ACTIVE',
+      objective: null,
+      updated_at: new Date().toISOString(),
+    })),
+    { onConflict: 'client_id,channel,external_id' },
+  );
+
+  const { data: dbCamps } = await supabase
+    .from('cr_campaigns')
+    .select('id, external_id')
+    .eq('client_id', clientId)
+    .eq('channel', 'tiktok');
+
+  const campMap = new Map<string, string>(
+    (dbCamps ?? []).map((c: { id: string; external_id: string }) => [c.external_id, c.id]),
+  );
+
+  const statsRows = dayStats
+    .map(r => {
+      const dbCampId = campMap.get(r.campaignId);
+      if (!dbCampId) return null;
+      return {
+        client_id: clientId,
+        campaign_id: dbCampId,
+        channel: 'tiktok',
+        date: r.date,
+        impressions:  r.impressions,
+        clicks:       r.clicks,
+        spend:        r.spend,
+        reach:        r.reach,
+        video_views:  r.videoViews,
+        conversions:  r.conversions,
+        ctr:          r.ctr,
+        cpc:          r.cpc,
+        cpm:          r.cpm,
+      };
+    })
+    .filter(Boolean);
+
+  for (let i = 0; i < statsRows.length; i += 500) {
+    const { error } = await supabase
+      .from('cr_daily_stats')
+      .upsert(statsRows.slice(i, i + 500), { onConflict: 'campaign_id,date' });
+    if (error) throw new Error(`Error guardando stats: ${error.message}`);
+  }
+
+  console.log(`[sync:tiktok] stats rows upserted: ${statsRows.length}`);
+  return {
+    ok: true,
+    rows_upserted: statsRows.length,
+    message: `${campSeen.size} campañas, ${statsRows.length} registros diarios importados`,
+  };
+}
+
 // ─── Route handler ─────────────────────────────────────────────────────────────
 
 export async function POST(
@@ -181,6 +342,10 @@ export async function POST(
 
     if (channel === 'meta') {
       result = await syncMeta(supabase, user.id, clientId, fields, sinceDate, untilDate);
+    } else if (channel === 'google_ads') {
+      result = await syncGoogleAdsChannel(supabase, clientId, fields, sinceDate, untilDate);
+    } else if (channel === 'tiktok') {
+      result = await syncTikTokChannel(supabase, clientId, fields, sinceDate, untilDate);
     } else {
       result = { ok: false, rows_upserted: 0, message: `Sincronización para ${channel} aún no implementada` };
     }
