@@ -3,7 +3,7 @@ import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis,
   CartesianGrid, Tooltip, Cell
 } from 'recharts';
-import type { CampaignSummary } from '@/types';
+import type { CampaignSummary, Channel } from '@/types';
 import { formatCurrency, formatNumber } from '@/lib/utils/format';
 
 interface CampaignBarChartProps {
@@ -13,10 +13,13 @@ interface CampaignBarChartProps {
   maxItems?: number;
 }
 
-const CHANNEL_COLORS: Record<string, string> = {
-  meta:   '#1877F2',
-  google: '#EA4335',
-  tiktok: '#010101',
+const CHANNEL_COLORS: Record<Channel, string> = {
+  meta:       '#1877F2',
+  google:     '#EA4335',
+  google_ads: '#EA4335',
+  tiktok:     '#010101',
+  ga4:        '#F9AB00',
+  gsc:        '#4285F4',
 };
 
 function formatValue(value: number, metric: string): string {

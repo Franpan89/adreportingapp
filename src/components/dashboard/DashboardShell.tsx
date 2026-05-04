@@ -29,7 +29,7 @@ const CHANNEL_COLORS: Record<Channel, string> = {
 interface DashboardShellProps {
   clientId: string;
   clientName?: string;
-  availableChannels?: Channel[];
+  availableChannels: Channel[];
   isAdmin?: boolean;
 }
 
@@ -44,7 +44,7 @@ const EMPTY_REPORT: ReportResponse = {
 export function DashboardShell({
   clientId,
   clientName = 'Dashboard',
-  availableChannels = ['meta', 'google', 'tiktok'],
+  availableChannels,
   isAdmin = false,
 }: DashboardShellProps) {
   const [activeChannel, setActiveChannel] = useState<Channel | 'all'>('all');

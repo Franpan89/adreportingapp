@@ -3,23 +3,30 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { LayoutDashboard, LogOut, BarChart3, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
+import type { Channel } from '@/types';
 
 interface ClientSidebarProps {
   clientName?: string;
   logoUrl?: string | null;
-  channels?: string[];
+  channels?: Channel[];
 }
 
-const CHANNEL_COLORS: Record<string, string> = {
-  meta:   '#1877F2',
-  google: '#EA4335',
-  tiktok: '#010101',
+const CHANNEL_COLORS: Record<Channel, string> = {
+  meta:       '#1877F2',
+  google:     '#EA4335',
+  google_ads: '#EA4335',
+  tiktok:     '#010101',
+  ga4:        '#F9AB00',
+  gsc:        '#4285F4',
 };
 
-const CHANNEL_LABELS: Record<string, string> = {
-  meta:   'Meta Ads',
-  google: 'Google Ads',
-  tiktok: 'TikTok Ads',
+const CHANNEL_LABELS: Record<Channel, string> = {
+  meta:       'Meta Ads',
+  google:     'Google Ads',
+  google_ads: 'Google Ads',
+  tiktok:     'TikTok Ads',
+  ga4:        'Analytics (GA4)',
+  gsc:        'Search Console',
 };
 
 export function ClientSidebar({ clientName = 'My Dashboard', channels = [] }: ClientSidebarProps) {

@@ -5,7 +5,7 @@ import type { Channel } from '@/types';
 interface ChannelTabsProps {
   active: Channel | 'all';
   onChange: (ch: Channel | 'all') => void;
-  available?: Channel[];
+  available: Channel[];
 }
 
 const CHANNEL_CONFIG: Record<Channel | 'all', { label: string; color: string }> = {
@@ -24,8 +24,10 @@ const CHANNEL_ICONS: Record<string, React.ReactNode> = {
   tiktok: <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.28 6.28 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.18 8.18 0 004.77 1.52V6.75a4.85 4.85 0 01-1-.06z"/></svg>,
 };
 
-export function ChannelTabs({ active, onChange, available = ['meta', 'google', 'tiktok'] }: ChannelTabsProps) {
+export function ChannelTabs({ active, onChange, available }: ChannelTabsProps) {
   const tabs: (Channel | 'all')[] = ['all', ...available];
+  // Hide the strip entirely when no channels are connected — caller renders an empty state.
+  if (available.length === 0) return null;
 
   return (
     <div className="flex items-center gap-1 bg-[#F3F4F6] p-1 rounded-xl w-fit">
