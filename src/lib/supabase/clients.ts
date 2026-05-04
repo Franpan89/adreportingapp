@@ -1,4 +1,4 @@
-import type { Client, Channel } from '@/types';
+import type { Client, Channel, BusinessType } from '@/types';
 
 function isSupabaseConfigured(): boolean {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
@@ -29,6 +29,7 @@ function mapRow(row: any): ClientRow {
     timezone: row.timezone,
     is_active: row.is_active,
     created_at: row.created_at,
+    business_type: (row.business_type as BusinessType | null) ?? null,
     channels,
     sync_status,
   };
@@ -76,6 +77,7 @@ export async function createClient(input: {
       timezone: input.timezone ?? 'UTC',
       is_active: true,
       created_at: new Date().toISOString(),
+      business_type: null,
       channels: [],
       sync_status: {},
     };
@@ -88,4 +90,17 @@ export async function createClient(input: {
     .single();
   if (error || !data) throw new Error(error?.message ?? 'Error al crear cliente');
   return mapRow(data);
+}
+
+export async function updateClientBusinessType(
+  clientId: string,
+  businessType: BusinessType | null,
+): Promise<void> {
+  if (!isSupabaseConfigured()) return; // mock mode no-op
+  const supabase = await getSupabase();
+  const { error } = await supabase
+    .from('cr_clients')
+    .update({ business_type: businessType })
+    .eq('id', clientId);
+  if (error) throw new Error(error.message);
 }

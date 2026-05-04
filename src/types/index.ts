@@ -101,6 +101,8 @@ export interface Client {
   timezone: string;
   is_active: boolean;
   created_at: string;
+  /** Shortcut for KPI defaults on the consolidated home. Nullable until classified. */
+  business_type: BusinessType | null;
   channels?: Channel[];
   sync_status?: Partial<Record<Channel, 'idle' | 'syncing' | 'success' | 'error'>>;
 }
