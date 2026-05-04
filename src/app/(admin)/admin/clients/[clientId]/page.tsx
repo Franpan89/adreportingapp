@@ -4,6 +4,7 @@ import { ArrowLeft, Settings2, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { DashboardShell } from '@/components/dashboard/DashboardShell';
 import { DeleteClientButton } from './_components/DeleteClientButton';
+import { BusinessTypeSelect } from './_components/BusinessTypeSelect';
 import { getClientById } from '@/lib/supabase/clients';
 import type { Channel } from '@/types';
 
@@ -29,6 +30,7 @@ export default async function AdminClientDetailPage({ params }: PageProps) {
             <span className="text-sm font-medium text-[#111827]">{client.name}</span>
           </div>
           <div className="flex items-center gap-2">
+            <BusinessTypeSelect clientId={clientId} initial={client.business_type} />
             <Link href={`/admin/clients/${clientId}/reportes`}>
               <Button variant="outline" size="sm" icon={<FileText className="w-3.5 h-3.5" />}>
                 Reportes
