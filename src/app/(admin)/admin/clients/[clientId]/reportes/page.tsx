@@ -84,7 +84,7 @@ export default async function AdminClientReportesPage({ params }: PageProps) {
                     <td className="px-5 py-3 text-right">
                       <div className="flex items-center justify-end gap-3">
                         <Link
-                          href={`/reportes/${r.id}`}
+                          href={`/admin/reportes/${r.id}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="inline-flex items-center gap-1 text-xs font-medium text-[#00BD7D] hover:underline"
