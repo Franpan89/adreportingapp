@@ -48,6 +48,7 @@ export default async function AdminClientDetailPage({ params }: PageProps) {
         clientId={clientId}
         clientName={client.name}
         availableChannels={client.channels as Channel[]}
+        businessType={client.business_type}
         isAdmin={true}
       />
     </div>
