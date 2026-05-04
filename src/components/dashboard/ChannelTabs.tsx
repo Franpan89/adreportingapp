@@ -9,15 +9,24 @@ interface ChannelTabsProps {
 }
 
 const CHANNEL_CONFIG: Record<Channel | 'all', { label: string; color: string }> = {
-  all:        { label: 'Todos los canales', color: '#111827' },
-  meta:       { label: 'Meta',              color: '#1877F2' },
-  google_ads: { label: 'Google Ads',        color: '#EA4335' },
-  tiktok:     { label: 'TikTok',            color: '#010101' },
-  ga4:        { label: 'GA4',               color: '#F9AB00' },
-  gsc:        { label: 'Search',            color: '#4285F4' },
-  gtm:        { label: 'GTM',               color: '#34A853' },
-  shopify:    { label: 'Shopify',           color: '#95BF47' },
-  ghl:        { label: 'GHL',               color: '#312E81' },
+  all:                   { label: 'Todos los canales', color: '#111827' },
+  meta_ads:              { label: 'Meta Ads',          color: '#1877F2' },
+  google_ads:            { label: 'Google Ads',        color: '#EA4335' },
+  tiktok_ads:            { label: 'TikTok Ads',        color: '#010101' },
+  meta_page:             { label: 'Facebook',          color: '#1877F2' },
+  meta_instagram:        { label: 'Instagram',         color: '#C13584' },
+  linkedin:              { label: 'LinkedIn',          color: '#0A66C2' },
+  pinterest:             { label: 'Pinterest',         color: '#E60023' },
+  tiktok_organic:        { label: 'TikTok',            color: '#010101' },
+  youtube:               { label: 'YouTube',           color: '#FF0000' },
+  ga4:                   { label: 'GA4',               color: '#F9AB00' },
+  google_search_console: { label: 'Search Console',    color: '#4285F4' },
+  shopify:               { label: 'Shopify',           color: '#95BF47' },
+  ghl:                   { label: 'GHL',               color: '#312E81' },
+  klaviyo:               { label: 'Klaviyo',           color: '#7C3AED' },
+  yotpo:                 { label: 'Yotpo',             color: '#D97706' },
+  toast:                 { label: 'Toast',             color: '#FB7185' },
+  email_sms:             { label: 'Email/SMS',         color: '#6B7280' },
 };
 
 const CHANNEL_ICONS: Record<string, React.ReactNode> = {

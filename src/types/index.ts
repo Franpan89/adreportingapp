@@ -2,15 +2,51 @@
    Core domain types for the Ad Reporting App
    ===================================================== */
 
-export type Channel =
-  | 'meta'
+/**
+ * SourceKey — every traffic source the app can render.
+ *
+ * Phase 2 introduces this as the canonical naming scheme. Migration 0013
+ * brings the database in line: cr_channel_credentials, cr_campaigns,
+ * cr_daily_stats, and cr_source_daily all CHECK against this set.
+ *
+ * `Channel` is kept as an alias for backwards-compatible imports across
+ * the app. New code should reach for `SourceKey`.
+ */
+export type SourceKey =
+  // Paid ads
+  | 'meta_ads'
   | 'google_ads'
-  | 'tiktok'
+  | 'tiktok_ads'
+  // Organic social
+  | 'meta_page'        // Facebook organic
+  | 'meta_instagram'   // Instagram organic
+  | 'linkedin'
+  | 'pinterest'
+  | 'tiktok_organic'   // distinct from tiktok_ads
+  | 'youtube'
+  // Web / search
   | 'ga4'
-  | 'gsc'
-  | 'gtm'
+  | 'google_search_console'
+  // Commerce / CRM / engagement
   | 'shopify'
-  | 'ghl';
+  | 'ghl'
+  | 'klaviyo'
+  | 'yotpo'
+  | 'toast'
+  | 'email_sms';
+
+export type Channel = SourceKey;
+
+/** Five buckets used as a SHORTCUT for KPI defaults on the consolidated home.
+ *  Never a feature gate. The connected-sources rule and the per-client
+ *  metric-config UI both override this. Nullable in the DB until classified. */
+export type BusinessType =
+  | 'ecommerce'
+  | 'high_ticket_local'
+  | 'low_ticket_local'
+  | 'b2b'
+  | 'restaurant';
+
 export type UserRole = 'admin' | 'client' | 'super_admin';
 
 /* ----- SaaS / Licencias ----- */
@@ -238,6 +274,43 @@ export interface ClientReport {
   audiences: AudienceSegment[];
   social_growth: SocialGrowthMetric[];
   recommendations: string;
+}
+
+/* ----- Source-level daily rollup (cr_source_daily) ----- */
+
+/**
+ * One row per (client, source, date). Universal attribution columns are
+ * typed; per-source specifics live in `extra`. Mirror of cr_source_daily.
+ *
+ * Universal column semantics:
+ *   cost         ad spend for paid; null/0 for organic
+ *   impressions  views/reach equivalent at impression-level
+ *   clicks       paid-ad clicks (Meta/Google/TikTok)
+ *   visits       organic clicks/sessions/profile-visits — separate from
+ *                paid clicks because they come from different platforms
+ *   conversions  platform-reported outcomes (varies per source)
+ *   revenue      attributed/reported revenue. Canonical: Shopify for ecom,
+ *                Toast for restaurant. Never the ad-platform's own number.
+ *   reach        unique people reached (when reported)
+ *   engagements  likes+comments+shares for social, opens+clicks for email
+ *
+ * Per-source `extra` keys are the connector's contract — see each
+ * connector module for the shape it writes.
+ */
+export interface SourceDailyRow {
+  client_id: string;
+  source_key: SourceKey;
+  date: string;             // ISO date (YYYY-MM-DD)
+  cost: number | null;
+  impressions: number | null;
+  clicks: number | null;
+  visits: number | null;
+  conversions: number | null;
+  revenue: number | null;
+  reach: number | null;
+  engagements: number | null;
+  extra: Record<string, unknown>;
+  synced_at: string;        // ISO timestamp
 }
 
 /* ----- Sync ----- */

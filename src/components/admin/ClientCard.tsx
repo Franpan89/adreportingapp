@@ -15,14 +15,23 @@ interface ClientCardProps {
 }
 
 const CHANNEL_COLORS: Record<Channel, string> = {
-  meta:       '#1877F2',
-  google_ads: '#EA4335',
-  tiktok:     '#010101',
-  ga4:        '#F9AB00',
-  gsc:        '#4285F4',
-  gtm:        '#34A853',
-  shopify:    '#95BF47',
-  ghl:        '#312E81',
+  meta_ads:              '#1877F2',
+  google_ads:            '#EA4335',
+  tiktok_ads:            '#010101',
+  meta_page:             '#1877F2',
+  meta_instagram:        '#C13584',
+  linkedin:              '#0A66C2',
+  pinterest:             '#E60023',
+  tiktok_organic:        '#010101',
+  youtube:               '#FF0000',
+  ga4:                   '#F9AB00',
+  google_search_console: '#4285F4',
+  shopify:               '#95BF47',
+  ghl:                   '#312E81',
+  klaviyo:               '#7C3AED',
+  yotpo:                 '#D97706',
+  toast:                 '#FB7185',
+  email_sms:             '#6B7280',
 };
 
 function SyncDot({ status }: { status?: string }) {

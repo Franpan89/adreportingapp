@@ -20,13 +20,13 @@ export const MOCK_REPORTS: ClientReport[] = [
     executive_summary:
       'Marzo cerró con una inversión total de $18,420 en Meta y Google, generando 412 conversiones (CPA promedio $44.70). Crecimiento de 18% en conversiones vs. febrero, apalancado por la campaña "Primavera Luxe" en Meta. Audiencias lookalike 1% superaron a los intereses amplios en 2.3x ROAS.',
     top_creatives: [
-      { name: 'Video Primavera Luxe · 30s', channel: 'meta',   spend: 4210, impressions: 620000, ctr: 2.8, conversions: 142 },
-      { name: 'Carrusel · Skincare Kit',    channel: 'meta',   spend: 2890, impressions: 410000, ctr: 2.1, conversions: 88 },
+      { name: 'Video Primavera Luxe · 30s', channel: 'meta_ads',   spend: 4210, impressions: 620000, ctr: 2.8, conversions: 142 },
+      { name: 'Carrusel · Skincare Kit',    channel: 'meta_ads',   spend: 2890, impressions: 410000, ctr: 2.1, conversions: 88 },
       { name: 'Search · Luxe Cosmetics',    channel: 'google_ads', spend: 3480, impressions: 185000, ctr: 6.4, conversions: 96 },
       { name: 'YouTube Shorts · Brand',     channel: 'google_ads', spend: 1620, impressions: 720000, ctr: 1.2, conversions: 34 },
     ],
     spend_vs_results: [
-      { channel: 'meta',   spend: 9820, conversions: 244, cpa: 40.25, roas: 3.8 },
+      { channel: 'meta_ads',   spend: 9820, conversions: 244, cpa: 40.25, roas: 3.8 },
       { channel: 'google_ads', spend: 8600, conversions: 168, cpa: 51.19, roas: 2.9 },
     ],
     audiences: [
@@ -57,11 +57,11 @@ export const MOCK_REPORTS: ClientReport[] = [
     executive_summary:
       'La campaña "Primavera Luxe" corrió 34 días con inversión total de $7,100 y generó 198 conversiones directas (CPA $35.85) + 82 asistidas. ROAS 4.2. Superó el objetivo de CPA ($45) en 20%.',
     top_creatives: [
-      { name: 'Video Primavera Luxe · 30s', channel: 'meta', spend: 4210, impressions: 620000, ctr: 2.8, conversions: 142 },
-      { name: 'Reel · UGC Testimonial',     channel: 'meta', spend: 1890, impressions: 310000, ctr: 3.4, conversions: 56 },
+      { name: 'Video Primavera Luxe · 30s', channel: 'meta_ads', spend: 4210, impressions: 620000, ctr: 2.8, conversions: 142 },
+      { name: 'Reel · UGC Testimonial',     channel: 'meta_ads', spend: 1890, impressions: 310000, ctr: 3.4, conversions: 56 },
     ],
     spend_vs_results: [
-      { channel: 'meta', spend: 7100, conversions: 198, cpa: 35.85, roas: 4.2 },
+      { channel: 'meta_ads', spend: 7100, conversions: 198, cpa: 35.85, roas: 4.2 },
     ],
     audiences: [
       { name: 'Lookalike 1% compradores', reach: 280000, engagement_rate: 4.3 },
@@ -86,12 +86,12 @@ export const MOCK_REPORTS: ClientReport[] = [
     executive_summary:
       'Marzo mostró estabilidad en inversión ($12,300) con ligero aumento de CPA (+8%) por estacionalidad. TikTok continúa siendo el canal de mayor crecimiento en reach.',
     top_creatives: [
-      { name: 'TikTok Trend · Reto Marca', channel: 'tiktok', spend: 2100, impressions: 890000, ctr: 3.9, conversions: 64 },
-      { name: 'Meta · Collab Influencer',  channel: 'meta',   spend: 3400, impressions: 480000, ctr: 2.2, conversions: 78 },
+      { name: 'TikTok Trend · Reto Marca', channel: 'tiktok_ads', spend: 2100, impressions: 890000, ctr: 3.9, conversions: 64 },
+      { name: 'Meta · Collab Influencer',  channel: 'meta_ads',   spend: 3400, impressions: 480000, ctr: 2.2, conversions: 78 },
     ],
     spend_vs_results: [
-      { channel: 'meta',   spend: 7200, conversions: 178, cpa: 40.45, roas: 3.1 },
-      { channel: 'tiktok', spend: 5100, conversions: 112, cpa: 45.54, roas: 2.6 },
+      { channel: 'meta_ads',   spend: 7200, conversions: 178, cpa: 40.45, roas: 3.1 },
+      { channel: 'tiktok_ads', spend: 5100, conversions: 112, cpa: 45.54, roas: 2.6 },
     ],
     audiences: [
       { name: 'Engagers TikTok 30d',      reach: 120000, engagement_rate: 5.8 },
@@ -139,12 +139,12 @@ export function createDemoReport(clientId: string, title: string, periodStart: s
       `Período ${periodStart} al ${periodEnd}: inversión y resultados dentro de los objetivos planteados. ` +
       'Ver detalle por canal, creativos ganadores, audiencias y recomendaciones para el próximo ciclo.',
     top_creatives: [
-      { name: 'Creativo A · Video 30s',    channel: 'meta',   spend: 3200, impressions: 520000, ctr: 2.6, conversions: 118 },
-      { name: 'Creativo B · Carrusel',     channel: 'meta',   spend: 1800, impressions: 310000, ctr: 2.0, conversions: 64 },
+      { name: 'Creativo A · Video 30s',    channel: 'meta_ads',   spend: 3200, impressions: 520000, ctr: 2.6, conversions: 118 },
+      { name: 'Creativo B · Carrusel',     channel: 'meta_ads',   spend: 1800, impressions: 310000, ctr: 2.0, conversions: 64 },
       { name: 'Search · Brand Keywords',   channel: 'google_ads', spend: 2400, impressions: 140000, ctr: 6.1, conversions: 82 },
     ],
     spend_vs_results: [
-      { channel: 'meta',   spend: 5000, conversions: 182, cpa: 27.47, roas: 3.6 },
+      { channel: 'meta_ads',   spend: 5000, conversions: 182, cpa: 27.47, roas: 3.6 },
       { channel: 'google_ads', spend: 3400, conversions: 98,  cpa: 34.69, roas: 2.9 },
     ],
     audiences: [

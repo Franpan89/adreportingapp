@@ -1,14 +1,23 @@
 import type { ClientReport, TopCreative, SpendResult, AudienceSegment, SocialGrowthMetric, Channel } from '@/types';
 
 const CHANNEL_META: Record<Channel, { label: string; color: string; bg: string }> = {
-  meta:       { label: 'Meta Ads',     color: '#1877F2', bg: '#EBF3FF' },
-  google_ads: { label: 'Google Ads',   color: '#EA4335', bg: '#FEECEB' },
-  tiktok:     { label: 'TikTok Ads',   color: '#010101', bg: '#F0F0F0' },
-  ga4:        { label: 'Analytics',    color: '#F9AB00', bg: '#FEF3CD' },
-  gsc:        { label: 'Search',       color: '#4285F4', bg: '#E8F0FE' },
-  gtm:        { label: 'Tag Manager',  color: '#34A853', bg: '#E6F4EA' },
-  shopify:    { label: 'Shopify',      color: '#95BF47', bg: '#F1F8E9' },
-  ghl:        { label: 'GoHighLevel',  color: '#312E81', bg: '#E0E7FF' },
+  meta_ads:              { label: 'Meta Ads',       color: '#1877F2', bg: '#EBF3FF' },
+  google_ads:            { label: 'Google Ads',     color: '#EA4335', bg: '#FEECEB' },
+  tiktok_ads:            { label: 'TikTok Ads',     color: '#010101', bg: '#F0F0F0' },
+  meta_page:             { label: 'Facebook',       color: '#1877F2', bg: '#EBF3FF' },
+  meta_instagram:        { label: 'Instagram',      color: '#C13584', bg: '#FCE7F3' },
+  linkedin:              { label: 'LinkedIn',       color: '#0A66C2', bg: '#E0F2FE' },
+  pinterest:             { label: 'Pinterest',      color: '#E60023', bg: '#FEE2E2' },
+  tiktok_organic:        { label: 'TikTok',         color: '#010101', bg: '#F0F0F0' },
+  youtube:               { label: 'YouTube',        color: '#FF0000', bg: '#FEE2E2' },
+  ga4:                   { label: 'Analytics',      color: '#F9AB00', bg: '#FEF3CD' },
+  google_search_console: { label: 'Search Console', color: '#4285F4', bg: '#E8F0FE' },
+  shopify:               { label: 'Shopify',        color: '#95BF47', bg: '#F1F8E9' },
+  ghl:                   { label: 'GoHighLevel',    color: '#312E81', bg: '#E0E7FF' },
+  klaviyo:               { label: 'Klaviyo',        color: '#7C3AED', bg: '#F3E8FF' },
+  yotpo:                 { label: 'Yotpo',          color: '#D97706', bg: '#FEF3C7' },
+  toast:                 { label: 'Toast',          color: '#FB7185', bg: '#FFE4E6' },
+  email_sms:             { label: 'Email/SMS',      color: '#6B7280', bg: '#F3F4F6' },
 };
 
 const PLATFORM_LABELS: Record<SocialGrowthMetric['platform'], string> = {

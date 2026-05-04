@@ -1,27 +1,27 @@
 import type { MetricDefinition, MetricConfig } from '@/types';
 
 export const METRIC_DEFINITIONS: MetricDefinition[] = [
-  { key: 'spend',              label: 'Inversión',          unit: 'currency', channels: ['meta','tiktok','google_ads'], is_derived: false },
-  { key: 'impressions',        label: 'Impresiones',        unit: 'integer',  channels: ['meta','tiktok','google_ads'], is_derived: false },
-  { key: 'clicks',             label: 'Clics',              unit: 'integer',  channels: ['meta','tiktok','google_ads'], is_derived: false },
-  { key: 'conversions',        label: 'Conversiones',       unit: 'integer',  channels: ['meta','tiktok','google_ads'], is_derived: false },
-  { key: 'conversions_value',  label: 'Ingresos',           unit: 'currency', channels: ['meta','tiktok','google_ads'], is_derived: false },
-  { key: 'reach',              label: 'Alcance',            unit: 'integer',  channels: ['meta','tiktok'],                       is_derived: false },
-  { key: 'video_views',        label: 'Vistas de video',    unit: 'integer',  channels: ['meta','tiktok'],                       is_derived: false },
-  { key: 'roas',               label: 'ROAS',               unit: 'ratio',    channels: ['meta','tiktok','google_ads'], is_derived: true,  formula: 'conversions_value / spend' },
-  { key: 'ctr',                label: 'CTR',                unit: 'percent',  channels: ['meta','tiktok','google_ads'], is_derived: true,  formula: 'clicks / impressions * 100' },
-  { key: 'cpc',                label: 'CPC',                unit: 'currency', channels: ['meta','tiktok','google_ads'], is_derived: true,  formula: 'spend / clicks' },
-  { key: 'cpm',                label: 'CPM',                unit: 'currency', channels: ['meta','tiktok','google_ads'], is_derived: true,  formula: 'spend / impressions * 1000' },
-  { key: 'cvr',                label: 'Tasa de conv.',      unit: 'percent',  channels: ['meta','tiktok','google_ads'], is_derived: true,  formula: 'conversions / clicks * 100' },
-  { key: 'cpa',                label: 'Costo por conv.',    unit: 'currency', channels: ['meta','tiktok','google_ads'], is_derived: true,  formula: 'spend / conversions' },
+  { key: 'spend',              label: 'Inversión',          unit: 'currency', channels: ['meta_ads','tiktok_ads','google_ads'], is_derived: false },
+  { key: 'impressions',        label: 'Impresiones',        unit: 'integer',  channels: ['meta_ads','tiktok_ads','google_ads'], is_derived: false },
+  { key: 'clicks',             label: 'Clics',              unit: 'integer',  channels: ['meta_ads','tiktok_ads','google_ads'], is_derived: false },
+  { key: 'conversions',        label: 'Conversiones',       unit: 'integer',  channels: ['meta_ads','tiktok_ads','google_ads'], is_derived: false },
+  { key: 'conversions_value',  label: 'Ingresos',           unit: 'currency', channels: ['meta_ads','tiktok_ads','google_ads'], is_derived: false },
+  { key: 'reach',              label: 'Alcance',            unit: 'integer',  channels: ['meta_ads','tiktok_ads'],                       is_derived: false },
+  { key: 'video_views',        label: 'Vistas de video',    unit: 'integer',  channels: ['meta_ads','tiktok_ads'],                       is_derived: false },
+  { key: 'roas',               label: 'ROAS',               unit: 'ratio',    channels: ['meta_ads','tiktok_ads','google_ads'], is_derived: true,  formula: 'conversions_value / spend' },
+  { key: 'ctr',                label: 'CTR',                unit: 'percent',  channels: ['meta_ads','tiktok_ads','google_ads'], is_derived: true,  formula: 'clicks / impressions * 100' },
+  { key: 'cpc',                label: 'CPC',                unit: 'currency', channels: ['meta_ads','tiktok_ads','google_ads'], is_derived: true,  formula: 'spend / clicks' },
+  { key: 'cpm',                label: 'CPM',                unit: 'currency', channels: ['meta_ads','tiktok_ads','google_ads'], is_derived: true,  formula: 'spend / impressions * 1000' },
+  { key: 'cvr',                label: 'Tasa de conv.',      unit: 'percent',  channels: ['meta_ads','tiktok_ads','google_ads'], is_derived: true,  formula: 'conversions / clicks * 100' },
+  { key: 'cpa',                label: 'Costo por conv.',    unit: 'currency', channels: ['meta_ads','tiktok_ads','google_ads'], is_derived: true,  formula: 'spend / conversions' },
   // GA4 — organic / sessions
   { key: 'sessions',           label: 'Sesiones',           unit: 'integer',  channels: ['ga4'],                                  is_derived: false },
   { key: 'organic_users',      label: 'Usuarios orgánicos', unit: 'integer',  channels: ['ga4'],                                  is_derived: false },
   // GSC — organic search
-  { key: 'organic_clicks',     label: 'Clics orgánicos',    unit: 'integer',  channels: ['gsc'],                                  is_derived: false },
-  { key: 'organic_impressions',label: 'Impresiones búsq.',  unit: 'integer',  channels: ['gsc'],                                  is_derived: false },
-  { key: 'organic_position',   label: 'Posición media',     unit: 'decimal',  channels: ['gsc'],                                  is_derived: false },
-  { key: 'organic_ctr',        label: 'CTR orgánico',       unit: 'percent',  channels: ['gsc'],                                  is_derived: true,  formula: 'organic_clicks / organic_impressions * 100' },
+  { key: 'organic_clicks',     label: 'Clics orgánicos',    unit: 'integer',  channels: ['google_search_console'],                                  is_derived: false },
+  { key: 'organic_impressions',label: 'Impresiones búsq.',  unit: 'integer',  channels: ['google_search_console'],                                  is_derived: false },
+  { key: 'organic_position',   label: 'Posición media',     unit: 'decimal',  channels: ['google_search_console'],                                  is_derived: false },
+  { key: 'organic_ctr',        label: 'CTR orgánico',       unit: 'percent',  channels: ['google_search_console'],                                  is_derived: true,  formula: 'organic_clicks / organic_impressions * 100' },
 ];
 
 export const DEFAULT_METRIC_CONFIG: MetricConfig[] = [

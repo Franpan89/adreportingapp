@@ -1,7 +1,9 @@
 import { cn } from '@/lib/utils/cn';
 import type { HTMLAttributes } from 'react';
+import type { SourceKey } from '@/types';
 
-type Variant = 'default' | 'primary' | 'success' | 'warning' | 'danger' | 'meta' | 'google_ads' | 'tiktok' | 'ga4' | 'gsc' | 'gtm' | 'shopify' | 'ghl';
+type StatusVariant = 'default' | 'primary' | 'success' | 'warning' | 'danger';
+type Variant = StatusVariant | SourceKey;
 type Size = 'sm' | 'md';
 
 interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
@@ -10,20 +12,33 @@ interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
   dot?: boolean;
 }
 
+const sourceVariants: Record<SourceKey, string> = {
+  meta_ads:              'bg-[#EBF3FF] text-[#1877F2]',
+  google_ads:            'bg-[#FEECEB] text-[#EA4335]',
+  tiktok_ads:            'bg-[#F0F0F0] text-[#010101]',
+  meta_page:             'bg-[#EBF3FF] text-[#1877F2]',
+  meta_instagram:        'bg-[#FCE7F3] text-[#C13584]',
+  linkedin:              'bg-[#E0F2FE] text-[#0A66C2]',
+  pinterest:             'bg-[#FEE2E2] text-[#E60023]',
+  tiktok_organic:        'bg-[#F0F0F0] text-[#010101]',
+  youtube:               'bg-[#FEE2E2] text-[#FF0000]',
+  ga4:                   'bg-[#FEF3CD] text-[#F9AB00]',
+  google_search_console: 'bg-[#E8F0FE] text-[#4285F4]',
+  shopify:               'bg-[#F1F8E9] text-[#95BF47]',
+  ghl:                   'bg-[#E0E7FF] text-[#312E81]',
+  klaviyo:               'bg-[#F3E8FF] text-[#7C3AED]',
+  yotpo:                 'bg-[#FEF3C7] text-[#D97706]',
+  toast:                 'bg-[#FFE4E6] text-[#FB7185]',
+  email_sms:             'bg-[#F3F4F6] text-[#6B7280]',
+};
+
 const variants: Record<Variant, string> = {
   default:    'bg-[#F3F4F6] text-[#374151]',
   primary:    'bg-[#e6f9f4] text-[#00BD7D]',
   success:    'bg-[#dcfce7] text-[#16A34A]',
   warning:    'bg-[#fef3c7] text-[#D97706]',
   danger:     'bg-[#fee2e2] text-[#DC2626]',
-  meta:       'bg-[#EBF3FF] text-[#1877F2]',
-  google_ads: 'bg-[#FEECEB] text-[#EA4335]',
-  tiktok:     'bg-[#F0F0F0] text-[#010101]',
-  ga4:        'bg-[#FEF3CD] text-[#F9AB00]',
-  gsc:        'bg-[#E8F0FE] text-[#4285F4]',
-  gtm:        'bg-[#E6F4EA] text-[#34A853]',
-  shopify:    'bg-[#F1F8E9] text-[#95BF47]',
-  ghl:        'bg-[#E0E7FF] text-[#312E81]',
+  ...sourceVariants,
 };
 
 const sizes: Record<Size, string> = {
@@ -48,21 +63,28 @@ export function Badge({ variant = 'default', size = 'md', dot, className, childr
   );
 }
 
-import type { Channel } from '@/types';
-
-const CHANNEL_LABELS: Record<Channel, string> = {
-  meta:       'Meta',
-  google_ads: 'Google Ads',
-  tiktok:     'TikTok',
-  ga4:        'GA4',
-  gsc:        'Search',
-  gtm:        'GTM',
-  shopify:    'Shopify',
-  ghl:        'GHL',
+const SOURCE_LABELS: Record<SourceKey, string> = {
+  meta_ads:              'Meta Ads',
+  google_ads:            'Google Ads',
+  tiktok_ads:            'TikTok Ads',
+  meta_page:             'Facebook',
+  meta_instagram:        'Instagram',
+  linkedin:              'LinkedIn',
+  pinterest:             'Pinterest',
+  tiktok_organic:        'TikTok',
+  youtube:               'YouTube',
+  ga4:                   'GA4',
+  google_search_console: 'Search Console',
+  shopify:               'Shopify',
+  ghl:                   'GHL',
+  klaviyo:               'Klaviyo',
+  yotpo:                 'Yotpo',
+  toast:                 'Toast',
+  email_sms:             'Email/SMS',
 };
 
-export function ChannelBadge({ channel }: { channel: Channel }) {
-  return <Badge variant={channel}>{CHANNEL_LABELS[channel]}</Badge>;
+export function ChannelBadge({ channel }: { channel: SourceKey }) {
+  return <Badge variant={channel}>{SOURCE_LABELS[channel]}</Badge>;
 }
 
 export function StatusBadge({ status }: { status: string }) {
