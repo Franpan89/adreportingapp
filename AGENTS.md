@@ -165,24 +165,28 @@ Boris Cherny (creator of Claude Code) keeps his team's file around 100 lines. Un
 - Build: `npm run build`
 - Test (all): no test suite configured
 - Lint: `npm run lint` (eslint ^9 + eslint-config-next)
-- Typecheck: `npx tsc --noEmit` (errors in `web/` are template scaffolding — ignore them, fix only `src/` errors)
-- Run locally: `npm run dev` → http://localhost:3000
+- Typecheck: `npx tsc --noEmit`
+- Run locally: `npm run dev` → http://localhost:3020
 
 ### Layout
 - Source lives in: `src/`
   - `src/app/` — App Router pages and API routes
   - `src/components/` — shared UI components
-  - `src/lib/` — services, utils, Supabase clients, mock data
-  - `src/types/index.ts` — canonical type definitions
+  - `src/lib/connectors/` — pure platform connectors (Meta v21.0, Google Ads v17, GA4 v1beta, GSC v1, TikTok v1.3). No Supabase, no auth, no DOM.
+  - `src/lib/metrics/` — METRIC_DEFINITIONS catalog + blendMetrics() cross-channel aggregation
+  - `src/lib/supabase/` — Supabase IO services, USE_MOCK fallback when URL is placeholder
+  - `src/types/index.ts` — canonical type definitions (Channel, MetricTotals, ClientReport)
   - `src/proxy.ts` — Next.js middleware for auth + role routing
-- Database migrations: `supabase/migrations/` (run in order: 0001→0004)
-- Do not modify: `web/` (unused Firebase template scaffolding — has intentional TS errors), `.next/` (build output)
+- Database migrations: `supabase/migrations/` (run in order: 0001→0009)
 
 ### Conventions specific to this repo
 - Naming: kebab-case files, PascalCase components, camelCase functions
 - Import alias: `@/` maps to `src/`
 - Server Components by default; add `'use client'` only for interactivity or browser APIs
 - `cookies()` and `searchParams` are async in Next.js 15+ — always await them
+- Reporting tables use `cr_` prefix (cr_clients, cr_daily_stats, …) — they share the WMM Supabase project with other apps. `profiles`, `licenses`, and `agency_meta_connections` are intentionally unprefixed.
+- Channel keys: `meta`, `google_ads`, `ga4`, `gsc`, `tiktok`. Legacy `google` exists for pre-consolidation rows; new google-ads syncs should write `google_ads`.
+- Connectors are pure: `sync<Channel>(creds, since, until)` returns normalized day-stats. Sync route owns DB writes, auth, token resolution.
 - Auth: demo mode uses `demo_role` cookie; real mode uses Supabase session
 - Services in `src/lib/supabase/` check `isSupabaseConfigured()` and fall back to mock data when the URL is a placeholder
 - Mutations from client components go through API routes (`src/app/api/`), not direct Supabase calls
@@ -193,8 +197,9 @@ Boris Cherny (creator of Claude Code) keeps his team's file around 100 lines. Un
 - `yarn`, `pnpm`, `bun` — npm only
 - Importing Supabase server client (`src/lib/supabase/server.ts`) in `'use client'` components
 - Calling `cookies()` synchronously — it returns a Promise in Next.js 15
-- Adding shadcn/ui or any other component library — custom components only
-- `firebase deploy` or `git push --force` from the agent
+- Extending the SaaS surface (`/superadmin/*`, license routes, agency Meta connection) on this branch — those move to a separate app
+- Renaming `profiles`, `licenses`, or `agency_meta_connections` to `cr_*` — those are intentionally unprefixed
+- `git push --force` from the agent
 
 ---
 

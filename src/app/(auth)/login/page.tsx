@@ -82,9 +82,9 @@ export default function LoginPage() {
             <BarChart3 className="w-7 h-7 text-white" />
           </div>
           <h1 className="text-2xl font-bold text-white" style={{ fontFamily: 'Oswald, sans-serif', letterSpacing: '0.05em' }}>
-            AdPulse
+            Client Reporting
           </h1>
-          <p className="text-white/40 text-sm mt-1">Plataforma de Reportes para Agencias</p>
+          <p className="text-white/40 text-sm mt-1">Reporte multicanal por cliente — Web My Money</p>
         </div>
 
         {/* Card */}

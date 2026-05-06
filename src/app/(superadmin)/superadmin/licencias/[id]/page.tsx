@@ -5,6 +5,7 @@ import { getLicenseById, PLANS } from '@/lib/supabase/licenses';
 import { getPlanById } from '@/lib/data/licenses';
 import { LicenseStatusBadge, PlanBadge } from '@/components/superadmin/LicenseBadge';
 import { LicenseActions } from './_components/LicenseActions';
+import { LicenseAddons } from './_components/LicenseAddons';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -146,6 +147,11 @@ export default async function LicenseDetailPage({ params }: PageProps) {
               licenseId={license.id}
               initialStatus={license.status}
               agencyName={license.agency_name}
+            />
+
+            <LicenseAddons
+              licenseId={license.id}
+              initialAddons={license.addons}
             />
 
             {/* Meta info */}

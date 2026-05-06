@@ -12,7 +12,7 @@ export async function DELETE(
   if (!user) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
 
   const { error } = await supabase
-    .from('clients')
+    .from('cr_clients')
     .delete()
     .eq('id', clientId);
 

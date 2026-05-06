@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { getAuthUser } from '@/lib/supabase/auth';
 import { encrypt, decrypt } from '@/lib/utils/encrypt';
+import { verifyMetaToken } from '@/lib/connectors/meta';
 
 export async function GET() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthUser();
   if (!user) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
 
+  const supabase = await createClient();
   const { data } = await supabase
     .from('agency_meta_connections')
     .select('id, connected_at, verified_at, access_token_enc')
@@ -32,9 +34,9 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthUser();
   if (!user) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+  const supabase = await createClient();
 
   const body = await request.json().catch(() => ({}));
   const { access_token } = body as { access_token?: string };
@@ -43,13 +45,10 @@ export async function POST(request: NextRequest) {
   }
 
   // Verify the token works before saving
-  const verifyRes = await fetch(
-    `https://graph.facebook.com/v21.0/me/adaccounts?fields=id&limit=1&access_token=${encodeURIComponent(access_token)}`,
-  );
-  const verifyData = await verifyRes.json();
-  if (verifyData.error) {
+  const verifyError = await verifyMetaToken(access_token);
+  if (verifyError) {
     return NextResponse.json(
-      { error: `Token inválido: ${verifyData.error.message}` },
+      { error: `Token inválido: ${verifyError}` },
       { status: 400 },
     );
   }
@@ -78,9 +77,9 @@ export async function POST(request: NextRequest) {
 }
 
 export async function DELETE() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthUser();
   if (!user) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+  const supabase = await createClient();
 
   await supabase
     .from('agency_meta_connections')

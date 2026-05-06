@@ -66,14 +66,14 @@ function sumDailyData(days: DailyDataPoint[]): MetricTotals {
 }
 
 export const MOCK_CAMPAIGNS: CampaignSummary[] = [
-  { id: '1', name: 'Brand Awareness Q2', channel: 'meta',   status: 'ACTIVE',  external_id: 'fb_001', spend: 4820, impressions: 312000, clicks: 8420,  conversions: 187, conversions_value: 11200, roas: 2.32, ctr: 2.70, cpc: 0.57, cpm: 15.45, cpa: 25.77, cvr: 2.22 },
-  { id: '2', name: 'Retargeting — Cart',  channel: 'meta',   status: 'ACTIVE',  external_id: 'fb_002', spend: 2310, impressions: 89000,  clicks: 4210,  conversions: 312, conversions_value: 18720, roas: 8.10, ctr: 4.73, cpc: 0.55, cpm: 25.96, cpa: 7.40,  cvr: 7.41 },
-  { id: '3', name: 'Performance Max',     channel: 'google', status: 'ACTIVE',  external_id: 'ga_001', spend: 5640, impressions: 228000, clicks: 12800, conversions: 445, conversions_value: 26700, roas: 4.73, ctr: 5.61, cpc: 0.44, cpm: 24.74, cpa: 12.67, cvr: 3.48 },
-  { id: '4', name: 'Search — Brand',      channel: 'google', status: 'ACTIVE',  external_id: 'ga_002', spend: 1890, impressions: 48000,  clicks: 9200,  conversions: 290, conversions_value: 17400, roas: 9.21, ctr: 19.17, cpc: 0.21, cpm: 39.38, cpa: 6.52, cvr: 3.15 },
-  { id: '5', name: 'TopFeed Creative 1',  channel: 'tiktok', status: 'ACTIVE',  external_id: 'tt_001', spend: 3120, impressions: 480000, clicks: 9600,  conversions: 198, conversions_value: 11880, roas: 3.81, ctr: 2.00, cpc: 0.33, cpm: 6.50,  cpa: 15.76, cvr: 2.06 },
-  { id: '6', name: 'Spark Ads — UGC',    channel: 'tiktok', status: 'PAUSED',  external_id: 'tt_002', spend: 980,  impressions: 210000, clicks: 3780,  conversions: 72,  conversions_value: 4320,  roas: 4.41, ctr: 1.80, cpc: 0.26, cpm: 4.67,  cpa: 13.61, cvr: 1.90 },
-  { id: '7', name: 'Lookalike — 3%',     channel: 'meta',   status: 'ACTIVE',  external_id: 'fb_003', spend: 3480, impressions: 198000, clicks: 6720,  conversions: 201, conversions_value: 12060, roas: 3.47, ctr: 3.39, cpc: 0.52, cpm: 17.58, cpa: 17.31, cvr: 2.99 },
-  { id: '8', name: 'Display Remarketing', channel: 'google', status: 'ACTIVE',  external_id: 'ga_003', spend: 720,  impressions: 320000, clicks: 2240,  conversions: 48,  conversions_value: 2880,  roas: 4.00, ctr: 0.70, cpc: 0.32, cpm: 2.25,  cpa: 15.00, cvr: 2.14 },
+  { id: '1', name: 'Brand Awareness Q2', channel: 'meta_ads',   status: 'ACTIVE',  external_id: 'fb_001', spend: 4820, impressions: 312000, clicks: 8420,  conversions: 187, conversions_value: 11200, roas: 2.32, ctr: 2.70, cpc: 0.57, cpm: 15.45, cpa: 25.77, cvr: 2.22 },
+  { id: '2', name: 'Retargeting — Cart',  channel: 'meta_ads',   status: 'ACTIVE',  external_id: 'fb_002', spend: 2310, impressions: 89000,  clicks: 4210,  conversions: 312, conversions_value: 18720, roas: 8.10, ctr: 4.73, cpc: 0.55, cpm: 25.96, cpa: 7.40,  cvr: 7.41 },
+  { id: '3', name: 'Performance Max',     channel: 'google_ads', status: 'ACTIVE',  external_id: 'ga_001', spend: 5640, impressions: 228000, clicks: 12800, conversions: 445, conversions_value: 26700, roas: 4.73, ctr: 5.61, cpc: 0.44, cpm: 24.74, cpa: 12.67, cvr: 3.48 },
+  { id: '4', name: 'Search — Brand',      channel: 'google_ads', status: 'ACTIVE',  external_id: 'ga_002', spend: 1890, impressions: 48000,  clicks: 9200,  conversions: 290, conversions_value: 17400, roas: 9.21, ctr: 19.17, cpc: 0.21, cpm: 39.38, cpa: 6.52, cvr: 3.15 },
+  { id: '5', name: 'TopFeed Creative 1',  channel: 'tiktok_ads', status: 'ACTIVE',  external_id: 'tt_001', spend: 3120, impressions: 480000, clicks: 9600,  conversions: 198, conversions_value: 11880, roas: 3.81, ctr: 2.00, cpc: 0.33, cpm: 6.50,  cpa: 15.76, cvr: 2.06 },
+  { id: '6', name: 'Spark Ads — UGC',    channel: 'tiktok_ads', status: 'PAUSED',  external_id: 'tt_002', spend: 980,  impressions: 210000, clicks: 3780,  conversions: 72,  conversions_value: 4320,  roas: 4.41, ctr: 1.80, cpc: 0.26, cpm: 4.67,  cpa: 13.61, cvr: 1.90 },
+  { id: '7', name: 'Lookalike — 3%',     channel: 'meta_ads',   status: 'ACTIVE',  external_id: 'fb_003', spend: 3480, impressions: 198000, clicks: 6720,  conversions: 201, conversions_value: 12060, roas: 3.47, ctr: 3.39, cpc: 0.52, cpm: 17.58, cpa: 17.31, cvr: 2.99 },
+  { id: '8', name: 'Display Remarketing', channel: 'google_ads', status: 'ACTIVE',  external_id: 'ga_003', spend: 720,  impressions: 320000, clicks: 2240,  conversions: 48,  conversions_value: 2880,  roas: 4.00, ctr: 0.70, cpc: 0.32, cpm: 2.25,  cpa: 15.00, cvr: 2.14 },
 ];
 
 export function generateMockReport(
@@ -142,7 +142,7 @@ export function generateMockReport(
     comparison,
     deltas,
     allowedMetrics: DEFAULT_METRIC_CONFIG,
-    syncStatus: { meta: 'success', google: 'success', tiktok: 'success' },
+    syncStatus: { meta_ads: 'success', google_ads: 'success', tiktok_ads: 'success' },
   };
 }
 
@@ -155,25 +155,25 @@ export const MOCK_CLIENTS: Array<{
   {
     id: 'client-1', name: 'Luxe Cosmetics', slug: 'luxe-cosmetics', logo_url: null,
     timezone: 'America/New_York', is_active: true, created_at: '2024-01-15T00:00:00Z',
-    channels: ['meta', 'google', 'tiktok'],
-    sync_status: { meta: 'success', google: 'success', tiktok: 'success' },
+    channels: ['meta_ads', 'google_ads', 'tiktok_ads'],
+    sync_status: { meta_ads: 'success', google_ads: 'success', tiktok_ads: 'success' },
   },
   {
     id: 'client-2', name: 'FitGear Pro', slug: 'fitgear-pro', logo_url: null,
     timezone: 'America/Chicago', is_active: true, created_at: '2024-02-20T00:00:00Z',
-    channels: ['meta', 'google'],
-    sync_status: { meta: 'success', google: 'error' },
+    channels: ['meta_ads', 'google_ads'],
+    sync_status: { meta_ads: 'success', google_ads: 'error' },
   },
   {
     id: 'client-3', name: 'Urban Threads', slug: 'urban-threads', logo_url: null,
     timezone: 'America/Los_Angeles', is_active: true, created_at: '2024-03-10T00:00:00Z',
-    channels: ['meta', 'tiktok'],
-    sync_status: { meta: 'syncing', tiktok: 'success' },
+    channels: ['meta_ads', 'tiktok_ads'],
+    sync_status: { meta_ads: 'syncing', tiktok_ads: 'success' },
   },
   {
     id: 'client-4', name: 'TechStart Inc.', slug: 'techstart-inc', logo_url: null,
     timezone: 'America/New_York', is_active: false, created_at: '2024-01-05T00:00:00Z',
-    channels: ['google'],
-    sync_status: { google: 'success' },
+    channels: ['google_ads'],
+    sync_status: { google_ads: 'success' },
   },
 ];

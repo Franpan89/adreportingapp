@@ -4,24 +4,38 @@ import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { MetricConfigEditor } from '@/components/admin/MetricConfigEditor';
 import { Card } from '@/components/ui/Card';
-import { DEFAULT_METRIC_CONFIG } from '@/lib/metrics/definitions';
 import type { MetricConfig } from '@/types';
 
 interface Props {
   clientId: string;
   clientName: string;
+  initialConfig: MetricConfig[];
 }
 
-export default function MetricsClient({ clientId, clientName }: Props) {
+export default function MetricsClient({ clientId, clientName, initialConfig }: Props) {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  async function handleSave(_metrics: MetricConfig[]) {
+  async function handleSave(metrics: MetricConfig[]) {
     setSaving(true);
-    await new Promise(r => setTimeout(r, 600));
-    setSaving(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+    setError(null);
+    setSaved(false);
+    try {
+      const res = await fetch(`/api/clients/${clientId}/metric-config`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ config: metrics }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'Error al guardar configuración');
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error inesperado');
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -44,9 +58,14 @@ export default function MetricsClient({ clientId, clientName }: Props) {
             ✓ Configuración de métricas guardada
           </div>
         )}
+        {error && (
+          <div className="mb-4 px-4 py-3 bg-[#fee2e2] border border-[#DC2626]/20 rounded-lg text-sm text-[#DC2626] font-medium">
+            {error}
+          </div>
+        )}
         <Card>
           <MetricConfigEditor
-            metrics={DEFAULT_METRIC_CONFIG}
+            metrics={initialConfig}
             onSave={handleSave}
             saving={saving}
           />

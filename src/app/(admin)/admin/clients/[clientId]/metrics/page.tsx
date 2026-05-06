@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import { getClientById } from '@/lib/supabase/clients';
+import { getMetricConfigForClient } from '@/lib/supabase/metric-config';
 import MetricsClient from './_components/MetricsClient';
 
 interface PageProps {
@@ -11,5 +12,7 @@ export default async function MetricsConfigPage({ params }: PageProps) {
   const client = await getClientById(clientId);
   if (!client) notFound();
 
-  return <MetricsClient clientId={clientId} clientName={client.name} />;
+  const config = await getMetricConfigForClient(clientId);
+
+  return <MetricsClient clientId={clientId} clientName={client.name} initialConfig={config} />;
 }

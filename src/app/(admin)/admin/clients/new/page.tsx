@@ -6,12 +6,14 @@ import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Select';
 import { Card } from '@/components/ui/Card';
+import { LogoUpload } from '@/components/ui/LogoUpload';
 import type { AdAccount } from '@/types';
 
 export default function NewClientPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ name: '', slug: '', timezone: 'America/New_York' });
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [metaAccountId, setMetaAccountId] = useState('');
   const [adAccounts, setAdAccounts] = useState<AdAccount[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -42,6 +44,7 @@ export default function NewClientPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...form,
+          logo_url: logoUrl || undefined,
           meta_account_id: metaAccountId || undefined,
         }),
       });
@@ -66,6 +69,13 @@ export default function NewClientPage() {
       <div className="flex-1 px-6 py-5 max-w-lg">
         <Card>
           <form onSubmit={handleSubmit} className="space-y-4">
+            <LogoUpload
+              currentUrl={logoUrl}
+              folder="clients"
+              label="Logo del cliente (opcional)"
+              size="sm"
+              onSuccess={url => setLogoUrl(url || null)}
+            />
             <Input
               label="Nombre del cliente"
               value={form.name}

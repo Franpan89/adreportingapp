@@ -25,13 +25,16 @@ export function GenerateReportButton({ clientId }: { clientId: string }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          client_id: clientId,
-          title: String(form.get('title') ?? defaultTitle),
+          client_id:    clientId,
+          title:        String(form.get('title') ?? defaultTitle),
           period_start: String(form.get('period_start') ?? defaultStart),
-          period_end: String(form.get('period_end') ?? defaultEnd),
+          period_end:   String(form.get('period_end') ?? defaultEnd),
         }),
       });
-      if (!res.ok) throw new Error('Error al generar el reporte');
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error ?? 'Error al generar el reporte');
+      }
       setOpen(false);
       router.refresh();
     } catch (err) {

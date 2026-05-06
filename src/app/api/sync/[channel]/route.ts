@@ -2,48 +2,24 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { decrypt } from '@/lib/utils/encrypt';
 import { getConversionActionTypes, getRevenueActionTypes } from '@/lib/utils/objectives';
+import {
+  fetchMetaCampaigns,
+  fetchMetaInsights,
+  fetchMetaAds,
+  fetchMetaAdInsights,
+  resolveObjectiveKey,
+  sumActions,
+  type MetaCampaign,
+  type MetaInsightRow,
+  type MetaAd,
+  type MetaAdInsightRow,
+} from '@/lib/connectors/meta';
+import { syncGoogleAds, type GoogleAdsCredentials } from '@/lib/connectors/google-ads';
+import { syncTikTok, type TikTokCredentials } from '@/lib/connectors/tiktok';
 
-// ─── Meta ─────────────────────────────────────────────────────────────────────
-
-function sumActions(
-  arr: { action_type: string; value: string }[] | undefined,
-  types: string[],
-): number {
-  if (!arr) return 0;
-  return arr
-    .filter(a => types.includes(a.action_type))
-    .reduce((s, a) => s + parseFloat(a.value ?? '0'), 0);
-}
-
-async function fetchAllMeta(url: string): Promise<unknown[]> {
-  const results: unknown[] = [];
-  let next: string | null = url;
-  while (next) {
-    const res = await fetch(next);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const data: any = await res.json();
-    if (data.error) throw new Error(`Meta API: ${data.error.message}`);
-    results.push(...(data.data ?? []));
-    next = data.paging?.next ?? null;
-  }
-  return results;
-}
-
-const MESSAGING_OPTIMIZATION_GOALS = new Set([
-  'CONVERSATIONS', 'REPLY_MESSAGING', 'MESSAGING_APPOINTMENT_CONVERSION', 'MESSAGING_PURCHASE_CONVERSION',
-]);
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function resolveObjectiveKey(campaign: any): string {
-  const base: string = campaign.objective ?? '';
-  if (base !== 'OUTCOME_ENGAGEMENT') return base;
-  const adsets: any[] = campaign.adsets?.data ?? [];
-  const isMessaging = adsets.some(
-    a => MESSAGING_OPTIMIZATION_GOALS.has(a.optimization_goal ?? '') ||
-         ['MESSENGER', 'WHATSAPP', 'INSTAGRAM_DIRECT'].includes(a.destination_type ?? ''),
-  );
-  return isMessaging ? 'OUTCOME_ENGAGEMENT_CONVERSATIONS' : base;
-}
+// ─── Meta sync orchestration ──────────────────────────────────────────────────
+// The connector handles Meta wire protocol; this function maps Meta payloads
+// to cr_campaigns / cr_daily_stats rows and resolves the right token.
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function resolveMetaToken(supabase: any, userId: string, clientCreds: Record<string, string>): Promise<string> {
@@ -71,28 +47,19 @@ async function syncMeta(supabase: any, userId: string, clientId: string, creds: 
 
   const access_token = await resolveMetaToken(supabase, userId, creds);
 
-  const actId = account_id.startsWith('act_') ? account_id : `act_${account_id}`;
-  const BASE = 'https://graph.facebook.com/v21.0';
-
-  // 1. Fetch campaigns with adset optimization_goal to detect messaging campaigns
-  const campParams = new URLSearchParams({
-    fields: 'id,name,status,objective,adsets{optimization_goal,destination_type}',
-    limit: '500',
-    access_token,
-  });
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const metaCampaigns = (await fetchAllMeta(`${BASE}/${actId}/campaigns?${campParams}`)) as any[];
+  // 1. Fetch campaigns with adset signals for objective resolution.
+  const metaCampaigns: MetaCampaign[] = await fetchMetaCampaigns(account_id, access_token);
   console.log(`[sync:meta] campaigns fetched: ${metaCampaigns.length}`);
 
   if (metaCampaigns.length === 0) {
     return { ok: true, rows_upserted: 0, message: 'Sin campañas activas en la cuenta' };
   }
 
-  // 2. Batch upsert campaigns — objective key is resolved from adset optimization_goal
-  await supabase.from('campaigns').upsert(
+  // 2. Batch upsert campaigns — objective key resolved from adset optimization_goal.
+  await supabase.from('cr_campaigns').upsert(
     metaCampaigns.map(c => ({
       client_id: clientId,
-      channel: 'meta',
+      channel: 'meta_ads',
       external_id: String(c.id),
       name: c.name ?? 'Sin nombre',
       status: c.status ?? null,
@@ -102,12 +69,12 @@ async function syncMeta(supabase: any, userId: string, clientId: string, creds: 
     { onConflict: 'client_id,channel,external_id' },
   );
 
-  // 3. Build external_id → db_id map AND objective map
+  // 3. Build external_id → db_id and external_id → objective maps.
   const { data: dbCamps } = await supabase
-    .from('campaigns')
+    .from('cr_campaigns')
     .select('id, external_id, objective')
     .eq('client_id', clientId)
-    .eq('channel', 'meta');
+    .eq('channel', 'meta_ads');
 
   const campMap = new Map<string, string>(
     (dbCamps ?? []).map((c: { id: string; external_id: string }) => [c.external_id, c.id]),
@@ -116,25 +83,15 @@ async function syncMeta(supabase: any, userId: string, clientId: string, creds: 
     (dbCamps ?? []).map((c: { external_id: string; objective: string }) => [c.external_id, c.objective ?? '']),
   );
 
-  // 4. Fetch insights — campaign level, 1 row per day
-  //    Note: "video_views" is NOT a valid Insights API field; use video_thruplay_watched_actions via actions
-  const insightParams = new URLSearchParams({
-    fields: 'campaign_id,impressions,clicks,spend,reach,actions,action_values',
-    level: 'campaign',
-    time_range: JSON.stringify({ since, until }),
-    time_increment: '1',
-    limit: '500',
-    access_token,
-  });
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const insights = (await fetchAllMeta(`${BASE}/${actId}/insights?${insightParams}`)) as any[];
+  // 4. Fetch insights — campaign level, 1 row per day.
+  const insights: MetaInsightRow[] = await fetchMetaInsights(account_id, access_token, since, until);
   console.log(`[sync:meta] insight rows fetched: ${insights.length}`);
 
   if (insights.length === 0) {
     return { ok: true, rows_upserted: 0, message: 'Sin datos en el rango de fechas seleccionado' };
   }
 
-  // 5. Build daily_stats rows — use objective-specific action types per campaign
+  // 5. Build cr_daily_stats rows — objective-specific action types per campaign.
   const videoTypes = ['video_view', 'video_thruplay_watched_actions'];
 
   const statsRows = insights
@@ -150,7 +107,7 @@ async function syncMeta(supabase: any, userId: string, clientId: string, creds: 
       return {
         client_id: clientId,
         campaign_id: dbCampId,
-        channel: 'meta',
+        channel: 'meta_ads',
         date: row.date_start,
         impressions:        parseInt(row.impressions ?? '0', 10) || 0,
         clicks:             parseInt(row.clicks ?? '0', 10) || 0,
@@ -164,19 +121,262 @@ async function syncMeta(supabase: any, userId: string, clientId: string, creds: 
     })
     .filter(Boolean);
 
-  // 6. Batch upsert in chunks of 500
+  // 6. Batch upsert in chunks of 500.
   for (let i = 0; i < statsRows.length; i += 500) {
     const { error } = await supabase
-      .from('daily_stats')
+      .from('cr_daily_stats')
       .upsert(statsRows.slice(i, i + 500), { onConflict: 'campaign_id,date' });
     if (error) throw new Error(`Error guardando stats: ${error.message}`);
   }
 
   console.log(`[sync:meta] stats rows upserted: ${statsRows.length}`);
+
+  // 7. Fetch ads + thumbnails and store in cr_ads.
+  let adRowsUpserted = 0;
+  try {
+    const metaAds: MetaAd[] = await fetchMetaAds(account_id, access_token);
+    console.log(`[sync:meta] ads fetched: ${metaAds.length}`);
+
+    if (metaAds.length > 0) {
+      // Map campaign external_id → db campaign id
+      const campaignExtToDb = new Map<string, string>(
+        (dbCamps ?? []).map((c: { id: string; external_id: string }) => [c.external_id, c.id]),
+      );
+
+      const adUpsertRows = metaAds
+        .map((ad: MetaAd) => {
+          const dbCampId = campaignExtToDb.get(String(ad.campaign_id ?? ''));
+          if (!dbCampId) return null;
+          return {
+            client_id:     clientId,
+            campaign_id:   dbCampId,
+            channel:       'meta_ads',
+            external_id:   String(ad.id),
+            name:          ad.name ?? 'Sin nombre',
+            thumbnail_url: ad.creative?.thumbnail_url ?? null,
+            creative_type: ad.creative?.object_type?.toLowerCase() ?? null,
+            updated_at:    new Date().toISOString(),
+          };
+        })
+        .filter(Boolean);
+
+      if (adUpsertRows.length > 0) {
+        await supabase.from('cr_ads').upsert(adUpsertRows, { onConflict: 'client_id,channel,external_id' });
+      }
+
+      // 8. Fetch ad-level daily insights and store in cr_ad_daily_stats.
+      const adInsights: MetaAdInsightRow[] = await fetchMetaAdInsights(account_id, access_token, since, until);
+      console.log(`[sync:meta] ad insight rows fetched: ${adInsights.length}`);
+
+      if (adInsights.length > 0) {
+        // Build ad external_id → db ad id map
+        const { data: dbAds } = await supabase
+          .from('cr_ads')
+          .select('id, external_id')
+          .eq('client_id', clientId)
+          .eq('channel', 'meta_ads');
+
+        const adExtToDb = new Map<string, string>(
+          (dbAds ?? []).map((a: { id: string; external_id: string }) => [a.external_id, a.id]),
+        );
+
+        const videoTypes = ['video_view', 'video_thruplay_watched_actions'];
+
+        const adStatRows = adInsights
+          .map((row: MetaAdInsightRow) => {
+            const dbAdId = adExtToDb.get(String(row.ad_id));
+            if (!dbAdId) return null;
+            return {
+              ad_id:       dbAdId,
+              client_id:   clientId,
+              date:        row.date_start,
+              impressions: parseInt(row.impressions ?? '0', 10) || 0,
+              reach:       parseInt(row.reach ?? '0', 10) || 0,
+              clicks:      parseInt(row.clicks ?? '0', 10) || 0,
+              spend:       parseFloat(row.spend ?? '0') || 0,
+              video_views: sumActions(row.actions, videoTypes),
+            };
+          })
+          .filter(Boolean);
+
+        for (let i = 0; i < adStatRows.length; i += 500) {
+          const { error } = await supabase
+            .from('cr_ad_daily_stats')
+            .upsert(adStatRows.slice(i, i + 500), { onConflict: 'ad_id,date' });
+          if (error) console.error(`[sync:meta] ad stats upsert error: ${error.message}`);
+        }
+
+        adRowsUpserted = adStatRows.length;
+        console.log(`[sync:meta] ad stat rows upserted: ${adRowsUpserted}`);
+      }
+    }
+  } catch (e) {
+    console.error('[sync:meta] ad-level sync failed (non-fatal):', e);
+  }
+
+  return {
+    ok: true,
+    rows_upserted: statsRows.length + adRowsUpserted,
+    message: `${metaCampaigns.length} campañas, ${statsRows.length} registros diarios importados`,
+  };
+}
+
+// ─── Google Ads sync orchestration ────────────────────────────────────────────
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function syncGoogleAdsChannel(supabase: any, clientId: string, creds: Record<string, string>, since: string, until: string) {
+  const required = ['customerId', 'developerToken', 'clientId', 'clientSecret', 'refreshToken'] as const;
+  for (const key of required) {
+    if (!creds[key]) throw new Error(`Falta ${key} en las credenciales del cliente para Google Ads`);
+  }
+  const dayStats = await syncGoogleAds(creds as unknown as GoogleAdsCredentials, since, until);
+  console.log(`[sync:google_ads] day stats fetched: ${dayStats.length}`);
+
+  if (dayStats.length === 0) {
+    return { ok: true, rows_upserted: 0, message: 'Sin datos en el rango de fechas seleccionado' };
+  }
+
+  // Distinct campaigns from the day stats (Google Ads returns one row per campaign per day).
+  const campSeen = new Map<string, { name: string; status: string }>();
+  for (const r of dayStats) {
+    if (!campSeen.has(r.campaignId)) campSeen.set(r.campaignId, { name: r.campaignName, status: r.status });
+  }
+
+  await supabase.from('cr_campaigns').upsert(
+    Array.from(campSeen, ([extId, c]) => ({
+      client_id: clientId,
+      channel: 'google_ads',
+      external_id: extId,
+      name: c.name || 'Sin nombre',
+      status: c.status,
+      objective: null,
+      updated_at: new Date().toISOString(),
+    })),
+    { onConflict: 'client_id,channel,external_id' },
+  );
+
+  const { data: dbCamps } = await supabase
+    .from('cr_campaigns')
+    .select('id, external_id')
+    .eq('client_id', clientId)
+    .eq('channel', 'google_ads');
+
+  const campMap = new Map<string, string>(
+    (dbCamps ?? []).map((c: { id: string; external_id: string }) => [c.external_id, c.id]),
+  );
+
+  const statsRows = dayStats
+    .map(r => {
+      const dbCampId = campMap.get(r.campaignId);
+      if (!dbCampId) return null;
+      return {
+        client_id: clientId,
+        campaign_id: dbCampId,
+        channel: 'google_ads',
+        date: r.date,
+        impressions:        r.impressions,
+        clicks:             r.clicks,
+        spend:              r.spend,
+        conversions:        r.conversions,
+        conversions_value:  r.conversionsValue,
+        ctr:                r.ctr,
+        cpc:                r.cpc,
+        cpm:                r.cpm,
+      };
+    })
+    .filter(Boolean);
+
+  for (let i = 0; i < statsRows.length; i += 500) {
+    const { error } = await supabase
+      .from('cr_daily_stats')
+      .upsert(statsRows.slice(i, i + 500), { onConflict: 'campaign_id,date' });
+    if (error) throw new Error(`Error guardando stats: ${error.message}`);
+  }
+
+  console.log(`[sync:google_ads] stats rows upserted: ${statsRows.length}`);
   return {
     ok: true,
     rows_upserted: statsRows.length,
-    message: `${metaCampaigns.length} campañas, ${statsRows.length} registros diarios importados`,
+    message: `${campSeen.size} campañas, ${statsRows.length} registros diarios importados`,
+  };
+}
+
+// ─── TikTok sync orchestration ────────────────────────────────────────────────
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function syncTikTokChannel(supabase: any, clientId: string, creds: Record<string, string>, since: string, until: string) {
+  if (!creds.advertiserId) throw new Error('Falta advertiserId en las credenciales del cliente para TikTok');
+  if (!creds.accessToken)  throw new Error('Falta accessToken en las credenciales del cliente para TikTok');
+
+  const dayStats = await syncTikTok(creds as unknown as TikTokCredentials, since, until);
+  console.log(`[sync:tiktok] day stats fetched: ${dayStats.length}`);
+
+  if (dayStats.length === 0) {
+    return { ok: true, rows_upserted: 0, message: 'Sin datos en el rango de fechas seleccionado' };
+  }
+
+  const campSeen = new Map<string, { name: string }>();
+  for (const r of dayStats) {
+    if (!campSeen.has(r.campaignId)) campSeen.set(r.campaignId, { name: r.campaignName });
+  }
+
+  await supabase.from('cr_campaigns').upsert(
+    Array.from(campSeen, ([extId, c]) => ({
+      client_id: clientId,
+      channel: 'tiktok_ads',
+      external_id: extId,
+      name: c.name || 'Sin nombre',
+      status: 'ACTIVE',
+      objective: null,
+      updated_at: new Date().toISOString(),
+    })),
+    { onConflict: 'client_id,channel,external_id' },
+  );
+
+  const { data: dbCamps } = await supabase
+    .from('cr_campaigns')
+    .select('id, external_id')
+    .eq('client_id', clientId)
+    .eq('channel', 'tiktok_ads');
+
+  const campMap = new Map<string, string>(
+    (dbCamps ?? []).map((c: { id: string; external_id: string }) => [c.external_id, c.id]),
+  );
+
+  const statsRows = dayStats
+    .map(r => {
+      const dbCampId = campMap.get(r.campaignId);
+      if (!dbCampId) return null;
+      return {
+        client_id: clientId,
+        campaign_id: dbCampId,
+        channel: 'tiktok_ads',
+        date: r.date,
+        impressions:  r.impressions,
+        clicks:       r.clicks,
+        spend:        r.spend,
+        reach:        r.reach,
+        video_views:  r.videoViews,
+        conversions:  r.conversions,
+        ctr:          r.ctr,
+        cpc:          r.cpc,
+        cpm:          r.cpm,
+      };
+    })
+    .filter(Boolean);
+
+  for (let i = 0; i < statsRows.length; i += 500) {
+    const { error } = await supabase
+      .from('cr_daily_stats')
+      .upsert(statsRows.slice(i, i + 500), { onConflict: 'campaign_id,date' });
+    if (error) throw new Error(`Error guardando stats: ${error.message}`);
+  }
+
+  console.log(`[sync:tiktok] stats rows upserted: ${statsRows.length}`);
+  return {
+    ok: true,
+    rows_upserted: statsRows.length,
+    message: `${campSeen.size} campañas, ${statsRows.length} registros diarios importados`,
   };
 }
 
@@ -201,7 +401,7 @@ export async function POST(
 
   // Load & decrypt credentials
   const { data: credRow } = await supabase
-    .from('channel_credentials')
+    .from('cr_channel_credentials')
     .select('credentials_enc')
     .eq('client_id', clientId)
     .eq('channel', channel)
@@ -220,7 +420,7 @@ export async function POST(
   }
 
   await supabase
-    .from('channel_credentials')
+    .from('cr_channel_credentials')
     .update({ sync_status: 'syncing' })
     .eq('client_id', clientId)
     .eq('channel', channel);
@@ -228,14 +428,18 @@ export async function POST(
   try {
     let result: { ok: boolean; rows_upserted: number; message?: string };
 
-    if (channel === 'meta') {
+    if (channel === 'meta_ads') {
       result = await syncMeta(supabase, user.id, clientId, fields, sinceDate, untilDate);
+    } else if (channel === 'google_ads') {
+      result = await syncGoogleAdsChannel(supabase, clientId, fields, sinceDate, untilDate);
+    } else if (channel === 'tiktok_ads') {
+      result = await syncTikTokChannel(supabase, clientId, fields, sinceDate, untilDate);
     } else {
       result = { ok: false, rows_upserted: 0, message: `Sincronización para ${channel} aún no implementada` };
     }
 
     await supabase
-      .from('channel_credentials')
+      .from('cr_channel_credentials')
       .update({ sync_status: result.ok ? 'success' : 'error', last_synced_at: new Date().toISOString(), sync_error: null })
       .eq('client_id', clientId)
       .eq('channel', channel);
@@ -244,7 +448,7 @@ export async function POST(
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Error desconocido';
     await supabase
-      .from('channel_credentials')
+      .from('cr_channel_credentials')
       .update({ sync_status: 'error', sync_error: message })
       .eq('client_id', clientId)
       .eq('channel', channel);

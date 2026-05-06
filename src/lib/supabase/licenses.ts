@@ -2,7 +2,7 @@
  * License service — uses Supabase when configured, falls back to mock data.
  * All functions are async and safe to call from Server Components.
  */
-import type { License, LicenseStatus, PlanId } from '@/types';
+import type { License, LicenseAddons, LicenseStatus, PlanId } from '@/types';
 import { MOCK_LICENSES, PLANS, getPlanById, MONTHLY_NEW_LICENSES } from '@/lib/data/licenses';
 
 /* ── Config check ────────────────────────────────── */
@@ -27,6 +27,7 @@ function mapRow(row: any): License {
     notes:         row.notes ?? null,
     clients_count: row.clients_count ?? 0,
     temp_password: row.temp_password ?? null,
+    addons: (row.addons as LicenseAddons) ?? {},
   };
 }
 
@@ -61,6 +62,20 @@ export async function getLicenseById(id: string): Promise<License | null> {
     .from('licenses')
     .select('*')
     .eq('id', id)
+    .single();
+  if (error || !data) return null;
+  return mapRow(data);
+}
+
+export async function getLicenseByAgencyUserId(userId: string): Promise<License | null> {
+  if (!isSupabaseConfigured()) {
+    return MOCK_LICENSES.find(l => l.agency_id === userId) ?? MOCK_LICENSES[0] ?? null;
+  }
+  const supabase = await getSupabase();
+  const { data, error } = await supabase
+    .from('licenses')
+    .select('*')
+    .eq('agency_user_id', userId)
     .single();
   if (error || !data) return null;
   return mapRow(data);
@@ -144,6 +159,7 @@ export async function createLicense(input: CreateLicenseInput): Promise<License>
       notes: input.notes ?? null,
       clients_count: 0,
       temp_password: input.temp_password,
+      addons: {},
     };
     return mock;
   }
@@ -176,6 +192,13 @@ export async function updateLicenseStatus(id: string, status: LicenseStatus): Pr
   if (error) throw new Error(error.message);
 }
 
+export async function updateLicenseAddons(id: string, addons: LicenseAddons): Promise<void> {
+  if (!isSupabaseConfigured()) return;
+  const supabase = await getSupabase();
+  const { error } = await supabase.from('licenses').update({ addons }).eq('id', id);
+  if (error) throw new Error(error.message);
+}
+
 export async function revokeLicense(id: string): Promise<void> {
   if (!isSupabaseConfigured()) return; // mock — no-op
   const supabase = await getSupabase();
@@ -185,3 +208,4 @@ export async function revokeLicense(id: string): Promise<void> {
 
 /* Re-export plan helpers so pages only need one import */
 export { PLANS, getPlanById };
+export type { LicenseAddons };

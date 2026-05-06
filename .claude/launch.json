@@ -2,11 +2,11 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "adpulse-dev",
+      "name": "wmm-client-reporting-dev",
       "runtimeExecutable": "npm.cmd",
       "runtimeArgs": ["run", "dev"],
       "cwd": ".",
-      "port": 3000,
+      "port": 3020,
       "autoPort": true
     }
   ]

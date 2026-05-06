@@ -48,7 +48,7 @@ function buildPeriod(rows: any[]): PeriodReport {
     add(d); dateMap.set(row.date, d);
 
     const id = row.campaign_id;
-    const camp = campMap.get(id) ?? { info: row.campaigns, t: {} };
+    const camp = campMap.get(id) ?? { info: row.cr_campaigns, t: {} };
     add(camp.t); campMap.set(id, camp);
 
     add(totals);
@@ -81,8 +81,8 @@ async function fetchStats(
 ) {
   const supabase = await createClient();
   let query = supabase
-    .from('daily_stats')
-    .select('date, channel, impressions, clicks, spend, conversions, conversions_value, reach, video_views, link_clicks, campaign_id, campaigns(id, name, status, external_id, channel, objective)')
+    .from('cr_daily_stats')
+    .select('date, channel, impressions, clicks, spend, conversions, conversions_value, reach, video_views, link_clicks, campaign_id, cr_campaigns(id, name, status, external_id, channel, objective)')
     .eq('client_id', clientId)
     .gte('date', start)
     .lte('date', end);
@@ -125,7 +125,7 @@ export async function GET(
     (async () => {
       const supabase = await createClient();
       const { data } = await supabase
-        .from('channel_credentials')
+        .from('cr_channel_credentials')
         .select('channel, sync_status')
         .eq('client_id', clientId)
         .eq('is_active', true);

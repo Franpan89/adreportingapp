@@ -1,10 +1,32 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
+// Internal-only app: there is no client portal anymore. Both `admin` and
+// `client` roles land on the admin dashboard. `super_admin` is SaaS-bound
+// and stays in /superadmin/*.
+const DEMO_ROLE_ROUTES: Record<string, string> = {
+  admin: '/admin/dashboard',
+  client: '/admin/dashboard',
+  super_admin: '/superadmin/dashboard',
+};
+
 export async function proxy(request: NextRequest) {
   // Dev bypass: if Supabase is not configured (placeholder URL), allow all access
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
   if (!supabaseUrl || supabaseUrl.includes('placeholder')) {
+    return NextResponse.next({ request });
+  }
+
+  // Demo mode bypass: cookie set by login page
+  const demoRole = request.cookies.get('demo_role')?.value;
+  if (demoRole && DEMO_ROLE_ROUTES[demoRole]) {
+    const path = request.nextUrl.pathname;
+    if (path === '/login') {
+      return NextResponse.redirect(new URL(DEMO_ROLE_ROUTES[demoRole], request.url));
+    }
+    if (path.startsWith('/api/') || path.startsWith('/auth/')) {
+      return NextResponse.next({ request });
+    }
     return NextResponse.next({ request });
   }
 
@@ -41,8 +63,7 @@ export async function proxy(request: NextRequest) {
         .eq('id', user.id)
         .single();
       const dest = profile?.role === 'super_admin' ? '/superadmin/dashboard'
-        : profile?.role === 'admin' ? '/admin/dashboard'
-        : '/dashboard';
+        : '/admin/dashboard';
       return NextResponse.redirect(new URL(dest, request.url));
     }
     return supabaseResponse;
@@ -66,13 +87,17 @@ export async function proxy(request: NextRequest) {
     .eq('id', user.id)
     .single();
 
-  const role = profile?.role ?? 'client';
+  const role = profile?.role ?? 'admin';
+
+  // Dead client-portal paths (removed) → admin dashboard.
+  if (path === '/dashboard' || path.startsWith('/dashboard/') ||
+      path === '/reportes'  || path.startsWith('/reportes/')) {
+    return NextResponse.redirect(new URL('/admin/dashboard', request.url));
+  }
 
   // Root → redirect based on role
   if (path === '/') {
-    const dest = role === 'super_admin' ? '/superadmin/dashboard'
-      : role === 'admin' ? '/admin/dashboard'
-      : '/dashboard';
+    const dest = role === 'super_admin' ? '/superadmin/dashboard' : '/admin/dashboard';
     return NextResponse.redirect(new URL(dest, request.url));
   }
 
@@ -83,18 +108,7 @@ export async function proxy(request: NextRequest) {
 
   // Non-super-admin trying to access /superadmin
   if (role !== 'super_admin' && path.startsWith('/superadmin')) {
-    const dest = role === 'admin' ? '/admin/dashboard' : '/dashboard';
-    return NextResponse.redirect(new URL(dest, request.url));
-  }
-
-  // Admin trying to access client area (redirect to admin)
-  if (role === 'admin' && path.startsWith('/dashboard')) {
     return NextResponse.redirect(new URL('/admin/dashboard', request.url));
-  }
-
-  // Client trying to access admin area
-  if (role === 'client' && path.startsWith('/admin')) {
-    return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
   return supabaseResponse;

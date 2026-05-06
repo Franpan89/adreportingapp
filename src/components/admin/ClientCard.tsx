@@ -15,9 +15,23 @@ interface ClientCardProps {
 }
 
 const CHANNEL_COLORS: Record<Channel, string> = {
-  meta:   '#1877F2',
-  google: '#EA4335',
-  tiktok: '#010101',
+  meta_ads:              '#1877F2',
+  google_ads:            '#EA4335',
+  tiktok_ads:            '#010101',
+  meta_page:             '#1877F2',
+  meta_instagram:        '#C13584',
+  linkedin:              '#0A66C2',
+  pinterest:             '#E60023',
+  tiktok_organic:        '#010101',
+  youtube:               '#FF0000',
+  ga4:                   '#F9AB00',
+  google_search_console: '#4285F4',
+  shopify:               '#95BF47',
+  ghl:                   '#312E81',
+  klaviyo:               '#7C3AED',
+  yotpo:                 '#D97706',
+  toast:                 '#FB7185',
+  email_sms:             '#6B7280',
 };
 
 function SyncDot({ status }: { status?: string }) {
@@ -73,25 +87,28 @@ export function ClientCard({ client }: ClientCardProps) {
         </div>
       )}
 
-      {/* Channel status */}
-      <div className="flex items-center gap-2 mb-4">
-        {(['meta', 'google', 'tiktok'] as Channel[]).map(ch => {
-          const connected = channels.includes(ch);
-          const status = syncStatus[ch];
-          return (
-            <div key={ch} className="flex items-center gap-1.5">
-              <span
-                className="w-2 h-2 rounded-full"
-                style={{ background: connected ? CHANNEL_COLORS[ch] : '#E5E7EB' }}
-              />
-              {connected && <SyncDot status={status} />}
-              <span className={cn('text-[10px]', connected ? 'text-[#374151]' : 'text-[#D1D5DB]')}>
-                {ch.charAt(0).toUpperCase() + ch.slice(1)}
-              </span>
-            </div>
-          );
-        })}
-      </div>
+      {/* Channel status — only shows the channels this client actually has connected. */}
+      {channels.length > 0 ? (
+        <div className="flex items-center gap-2 mb-4 flex-wrap">
+          {channels.map(ch => {
+            const status = syncStatus[ch];
+            return (
+              <div key={ch} className="flex items-center gap-1.5">
+                <span
+                  className="w-2 h-2 rounded-full"
+                  style={{ background: CHANNEL_COLORS[ch] }}
+                />
+                <SyncDot status={status} />
+                <span className="text-[10px] text-[#374151]">
+                  {ch.charAt(0).toUpperCase() + ch.slice(1)}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        <p className="text-[10px] text-[#9CA3AF] mb-4">Sin canales conectados</p>
+      )}
 
       {/* Footer link */}
       <Link

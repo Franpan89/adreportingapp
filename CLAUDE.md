@@ -1,352 +1,145 @@
 @AGENTS.md
 
-# {{APP_NAME}} — Claude Code Conventions
+# wmm-client-reporting — Claude Code Conventions
 
-> **WMM Standalone App** — Part of the Web My Money ecosystem.
+> **Centralized client performance dashboard for Web My Money** — Meta, Google Ads, GA4, Search Console, TikTok Ads in one app.
+> Consolidates the connector logic from wmm-client-intel (Firebase Cloud Functions), octo-functions (Google Ads OAuth), and wmm-influ-campaigns (Meta v21.0 sync) into a single Supabase + Vercel app.
 > Standards derived from [wmm-agents](https://github.com/Web-My-Money/wmm-agents).
 
 ## Project
-- Firebase project: `{{FIREBASE_PROJECT}}`
-- GitHub repo: `Web-My-Money/{{REPO_NAME}}`
-- Region: `us-central1`
+- GitHub repo: `Web-My-Money/wmm-client-reporting`
+- **No Firebase** — Supabase + Vercel only
+- Supabase project: shared WMM hub (table prefix `cr_` to namespace this app's domain)
 - Runtime: Node.js 22 (`.nvmrc` → `22`)
-- Cloud Functions: v2 (`firebase-functions/v2`)
-- Firestore: Native mode
 - Package manager: **npm only** — never Yarn, pnpm, or Bun
-- Port: **{{PORT}}** (local dev)
-- Owner: {{OWNER_NAME}} ({{OWNER_PERSON_ID}})
+- Port: **3020** (local dev)
+- Owner: Fran + Pancho
+
+## Channels
+
+| Channel key   | Source            | API version              | Auth pattern                          |
+|---------------|-------------------|--------------------------|---------------------------------------|
+| `meta`        | `connectors/meta` | Graph API v21.0          | Per-client token, agency-token fallback |
+| `google_ads`  | `connectors/google-ads` | Google Ads API v17 | OAuth2 refresh-token flow             |
+| `ga4`         | `connectors/ga4`  | Data API v1beta          | Google service account JSON           |
+| `gsc`         | `connectors/gsc`  | Search Console v1        | Google service account JSON (same as GA4) |
+| `tiktok`      | `connectors/tiktok` | Business API v1.3      | App ID + secret + access token        |
+| `google` (legacy) | inline            | —                    | Pre-consolidation Google channel — slated for migration to `google_ads` |
+
+## Database — `cr_` prefix
+
+This app shares the WMM Supabase project with `wmm-website` (`leads`, `appointments`, …) and `wmm-legacy-leads` (`scrape_jobs`, `legacy_leads`, …). Every reporting table is prefixed `cr_` to keep namespaces disjoint.
+
+| Table                       | Purpose                                            |
+|-----------------------------|----------------------------------------------------|
+| `cr_clients`                | Client registry — id, name, slug, timezone         |
+| `cr_client_users`           | Client → user portal access mapping                |
+| `cr_channel_credentials`    | Encrypted API tokens per client + channel          |
+| `cr_campaigns`              | Campaign snapshots — id, client, channel, ext_id  |
+| `cr_daily_stats`            | Per-campaign per-day metrics (raw + derived)       |
+| `cr_sync_logs`              | Sync job history                                   |
+| `cr_metric_definitions`     | Metric catalog — key, label, unit, channels        |
+| `cr_client_metric_config`   | Per-client metric visibility / order               |
+| `cr_reports`                | Client-facing generated reports (draft/published) |
+
+**Not prefixed (intentional):**
+- `profiles` — auth cross-cutting, used by Supabase trigger
+- `licenses`, `agency_meta_connections` — SaaS-bound, slated for split into a separate app
+
+## SaaS surface (do not extend on this branch)
+The Super Admin panel (`/superadmin/*`), license management, license addons, and the agency Meta connection are SaaS concerns that will move to a separate app. **Do not add features to those routes here.** Reporting work goes in the admin and client groups.
+
+## Architecture
+```
+wmm-client-reporting/
+  src/
+    app/
+      (admin)/admin/                # Admin role routes — clients, metrics, reportes, settings, story-engine
+      (client)/dashboard, reportes  # Client portal — read-only, RLS-scoped
+      (superadmin)/superadmin/      # SaaS — DO NOT EXTEND, slated for split
+      (auth)/login, callback        # Supabase auth flow
+      api/
+        sync/[channel]/route.ts     # Sync orchestrator — calls connectors, writes cr_* tables
+        reports/[clientId]/route.ts # Aggregate cr_daily_stats + period comparison
+        client-reports/             # Generated client reports CRUD
+        clients/                    # Client CRUD
+        agency/meta-connection/     # SaaS — slated for split
+        licenses/, superadmin/      # SaaS — slated for split
+    components/
+      ui/                           # shadcn-style primitives
+      dashboard/                    # DashboardShell, ChannelTabs, CampaignTable
+      admin/, superadmin/, reports/, layout/
+    lib/
+      connectors/                   # Pure data-fetching modules — no Supabase, no UI
+        meta.ts                     # Graph API v21.0 + agency token verify
+        ga4.ts                      # @google-analytics/data
+        gsc.ts                      # googleapis (Search Console v1)
+        tiktok.ts                   # Business API v1.3 raw fetch
+        google-ads.ts               # OAuth2 + GAQL searchStream
+      metrics/
+        definitions.ts              # METRIC_DEFINITIONS + DEFAULT_METRIC_CONFIG (Spanish labels)
+        blended.ts                  # blendMetrics() across paid + organic channels
+      supabase/                     # client + server + auth helpers
+      data/, reports/               # mock data for unconfigured Supabase
+      utils/encrypt.ts              # AES encrypt/decrypt for stored tokens
+  supabase/migrations/              # 0001 → 0009
+```
+
+## Architecture layers (follow this order)
+1. `src/types/index.ts` — Channel, MetricTotals, ClientReport, etc.
+2. `src/lib/connectors/*.ts` — pure connector modules (no DB, no auth)
+3. `src/lib/supabase/*.ts` — Supabase IO services, USE_MOCK fallback
+4. `src/app/api/*/route.ts` — orchestrators: auth, validate, call connector, upsert to cr_* tables
+5. `src/app/**/page.tsx` — thin renderers, server components by default
+
+## Connectors are pure
+Each `lib/connectors/<channel>.ts` exports `sync<Channel>(creds, since, until)` returning normalized day-stats. No Supabase, no auth, no DOM, no Next.js. The sync route handles all those concerns.
 
 ## WMM Brand Standards
-All WMM apps must follow these visual standards for consistency:
-
-- **Logo**: `public/logo.png` (teal hexagonal WM mark) — included in template
-- **Primary color**: Teal `#00C4B4` — buttons, links, focus rings, active states
-- **Accent color**: Violet `#7C3AED` — secondary highlights, gradients
-- **Sky**: `#0EA5E9` — tertiary accent, charts, info states
-- **Background**: Dark `#080b14` (oklch(0.13 0.005 260))
-- **Card surface**: `#0f172a` (oklch(0.17 0.005 260))
-- **Borders**: `rgba(255, 255, 255, 0.08)` — 8-10% white
-- **Font**: Geist Sans + Geist Mono (via next/font/google)
-- **Theme**: Always dark mode first. Light mode optional.
-- **Theme color** (metadata): `#00C4B4`
-- **Header pattern**: Logo (h-7) + app name, teal accent on active nav items
-- **Cards**: rounded-xl, bg-card, border-border, 1px border
-
-## Stack
-- **Frontend**: Next.js 15 (App Router), React 19, TypeScript strict
-- **Styling**: Tailwind CSS (dark theme, oklch tokens)
-- **Components**: shadcn/ui from `web/components/ui/` — never build custom UI primitives
-- **Icons**: lucide-react
-- **State**: TanStack Query for server cache, useState for client state
-- **Forms**: react-hook-form + zod (validate all inputs server-side)
-- **Backend**: Firebase Cloud Functions v2 (TypeScript)
-- **Auth**: Firebase Auth
-- **Database**: Firestore (`{{FIREBASE_PROJECT}}` — isolated, never shared)
-- **AI**: Claude API via @anthropic-ai/sdk (if needed)
-
-## Directory Structure
-```
-{{REPO_NAME}}/
-  web/                          # Next.js frontend
-    app/                        # App Router pages (thin renderers)
-      layout.tsx                # Root layout with providers
-      page.tsx                  # Home page
-      api/                      # Route handlers
-    lib/
-      firebase.ts               # Firebase client config + USE_MOCK flag
-      schema.ts                 # Firestore document types (source of truth)
-      helpers.ts                # Pure utility functions (no React, no Firestore)
-      types.ts                  # App-specific constants and enums
-      services/                 # Firestore read/write logic (no UI)
-        firestore.ts            # Shared helpers (subscribe, fetch, add)
-        index.ts                # Barrel export
-    components/
-      ui/                       # shadcn/ui primitives (do not modify)
-    package.json
-    tsconfig.json
-  functions/                    # Cloud Functions backend
-    src/
-      index.ts                  # Re-exports all functions
-    package.json
-  firebase.json
-  .firebaserc
-  firestore.rules
-  firestore.indexes.json
-  .gitignore
-  .nvmrc
-  apphosting.yaml
-  CLAUDE.md                     # This file
-```
-
-## Architecture Layers (follow this order)
-1. **Schema** (`lib/schema.ts`) — Canonical Firestore document types. Use `FirestoreTimestamp` (never `any`). Export collection name constants.
-2. **Services** (`lib/services/`) — One file per Firestore collection. Handles subscribe, fetch, create, update. No React, no UI.
-3. **Hooks** (`lib/use-data.ts` or feature-specific) — React hooks wrapping services with useState/useEffect. Handle mock data switching.
-4. **Helpers** (`lib/helpers.ts`) — Pure utility functions. No Firestore, no React.
-5. **Pages** (`app/`) — Thin renderers. Call hooks, compose UI. No direct Firestore imports.
+- Primary: Teal `#00C4B4`
+- Accent: Violet `#7C3AED`
+- Background: Dark `#080b14` (oklch(0.13 0.005 260))
+- Card surface: `#0f172a` (oklch(0.17 0.005 260))
+- Theme: Dark mode first
+- UI language: Spanish (existing convention — labels, error messages, page titles)
 
 ## Naming Conventions
-| Entity | Convention | Example |
-|--------|-----------|---------|
-| Files | `kebab-case` | `brain-inputs.ts`, `user-avatar.tsx` |
-| Components | `PascalCase` | `UserAvatar`, `CampaignCard` |
-| Firestore collections | `snake_case` | `team_roster`, `brain_inputs` |
-| Firestore fields | `snake_case` | `person_id`, `created_at` |
-| Cloud Functions | `camelCase` | `handleWebhook`, `extractBrief` |
-| Env vars | `ALL_CAPS` | `NEXT_PUBLIC_FIREBASE_PROJECT_ID` |
-
-## Firestore Schema Policy (from wmm-agents)
-- **Additive only** — never remove, rename, or change field types without a multi-phase migration
-- Allowed without migration: new optional fields with defaults, new subcollections, new collections
-- Requires dual-write migration: renaming fields, changing field types
-- **Blocked**: removing fields still read by active code, renaming collections
-- Always use `FieldValue.serverTimestamp()` for `created_at`/`updated_at`
-- Document all composite indexes in `firestore.indexes.json`
-
-## Cloud Functions Standards (from wmm-agents)
-- **One function per file** in `functions/src/`
-- Re-export all from `functions/src/index.ts`
-- **Trigger selection**: `onRequest` (webhooks), `onCall` (authenticated), `onDocumentCreated` (Firestore triggers), `onSchedule` (cron)
-- **Idempotency**: Check `_processed/{idempotencyKey}` before execution, mark AFTER success
-- **DLQ**: Write failed events to `_dlq` with eventType, eventId, payload, error, retryCount, status
-- **Secrets**: Always use `defineSecret()` — never hardcode
-- **Error handling**: Structured responses, exponential backoff for transient failures
-- **CORS**: Explicit origin allowlist — never `cors: true`
-- **Cold starts**: Lazy-import large modules inside function body
-
-```typescript
-// Idempotency pattern
-const key = `${eventType}_${eventId}`;
-const ref = db.doc(`_processed/${key}`);
-if ((await ref.get()).exists) return res.status(200).json({ status: 'duplicate' });
-// ... business logic ...
-await ref.set({ processedAt: FieldValue.serverTimestamp() });
-```
-
-```typescript
-// DLQ pattern
-await db.collection('_dlq').add({
-  eventType, eventId, payload,
-  error: String(err),
-  retryCount: 0,
-  status: 'pending',
-  createdAt: FieldValue.serverTimestamp(),
-});
-```
-
-## Frontend Standards (from wmm-agents)
-- **App Router only** — no Pages Router
-- **Server Components by default** — add `'use client'` only for interactivity
-- **Tailwind CSS** exclusively — no CSS Modules, no styled-components
-- **TanStack Query** for server cache — never Redux
-- **TypeScript strict** — no `any` without justification comment
-- **zod** for runtime validation of all API request bodies
-- Route handlers validate auth before any Firestore writes
-
-## Security Baseline (from wmm-agents)
-- **No secrets in code** — use `process.env` or `defineSecret()`
-- **Never commit .env files** — `.env` must be in `.gitignore`
-- **Webhook signature verification** — HMAC with `crypto.timingSafeEqual()`, return 401 immediately on failure
-- **Input validation** — server-side zod validation for all user inputs
-- **Auth checks** — `request.auth` for onCall, Firebase middleware for routes
-- **Firestore rules** — least privilege, type validation, `request.auth.uid` anchor
-- **Dependency audit** — `npm audit --audit-level=critical` in CI
-
-## AI Generation Rules (from wmm-agents)
-- Human review required for: auth code, payment handlers, schema changes, webhook handlers, security rules
-- AI must NOT: skip signature verification, weaken security rules, hardcode secrets, deploy to production
-- Attribution: comment for AI-generated sections >20 lines
-- Use most specific wmm-agent for the task (firebase, fullstack, code-reviewer, tech-writer)
-
-## Auth — WMM SSO Pattern
-All WMM internal apps use the same auth flow:
-1. Google OAuth via Firebase Auth with `hd: "webmymoney.com"` domain restriction
-2. Only @webmymoney.com emails can sign in (enforced at provider + app level)
-3. Each app has its OWN Firebase project — auth is independent per app, but same Google account works everywhere
-4. After sign-in, app maps `firebaseUser.email` → local user record (Firestore `users` collection or hardcoded config)
-
-**Files included in template:**
-- `lib/auth.ts` — signIn/signOut with domain validation
-- `lib/firebase.ts` — GoogleAuthProvider with `hd: "webmymoney.com"`
-- `context/auth-context.tsx` — AuthProvider + useAuth hook (handles mock mode)
-- `components/AuthGuard.tsx` — Wraps protected content with sign-in gate
-
-**To add roles/permissions:**
-1. Create a `users` collection in Firestore with `{ email, role, name, ... }`
-2. After Firebase Auth, look up user by email in Firestore
-3. Store enriched user in context (role, permissions, etc.)
-
-## Secrets Management
-- **Client-side** (`NEXT_PUBLIC_*`): Firebase config — intentionally public, security via Firestore rules
-- **Server-side** (`process.env`): API keys, webhook secrets — never expose to client
-- **Cloud Functions**: Use `defineSecret()` from `firebase-functions/params` for production secrets
-- **Local dev**: `.env.local` for all secrets (never committed, in `.gitignore`)
-- **Webhook verification**: HMAC-SHA256 with `crypto.timingSafeEqual()` — return 401 before any processing
-
-```typescript
-// Cloud Functions secret pattern (recommended for production)
-import { defineSecret } from 'firebase-functions/params';
-const apiKey = defineSecret('MY_API_KEY');
-
-export const myFunction = onRequest({ secrets: [apiKey] }, async (req, res) => {
-  const key = apiKey.value(); // injected at runtime, encrypted at rest
-});
-```
+| Entity      | Convention      | Example                        |
+|-------------|-----------------|--------------------------------|
+| Files       | `kebab-case`    | `meta.ts`, `campaign-card.tsx` |
+| Components  | `PascalCase`    | `CampaignTable`, `DashboardShell` |
+| DB tables   | `cr_snake_case` | `cr_clients`, `cr_daily_stats` |
+| DB fields   | `snake_case`    | `client_id`, `created_at`      |
+| Env vars    | `ALL_CAPS`      | `META_ACCESS_TOKEN`, `SUPABASE_SERVICE_ROLE_KEY` |
 
 ## Environment Variables
-```bash
-# Firebase (public — safe to expose, security via Firestore rules)
-NEXT_PUBLIC_FIREBASE_API_KEY=
-NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=
-NEXT_PUBLIC_FIREBASE_PROJECT_ID={{FIREBASE_PROJECT}}
-NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=
-NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=
-NEXT_PUBLIC_FIREBASE_APP_ID=
-NEXT_PUBLIC_USE_MOCK=true
-
-# Server-side only (never expose to client)
-# ANTHROPIC_API_KEY=           # if using Claude AI
-# WEBHOOK_SECRET=              # if receiving webhooks
-```
+See `.env.example`. Server-side credential vars are never `NEXT_PUBLIC_`.
 
 ## Running Locally
 ```bash
-cd web && npm install   # takes 4-5 min first time
-cd web && npm run dev   # starts on port {{PORT}}
+npm install
+cp .env.example .env.local   # fill in credentials
+npm run dev                  # starts on port 3020
 ```
 
 ## Before Committing
-- Run `npm run typecheck` from `web/`
-- Never commit `.env.local` or secrets
-- Confirm `firestore.rules` covers new collections
+- Run `npx tsc --noEmit`
+- Never commit `.env.local`, service-account JSON, or API tokens
+- Per-client tokens live in `cr_channel_credentials` (encrypted), not env vars
 
-## Commits
-- Format: `[SCOPE] description`
-- Example: `[AUTH] add Firebase sign-in with Google`
-
-## WMM OS Cross-Project Data Access
-
-Workspace apps need to read team roles, departments, and priorities from wmm-os without having their own copy. This template includes a **secondary Firebase app** pattern for read-only access to wmm-os Firestore.
-
-### Files
-- `lib/wmm-os-firebase.ts` — Secondary Firebase app init pointing at wmm-os project
-- `lib/wmm-os-data.ts` — Helper functions: `emailToPersonId()`, `getRoleTier()`, `getPosition()`, `getDepartment()`, `getDailyPriorities()`, `canManage()`, plus Firestore reads (`fetchTeamRoster()`, `subscribeTeamRoster()`, `fetchTeamMember()`)
-
-### How it works
-1. The workspace has its OWN Firebase project (for auth + local data)
-2. A SECOND named Firebase app (`"wmm-os"`) connects to wmm-os Firestore (read-only)
-3. Identity lookups (email→person, role, department, priorities) are hardcoded for speed — no Firestore needed
-4. Live data (team roster) reads from wmm-os Firestore via the secondary app
-
-### Usage
-```typescript
-import { emailToPersonId, getRoleTier, getDailyPriorities } from "@/lib/wmm-os-data";
-
-// After Firebase Auth, resolve the user
-const personId = emailToPersonId(user.email); // "john"
-const role = getRoleTier(personId);           // "manager"
-const priorities = getDailyPriorities(personId); // ["Check campaign performance...", ...]
-```
-
-### Env vars required
-Add to `.env.local` (values from Firebase Console → wmm-os project):
-```
-NEXT_PUBLIC_WMM_OS_API_KEY=
-NEXT_PUBLIC_WMM_OS_AUTH_DOMAIN=webmymoney-dev.firebaseapp.com
-NEXT_PUBLIC_WMM_OS_PROJECT_ID=webmymoney-dev
-NEXT_PUBLIC_WMM_OS_STORAGE_BUCKET=
-NEXT_PUBLIC_WMM_OS_MESSAGING_SENDER_ID=
-NEXT_PUBLIC_WMM_OS_APP_ID=
-```
-
-### Important
-- **Never write to wmm-os Firestore** from a workspace app
-- Firestore rules on wmm-os must allow authenticated reads from workspace apps
-- When adding a new team member, update both wmm-os/web/lib/types.ts AND wmm-os-data.ts in this template
-
-## Creating a New Workspace
-
-When a team member needs their own customizable dashboard:
-
-1. **Clone this template**: `git clone wmm-app-template → wmm-workspace-{name}`
-2. **Replace placeholders**: Search for `{{VARIABLES}}` and fill in:
-   - `{{APP_NAME}}` — e.g., "WMM Ads Dashboard"
-   - `{{FIREBASE_PROJECT}}` — Create a new Firebase project or reuse existing
-   - `{{REPO_NAME}}` — e.g., "wmm-workspace-ads"
-   - `{{PORT}}` — Next available (check app registry, currently 3015+)
-   - `{{OWNER_NAME}}` / `{{OWNER_PERSON_ID}}` — Who owns this workspace
-3. **Set up Firebase**: Create project, enable Auth + Firestore, add env vars
-4. **Add wmm-os env vars**: Copy from team shared secrets
-5. **Install & run**: `cd web && npm install && npm run dev`
-6. **Register in wmm-os**: Add to app registry when ready for production
-
-The workspace owner can then customize freely with Claude Code — their repo, their changes, no risk to wmm-os or other apps.
-
-## WMM Ecosystem
-This is a standalone app with its own Firebase project (`{{FIREBASE_PROJECT}}`).
-It follows [wmm-agents standards](https://github.com/Web-My-Money/wmm-agents).
-
-| App | Port | Firebase Project |
-|-----|------|-----------------|
-| wmm-os | 3001 | webmymoney-dev/prod |
-| wmm-brain | 3002 | wmm-brain |
-| pancho-dapa-crm-assistant | 3003 | dapa-crm-assistant |
-| wmm-proposal-gen | 3004 | wmm-proposal-gen |
-| wmm-alarms-marketplace | 3005 | wmm-alarms-mkt |
-| wmm-wiki | 3006 | wmm-wiki |
-| wmm-influ-campaigns | 3007 | wmm-influcampaigns |
-| wmm-crawler | 3012 | wmm-crawler |
-| wmm-blitz | 3010 | webmymoney-prod |
-| wmm-email-lead-gen-app | 3011 | wmm-email-lead-gen |
-| wmm-onboarding | 3013 | wmm-onboarding |
-| wmm-client-intel | 3014 | wmm-client-intel |
-| wmm-mind | 3015 | webmymoney-prod |
-| wmm-legacy-leads | 3018 | wmm-legacy-leads |
-
----
-
-## Ecosystem Awareness
-
-### What This Template Is
-The canonical **starter template** for all new WMM standalone apps. When a team member needs their own customizable workspace or a new internal tool is needed, clone this template, replace placeholders, and deploy. It includes the full WMM standard stack, auth pattern, USE_MOCK pattern, and cross-project wmm-os data access pattern pre-wired.
-
-### What This Template Includes (Pre-built)
-- **Auth scaffold**: `lib/auth.ts` + `context/auth-context.tsx` + `components/AuthGuard.tsx` — Google OAuth with @webmymoney.com lock
-- **USE_MOCK pattern**: `lib/firebase.ts` exports `USE_MOCK` flag — all services check it and return mock data when true
-- **wmm-os cross-project access**: `lib/wmm-os-firebase.ts` + `lib/wmm-os-data.ts` — read team roster without local copy
-- **Firestore service helpers**: `lib/services/firestore.ts` — `subscribe()`, `fetch()`, `add()`, `update()` helpers
-- **Schema pattern**: `lib/schema.ts` — typed Firestore document interfaces with `FirestoreTimestamp`
-- **Dark theme**: Tailwind CSS + oklch tokens matching wmm-os visual design
-
-### DO NOT REBUILD — Exists Elsewhere
-| What | Lives In | Where Exactly |
-|------|---------|--------------|
-| Task management | wmm-os | `/tasks`, Cloud Functions |
-| Meeting → brief pipeline | wmm-os | `ingestor` → `extractor` → `dispatcher` |
-| Team roster (authoritative) | wmm-os | `team_roster` collection |
-| Content generation | wmm-mind | ContentEngine, `/api/generate` |
-| Cold email campaigns | wmm-email-lead-gen-app | El Pulpo |
-| Influencer campaigns | wmm-influ-campaigns | AIAP |
-| Knowledge base | wmm-wiki | Google Drive sync |
-| Lead scraping | wmm-legacy-leads | Outscraper + Wappalyzer |
-| Client analytics | wmm-client-intel | Platform connectors |
-| Sales gamification | wmm-blitz | War Board |
-| CEO private vault | wmm-brain | Isolated Firebase project |
-| Employee onboarding | wmm-onboarding | Config-driven wizard |
-| Proposal generation | wmm-proposal-gen | Claude builder |
-| Document crawling | wmm-crawler | Multi-source pipeline |
-
-### WMM Team Structure
-**5 Departments:** Strategy & Growth | Marketing & Content | Sales | Client Success | Operations
-**Key People:** Fran (CEO) · Sabi · Pancho · Milan · Camilo · Pia · Manuel · Linus
-**9 Position Types:** CEO · Operations Manager · Sales Rep · Content Creator · Client Success Manager · Developer · Designer · Finance Lead · Marketing Manager
+## DO NOT REBUILD — Exists Elsewhere
+| What                              | Lives in                                       |
+|-----------------------------------|------------------------------------------------|
+| Influencer campaign management    | wmm-influ-campaigns                            |
+| Cold email campaigns              | wmm-email-lead-gen-app (El Pulpo)              |
+| Sales gamification / leaderboard  | wmm-blitz                                      |
+| Content generation                | wmm-content                                    |
+| Team roster                       | wmm-os `team_roster`                           |
+| Revenue Intelligence ETL → BigQuery | octo-functions (Junior's — do not modify)    |
 
 ## Security Rules (MANDATORY)
-- NEVER run `firebase deploy` from Claude Code — all deploys go through GitHub CI
-- NEVER run `git push --force` or `git push --force-with-lease` to any branch
-- NEVER modify firestore.rules without explicit approval from admin@webmymoney.com or fran@webmymoney.com
-- NEVER modify apphosting.yaml or apphosting.prod.yaml secrets
-- NEVER delete Firestore documents — use status:archived pattern instead
-- NEVER commit .env.local, service account keys, or API tokens to git
-- NEVER modify branch protection rules or GitHub settings
-- All security rule changes require review by Fran (fran@webmymoney.com) or Admin (admin@webmymoney.com)
+- NEVER run `git push --force` to any branch
+- NEVER commit `.env.local`, service-account JSON keys, or API tokens to git
+- NEVER expose `SUPABASE_SERVICE_ROLE_KEY` to client (never `NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY`)
+- NEVER expose connector secrets to client — all sync routes are server-side API routes only
+- All credential or schema changes require review by Fran (fran@webmymoney.com)
