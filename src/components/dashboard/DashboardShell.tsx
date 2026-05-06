@@ -156,6 +156,9 @@ export function DashboardShell({
             report={report}
             loading={loading}
             showComparison={compareEnabled}
+            clientId={clientId}
+            since={formatDateParam(primaryRange.start)}
+            until={formatDateParam(primaryRange.end)}
           />
         )}
       </div>

@@ -101,6 +101,62 @@ export async function fetchMetaCampaigns(
   );
 }
 
+export interface MetaAd {
+  id: string;
+  name?: string;
+  campaign_id?: string;
+  creative?: {
+    thumbnail_url?: string;
+    object_type?: string;
+  };
+}
+
+export interface MetaAdInsightRow {
+  date_start: string;
+  ad_id: string;
+  campaign_id: string;
+  impressions?: string;
+  clicks?: string;
+  spend?: string;
+  reach?: string;
+  actions?: MetaAction[];
+}
+
+/** Fetch ads with creative thumbnails for an account. */
+export async function fetchMetaAds(
+  account_id: string,
+  access_token: string,
+): Promise<MetaAd[]> {
+  const params = new URLSearchParams({
+    fields: 'id,name,campaign_id,creative{thumbnail_url,object_type}',
+    limit: '500',
+    access_token,
+  });
+  return fetchAllMeta<MetaAd>(
+    `${META_API_BASE}/${normalizeAdAccountId(account_id)}/ads?${params}`,
+  );
+}
+
+/** Daily ad-level insights for [since, until]. */
+export async function fetchMetaAdInsights(
+  account_id: string,
+  access_token: string,
+  since: string,
+  until: string,
+): Promise<MetaAdInsightRow[]> {
+  const params = new URLSearchParams({
+    fields: 'ad_id,campaign_id,impressions,clicks,spend,reach,actions',
+    level: 'ad',
+    time_range: JSON.stringify({ since, until }),
+    time_increment: '1',
+    limit: '500',
+    access_token,
+  });
+  return fetchAllMeta<MetaAdInsightRow>(
+    `${META_API_BASE}/${normalizeAdAccountId(account_id)}/insights?${params}`,
+  );
+}
+
 /** Daily campaign-level insights for [since, until]. */
 export async function fetchMetaInsights(
   account_id: string,
@@ -148,4 +204,72 @@ export async function verifyMetaToken(access_token: string): Promise<string | nu
   const res = await fetch(url);
   const data = (await res.json()) as { error?: { message: string } };
   return data.error?.message ?? null;
+}
+
+export interface MetaPage {
+  id: string;
+  name: string;
+  instagram_business_account?: { id: string; name?: string; followers_count?: number } | null;
+}
+
+/** Pages the token's user manages. Needs pages_read_engagement or pages_show_list. */
+export async function fetchMetaConnectedPages(access_token: string): Promise<MetaPage[]> {
+  const params = new URLSearchParams({
+    fields: 'id,name,instagram_business_account{id,name,followers_count}',
+    limit: '50',
+    access_token,
+  });
+  try {
+    return await fetchAllMeta<MetaPage>(`${META_API_BASE}/me/accounts?${params}`);
+  } catch {
+    return [];
+  }
+}
+
+export interface PageFanValue { value: number; end_time: string }
+
+/** Daily page_fans metric for a Facebook Page. Returns [{value, end_time}]. */
+export async function fetchPageFans(
+  pageId: string,
+  access_token: string,
+  since: string,
+  until: string,
+): Promise<PageFanValue[]> {
+  const params = new URLSearchParams({
+    metric: 'page_fans',
+    period: 'day',
+    since,
+    until,
+    access_token,
+  });
+  const res = await fetch(`${META_API_BASE}/${pageId}/insights?${params}`);
+  const json = (await res.json()) as {
+    data?: Array<{ name: string; values?: PageFanValue[] }>;
+    error?: { message: string };
+  };
+  if (json.error) throw new Error(json.error.message);
+  return json.data?.find(d => d.name === 'page_fans')?.values ?? [];
+}
+
+/** Daily follower_count for an Instagram Business Account. */
+export async function fetchIgFollowerHistory(
+  igAccountId: string,
+  access_token: string,
+  since: string,
+  until: string,
+): Promise<PageFanValue[]> {
+  const params = new URLSearchParams({
+    metric: 'follower_count',
+    period: 'day',
+    since,
+    until,
+    access_token,
+  });
+  const res = await fetch(`${META_API_BASE}/${igAccountId}/insights?${params}`);
+  const json = (await res.json()) as {
+    data?: Array<{ name: string; values?: PageFanValue[] }>;
+    error?: { message: string };
+  };
+  if (json.error) return [];
+  return json.data?.find(d => d.name === 'follower_count')?.values ?? [];
 }

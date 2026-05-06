@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button';
 import { DashboardShell } from '@/components/dashboard/DashboardShell';
 import { DeleteClientButton } from './_components/DeleteClientButton';
 import { BusinessTypeSelect } from './_components/BusinessTypeSelect';
+import { ClientLogoEdit } from './_components/ClientLogoEdit';
 import { getClientById } from '@/lib/supabase/clients';
 import type { Channel } from '@/types';
 
@@ -45,6 +46,17 @@ export default async function AdminClientDetailPage({ params }: PageProps) {
           </div>
         </div>
       </div>
+
+      {/* Logo edit panel — collapsed by default, admin only */}
+      <details className="border-b border-[#F3F4F6] bg-white group">
+        <summary className="px-6 py-2 text-xs text-[#9CA3AF] cursor-pointer hover:text-[#374151] list-none flex items-center gap-1.5 select-none w-fit">
+          <span className="group-open:rotate-90 transition-transform inline-block">›</span>
+          Logo del cliente
+        </summary>
+        <div className="px-6 pb-4 pt-1">
+          <ClientLogoEdit clientId={clientId} initialUrl={client.logo_url} />
+        </div>
+      </details>
 
       <DashboardShell
         clientId={clientId}

@@ -6,6 +6,7 @@ import { LineAreaChart } from '@/components/charts/LineAreaChart';
 import { CampaignBarChart } from '@/components/charts/BarChartComp';
 import { Sparkles } from 'lucide-react';
 import type { MetricConfig, MetricUnit, ReportResponse, SourceKey } from '@/types';
+import { CreativeBreakdown } from './CreativeBreakdown';
 
 /** Per-source KPI card definition. Picks columns from the
  *  cr_daily_stats / period totals already populated for paid sources.
@@ -85,9 +86,12 @@ interface SourceTabProps {
   report: ReportResponse;
   loading: boolean;
   showComparison: boolean;
+  clientId?: string;
+  since?: string;
+  until?: string;
 }
 
-export function SourceTab({ sourceKey, report, loading, showComparison }: SourceTabProps) {
+export function SourceTab({ sourceKey, report, loading, showComparison, clientId, since, until }: SourceTabProps) {
   const kpis = SOURCE_KPIS[sourceKey];
   const label = SOURCE_LABELS[sourceKey];
 
@@ -185,6 +189,15 @@ export function SourceTab({ sourceKey, report, loading, showComparison }: Source
               showComparison={showComparison}
             />
           </Card>
+
+          {sourceKey === 'meta_ads' && clientId && since && until && (
+            <CreativeBreakdown
+              clientId={clientId}
+              sourceKey={sourceKey}
+              since={since}
+              until={until}
+            />
+          )}
         </>
       )}
     </div>

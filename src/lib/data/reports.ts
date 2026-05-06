@@ -43,6 +43,11 @@ export const MOCK_REPORTS: ClientReport[] = [
     ],
     recommendations:
       '1) Escalar presupuesto +30% en "Primavera Luxe" manteniendo targeting Lookalike 1%. 2) Pausar audiencia "Broad AI" o limitar a 15% del budget hasta mejorar CPA. 3) Producir 3 variantes nuevas del video de 30s para evitar fatiga creativa en Abril. 4) Activar campaña de email retargeting para los 12.5k carritos abandonados de Marzo.',
+    client_logo_url: null,
+    agency_logo_url: null,
+    period_totals: null,
+    agency_name: null,
+    accent_color: null,
   },
   {
     id: 'rpt-002',
@@ -72,6 +77,11 @@ export const MOCK_REPORTS: ClientReport[] = [
     ],
     recommendations:
       'Replicar estructura en campaña "Verano Luxe" con inicio en Junio. Reservar budget para versión TikTok del creativo ganador. Crear Lookalike 2% para escalar reach manteniendo calidad.',
+    client_logo_url: null,
+    agency_logo_url: null,
+    period_totals: null,
+    agency_name: null,
+    accent_color: null,
   },
   {
     id: 'rpt-003',
@@ -103,6 +113,11 @@ export const MOCK_REPORTS: ClientReport[] = [
     ],
     recommendations:
       'Doblar apuesta en TikTok con 2 campañas paralelas: una de awareness (broad) y una de conversión (lookalike). Producir 4 variantes de creativo TikTok por mes para evitar fatiga.',
+    client_logo_url: null,
+    agency_logo_url: null,
+    period_totals: null,
+    agency_name: null,
+    accent_color: null,
   },
 ];
 
@@ -158,6 +173,11 @@ export function createDemoReport(clientId: string, title: string, periodStart: s
     ],
     recommendations:
       'Mantener inversión en canales con ROAS > 3. Renovar creativos cada 3-4 semanas. Explorar nuevos lookalikes basados en compradores de mayor LTV.',
+    client_logo_url: null,
+    agency_logo_url: null,
+    period_totals: null,
+    agency_name: null,
+    accent_color: null,
   };
   MOCK_REPORTS.unshift(report);
   return report;

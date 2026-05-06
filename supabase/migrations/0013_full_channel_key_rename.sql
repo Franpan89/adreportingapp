@@ -29,6 +29,9 @@ BEGIN;
 
 -- ---- cr_channel_credentials -----------------------------------------------
 
+-- Drop constraint first so the renames below are not blocked by it
+ALTER TABLE public.cr_channel_credentials DROP CONSTRAINT IF EXISTS cr_channel_credentials_channel_check;
+
 DELETE FROM public.cr_channel_credentials
   WHERE channel = 'meta'
     AND (client_id, 'meta_ads')
@@ -63,6 +66,8 @@ ALTER TABLE public.cr_channel_credentials
 
 -- ---- cr_campaigns ---------------------------------------------------------
 
+ALTER TABLE public.cr_campaigns DROP CONSTRAINT IF EXISTS cr_campaigns_channel_check;
+
 DELETE FROM public.cr_campaigns
   WHERE channel = 'meta'
     AND (client_id, 'meta_ads', external_id)
@@ -91,13 +96,13 @@ ALTER TABLE public.cr_campaigns
 
 -- ---- cr_daily_stats -------------------------------------------------------
 
+ALTER TABLE public.cr_daily_stats DROP CONSTRAINT IF EXISTS cr_daily_stats_channel_check;
+
 UPDATE public.cr_daily_stats SET channel = 'meta_ads'   WHERE channel = 'meta';
 UPDATE public.cr_daily_stats SET channel = 'google_ads' WHERE channel = 'google';
 UPDATE public.cr_daily_stats SET channel = 'tiktok_ads' WHERE channel = 'tiktok';
 
 DELETE FROM public.cr_daily_stats WHERE channel = 'gtm';
-
-ALTER TABLE public.cr_daily_stats DROP CONSTRAINT IF EXISTS cr_daily_stats_channel_check;
 ALTER TABLE public.cr_daily_stats
   ADD CONSTRAINT cr_daily_stats_channel_check
   CHECK (channel IN (

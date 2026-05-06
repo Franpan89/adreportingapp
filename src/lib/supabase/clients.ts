@@ -67,13 +67,14 @@ export async function createClient(input: {
   name: string;
   slug: string;
   timezone?: string;
+  logo_url?: string | null;
 }): Promise<ClientRow> {
   if (!isSupabaseConfigured()) {
     return {
       id: crypto.randomUUID(),
       name: input.name,
       slug: input.slug,
-      logo_url: null,
+      logo_url: input.logo_url ?? null,
       timezone: input.timezone ?? 'UTC',
       is_active: true,
       created_at: new Date().toISOString(),
@@ -85,11 +86,24 @@ export async function createClient(input: {
   const supabase = await getSupabase();
   const { data, error } = await supabase
     .from('cr_clients')
-    .insert({ name: input.name, slug: input.slug, timezone: input.timezone ?? 'UTC' })
+    .insert({ name: input.name, slug: input.slug, timezone: input.timezone ?? 'UTC', logo_url: input.logo_url ?? null })
     .select(SELECT)
     .single();
   if (error || !data) throw new Error(error?.message ?? 'Error al crear cliente');
   return mapRow(data);
+}
+
+export async function updateClientLogo(
+  clientId: string,
+  logoUrl: string | null,
+): Promise<void> {
+  if (!isSupabaseConfigured()) return;
+  const supabase = await getSupabase();
+  const { error } = await supabase
+    .from('cr_clients')
+    .update({ logo_url: logoUrl })
+    .eq('id', clientId);
+  if (error) throw new Error(error.message);
 }
 
 export async function updateClientBusinessType(

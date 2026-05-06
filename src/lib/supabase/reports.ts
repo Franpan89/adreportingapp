@@ -9,6 +9,7 @@ import type {
   SpendResult,
   AudienceSegment,
   SocialGrowthMetric,
+  PeriodTotals,
 } from '@/types';
 import {
   MOCK_REPORTS,
@@ -43,6 +44,11 @@ function mapRow(row: any): ClientReport {
     created_by: row.created_by ?? null,
     created_at: row.created_at,
     published_at: row.published_at ?? null,
+    client_logo_url: row.client_logo_url ?? null,
+    agency_logo_url: row.agency_logo_url ?? null,
+    period_totals:   row.period_totals   ?? null,
+    agency_name:     row.agency_name     ?? null,
+    accent_color:    row.accent_color    ?? null,
   };
 }
 
@@ -106,6 +112,10 @@ export interface CreateReportInput {
   title: string;
   period_start: string;
   period_end: string;
+  client_logo_url?: string | null;
+  agency_logo_url?: string | null;
+  agency_name?: string | null;
+  accent_color?: string | null;
 }
 
 export async function createReport(input: CreateReportInput): Promise<ClientReport> {
@@ -114,19 +124,46 @@ export async function createReport(input: CreateReportInput): Promise<ClientRepo
     return createDemoReport(input.client_id, input.title, input.period_start, input.period_end);
   }
   const supabase = await getSupabase();
-  const { data, error } = await supabase
-    .from('cr_reports')
-    .insert({
-      client_id: input.client_id,
-      title: input.title,
-      period_start: input.period_start,
-      period_end: input.period_end,
-      status: 'draft',
-    })
-    .select()
-    .single();
+  const base = {
+    client_id: input.client_id,
+    title: input.title,
+    period_start: input.period_start,
+    period_end: input.period_end,
+    status: 'draft' as const,
+    client_logo_url: input.client_logo_url ?? null,
+    agency_logo_url: input.agency_logo_url ?? null,
+    agency_name:     input.agency_name     ?? null,
+    accent_color:    input.accent_color    ?? '#00BD7D',
+  };
+  let { data, error } = await supabase.from('cr_reports').insert(base).select().single();
+  // If logo columns don't exist yet (migration pending), retry without them.
+  if (error?.message?.includes('column') && (error.message.includes('client_logo_url') || error.message.includes('agency_logo_url'))) {
+    const { client_logo_url, agency_logo_url, ...withoutLogos } = base;
+    void client_logo_url; void agency_logo_url;
+    ({ data, error } = await supabase.from('cr_reports').insert(withoutLogos).select().single());
+  }
   if (error || !data) throw new Error(error?.message ?? 'Error al crear reporte');
   return mapRow(data);
+}
+
+export async function updateReportContent(
+  id: string,
+  content: {
+    executive_summary?: string;
+    recommendations?: string;
+    top_creatives?: unknown[];
+    spend_vs_results?: unknown[];
+    audiences?: unknown[];
+    social_growth?: unknown[];
+    period_totals?: PeriodTotals | null;
+    agency_name?: string | null;
+    accent_color?: string | null;
+  },
+): Promise<void> {
+  if (!isSupabaseConfigured()) return;
+  const supabase = await getSupabase();
+  const { error } = await supabase.from('cr_reports').update(content).eq('id', id);
+  if (error) throw new Error(error.message);
 }
 
 export async function updateReportStatus(

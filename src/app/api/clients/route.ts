@@ -19,10 +19,11 @@ export async function POST(request: NextRequest) {
     if (!user) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
 
     const body = await request.json();
-    const { name, slug, timezone, meta_account_id } = body as {
+    const { name, slug, timezone, logo_url, meta_account_id } = body as {
       name: string;
       slug: string;
       timezone?: string;
+      logo_url?: string;
       meta_account_id?: string;
     };
 
@@ -30,7 +31,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'name y slug son requeridos' }, { status: 400 });
     }
 
-    const client = await createClient({ name, slug, timezone });
+    const client = await createClient({ name, slug, timezone, logo_url });
 
     if (meta_account_id) {
       let credentials_enc: string;
@@ -46,7 +47,7 @@ export async function POST(request: NextRequest) {
         .upsert(
           {
             client_id: client.id,
-            channel: 'meta',
+            channel: 'meta_ads',
             credentials_enc,
             is_active: true,
             sync_status: 'idle',
