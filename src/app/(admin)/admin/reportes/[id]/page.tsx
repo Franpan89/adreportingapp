@@ -27,6 +27,15 @@ export default async function AdminReporteDetailPage({ params }: PageProps) {
   const supabase = await createSupabase();
   const { data: { user } } = await supabase.auth.getUser();
 
+  // ── 0. Fetch client name for cover/header ──────────────────────────────────
+  const { data: clientRow } = await supabase
+    .from('cr_clients')
+    .select('name')
+    .eq('id', report.client_id)
+    .single()
+    .then(r => r, () => ({ data: null }));
+  const clientName: string | undefined = (clientRow as { name?: string } | null)?.name ?? undefined;
+
   // ── 1. Always override color + name from current agency settings ───────────
   if (user) {
     const { data: ag } = await supabase
@@ -193,7 +202,7 @@ export default async function AdminReporteDetailPage({ params }: PageProps) {
       </div>
 
       <div id="report-print-area" className="flex-1 px-6 py-8 print:p-0">
-        <ReportView report={report} />
+        <ReportView report={report} clientName={clientName} />
       </div>
     </div>
   );

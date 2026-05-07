@@ -107,28 +107,47 @@ export async function generateReportContent(
   let audiences: AudienceSegment[] = [];
 
   if (apiKey && hasMetrics) {
+    const totalConv  = period_totals.conversions;
+    const totalSpend = period_totals.spend;
+    const avgCpa     = totalConv > 0 ? round2(totalSpend / totalConv) : 0;
+
     const channelLines = spend_vs_results
-      .map(r => `- ${r.channel}: $${r.spend.toFixed(0)} invertidos, ${r.conversions} conversiones (mensajes/leads), CPA $${r.cpa.toFixed(2)}`)
+      .map(r => `- ${r.channel}: $${r.spend.toFixed(2)} invertidos, ${r.conversions} conversiones, CPA $${r.cpa.toFixed(2)}`)
       .join('\n');
 
-    const adLines = top_creatives.slice(0, 3)
-      .map(c => `- "${c.name}" (${c.channel}): $${c.spend.toFixed(0)}, ${c.conversions} conv., CTR ${c.ctr.toFixed(1)}%`)
+    const allAdLines = top_creatives
+      .map((c, i) => `${i + 1}. "${c.name}" (${c.channel}): $${c.spend.toFixed(2)} invertidos, ${c.conversions} conversiones, CPA $${c.conversions > 0 ? round2(c.spend / c.conversions).toFixed(2) : 'N/A'}, ${c.impressions.toLocaleString()} impresiones, CTR ${c.ctr.toFixed(2)}%`)
       .join('\n') || 'Sin datos de anuncios individuales.';
 
+    const topAd = top_creatives[0];
+    const topAdSummary = topAd
+      ? `Anuncio #1: "${topAd.name}" con ${topAd.conversions} conversiones y CPA $${topAd.conversions > 0 ? round2(topAd.spend / topAd.conversions).toFixed(2) : 'N/A'}`
+      : '';
+
     const prompt =
-      `Eres analista de marketing digital de la agencia Web My Money.\n` +
-      `Genera un análisis en español para el período ${periodStart} al ${periodEnd}.\n` +
-      `Los clientes se miden por conversiones (mensajes recibidos/leads) y CPA. NUNCA menciones ROAS.\n\n` +
-      `CANALES:\n${channelLines}\n\n` +
-      `MEJORES ANUNCIOS:\n${adLines}\n\n` +
-      `REACH TOTAL DEL PERÍODO: ${period_totals.reach > 0 ? period_totals.reach.toLocaleString('es-MX') : 'no disponible'}\n\n` +
-      `Responde ÚNICAMENTE con JSON válido con esta estructura exacta:\n` +
+      `Eres analista senior de marketing digital. Genera un informe profesional en español.\n\n` +
+      `PERÍODO: ${periodStart} al ${periodEnd}\n` +
+      `MÉTRICAS CLAVE:\n` +
+      `- Inversión total: $${totalSpend.toFixed(2)}\n` +
+      `- Conversiones totales (mensajes/leads): ${totalConv}\n` +
+      `- CPA promedio: $${avgCpa.toFixed(2)}\n` +
+      `- Impresiones totales: ${period_totals.impressions.toLocaleString()}\n` +
+      `- Alcance total: ${period_totals.reach > 0 ? period_totals.reach.toLocaleString() : 'no disponible'}\n\n` +
+      `RENDIMIENTO POR CANAL:\n${channelLines}\n\n` +
+      `TODOS LOS ANUNCIOS DEL PERÍODO:\n${allAdLines}\n\n` +
+      (topAdSummary ? `ANUNCIO DESTACADO: ${topAdSummary}\n\n` : '') +
+      `REGLAS:\n` +
+      `- NUNCA menciones ROAS\n` +
+      `- Usa los números EXACTOS del período en el resumen\n` +
+      `- El resumen debe mencionar el anuncio #1 por nombre exacto\n` +
+      `- Las recomendaciones deben referenciar datos concretos del período\n\n` +
+      `Responde ÚNICAMENTE con JSON válido:\n` +
       `{\n` +
-      `  "executive_summary": "2-3 párrafos enfocados en conversiones/mensajes y CPA, tono profesional, sin mencionar ROAS",\n` +
-      `  "recommendations": "texto plano con 4-5 recomendaciones numeradas separadas por salto de línea, ejemplo: 1. Texto...\\n2. Texto...\\n3. Texto...",\n` +
+      `  "executive_summary": "3 párrafos. Párrafo 1: resultados generales con números exactos (inversión, conversiones totales, CPA). Párrafo 2: destacar el anuncio con mejor performance mencionando su nombre, conversiones y CPA. Párrafo 3: conclusión sobre el rendimiento general y oportunidades. Tono profesional.",\n` +
+      `  "recommendations": "5 recomendaciones numeradas separadas por \\n. Cada una DEBE ser específica y referenciar datos del período. Formato: '1. [Acción concreta basada en los datos]'. Sin ROAS.",\n` +
       `  "audiences": [\n` +
-      `    {"name": "nombre del segmento", "reach": 120000, "engagement_rate": 3.5, "notes": "observación"},\n` +
-      `    ... (3-4 segmentos típicos de Meta Ads para este tipo de campaña de conversiones/mensajes)\n` +
+      `    {"name": "Nombre descriptivo del segmento", "reach": 50000, "engagement_rate": 4.2, "notes": "Descripción del perfil: género dominante, rango de edad, comportamiento de compra, por qué este segmento convierte bien para este tipo de campaña"},\n` +
+      `    ... (genera 4 segmentos relevantes para campañas de conversión/mensajes en Meta Ads)\n` +
       `  ]\n` +
       `}`;
 
@@ -145,7 +164,7 @@ export async function generateReportContent(
           model:       'openai/gpt-4o-mini',
           messages:    [{ role: 'user', content: prompt }],
           temperature: 0.7,
-          max_tokens:  1100,
+          max_tokens:  1800,
         }),
       });
 
