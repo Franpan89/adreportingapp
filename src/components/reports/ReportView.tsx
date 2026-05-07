@@ -30,9 +30,24 @@ const PLATFORM_LABELS: Record<SocialGrowthMetric['platform'], string> = {
 
 function parseRecommendations(text: string): string[] {
   if (!text?.trim()) return [];
-  const parts = text.split(/(?=\n?\s*\d+[.)]\s+)/);
+  const str = text.trim();
+
+  // AI sometimes stores recommendations as a JSON array string
+  if (str.startsWith('[')) {
+    try {
+      const arr = JSON.parse(str);
+      if (Array.isArray(arr)) {
+        return arr
+          .map(s => String(s).replace(/^\s*\d+[.)]\s+/, '').trim())
+          .filter(Boolean);
+      }
+    } catch { /* fall through */ }
+  }
+
+  // Standard numbered list: "1. ...\n2. ..."
+  const parts = str.split(/(?=\n\s*\d+[.)]\s+)/);
   const cleaned = parts.map(s => s.replace(/^\s*\d+[.)]\s+/, '').trim()).filter(Boolean);
-  return cleaned.length > 1 ? cleaned : [text.trim()];
+  return cleaned.length > 1 ? cleaned : [str];
 }
 
 export function ReportView({ report }: { report: ClientReport }) {
@@ -55,7 +70,7 @@ export function ReportView({ report }: { report: ClientReport }) {
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-3">
             {report.agency_logo_url ? (
-              <img src={report.agency_logo_url} alt="Logo agencia" className="h-10 max-w-[140px] object-contain" referrerPolicy="no-referrer" />
+              <img src={report.agency_logo_url} alt="Logo agencia" className="h-20 max-w-[200px] object-contain" referrerPolicy="no-referrer" />
             ) : (
               <div className="h-10 flex items-center">
                 <span className="text-sm font-semibold text-[#9CA3AF]">{report.agency_name ?? ''}</span>
@@ -96,7 +111,7 @@ export function ReportView({ report }: { report: ClientReport }) {
         {report.top_creatives.length === 0 ? (
           <EmptyNote>No hay datos de creativos para este período.</EmptyNote>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-5">
             {report.top_creatives.map((c, i) => <CreativeCard key={i} creative={c} accent={accent} rank={i + 1} />)}
           </div>
         )}
@@ -231,14 +246,14 @@ function CreativeCard({ creative, accent, rank }: { creative: TopCreative; accen
   return (
     <div className="rounded-xl overflow-hidden border border-[#E5E7EB] shadow-sm hover:shadow-md transition-shadow">
       {/* Image */}
-      <div className="relative bg-[#1a1a1a] aspect-square overflow-hidden">
+      <div className="relative bg-[#1a1a1a] overflow-hidden" style={{ height: '200px' }}>
         {creative.thumbnail_url ? (
           <img
             src={creative.thumbnail_url}
             alt={creative.name}
-            className="w-full h-full object-contain"
+            className="w-full h-full object-cover"
             referrerPolicy="no-referrer"
-            style={{ imageRendering: 'auto' }}
+            loading="eager"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-[#F3F4F6]">

@@ -141,9 +141,12 @@ export default async function AdminReporteDetailPage({ params }: PageProps) {
         const growthRows: SocialGrowthMetric[] = [];
 
         for (const page of pages.slice(0, 3)) {
+          // Page Insights require the page-scoped token, not the user token
+          const pageToken = page.access_token ?? accessToken;
+
           // Facebook fans
           try {
-            const fans = await fetchPageFans(page.id, accessToken, since, until);
+            const fans = await fetchPageFans(page.id, pageToken, since, until);
             if (fans.length >= 2) {
               const start = fans[0].value;
               const end   = fans[fans.length - 1].value;
@@ -156,7 +159,7 @@ export default async function AdminReporteDetailPage({ params }: PageProps) {
           const igId = page.instagram_business_account?.id;
           if (igId) {
             try {
-              const igFans = await fetchIgFollowerHistory(igId, accessToken, since, until);
+              const igFans = await fetchIgFollowerHistory(igId, pageToken, since, until);
               if (igFans.length >= 2) {
                 const start = igFans[0].value;
                 const end   = igFans[igFans.length - 1].value;

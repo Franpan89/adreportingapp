@@ -118,14 +118,14 @@ export async function generateReportContent(
     const prompt =
       `Eres analista de marketing digital de la agencia Web My Money.\n` +
       `Genera un análisis en español para el período ${periodStart} al ${periodEnd}.\n` +
-      `Los clientes se miden principalmente por conversiones (mensajes recibidos/leads), NO por ROAS.\n\n` +
+      `Los clientes se miden por conversiones (mensajes recibidos/leads) y CPA. NUNCA menciones ROAS.\n\n` +
       `CANALES:\n${channelLines}\n\n` +
       `MEJORES ANUNCIOS:\n${adLines}\n\n` +
       `REACH TOTAL DEL PERÍODO: ${period_totals.reach > 0 ? period_totals.reach.toLocaleString('es-MX') : 'no disponible'}\n\n` +
       `Responde ÚNICAMENTE con JSON válido con esta estructura exacta:\n` +
       `{\n` +
-      `  "executive_summary": "2-3 párrafos enfocados en conversiones/mensajes y CPA, tono profesional",\n` +
-      `  "recommendations": "4-5 recomendaciones numeradas, accionables, orientadas a bajar CPA y subir conversiones",\n` +
+      `  "executive_summary": "2-3 párrafos enfocados en conversiones/mensajes y CPA, tono profesional, sin mencionar ROAS",\n` +
+      `  "recommendations": "texto plano con 4-5 recomendaciones numeradas separadas por salto de línea, ejemplo: 1. Texto...\\n2. Texto...\\n3. Texto...",\n` +
       `  "audiences": [\n` +
       `    {"name": "nombre del segmento", "reach": 120000, "engagement_rate": 3.5, "notes": "observación"},\n` +
       `    ... (3-4 segmentos típicos de Meta Ads para este tipo de campaña de conversiones/mensajes)\n` +
@@ -159,7 +159,14 @@ export async function generateReportContent(
           audiences?: AudienceSegment[];
         };
         executive_summary = parsed.executive_summary ?? '';
-        recommendations   = parsed.recommendations   ?? '';
+        // AI sometimes returns recommendations as an array despite the prompt asking for a string
+        if (Array.isArray(parsed.recommendations)) {
+          recommendations = (parsed.recommendations as string[])
+            .map((r, i) => `${i + 1}. ${String(r).replace(/^\s*\d+[.)]\s+/, '').trim()}`)
+            .join('\n');
+        } else {
+          recommendations = parsed.recommendations ?? '';
+        }
         audiences         = Array.isArray(parsed.audiences) ? parsed.audiences : [];
       }
     } catch {
