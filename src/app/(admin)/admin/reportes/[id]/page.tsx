@@ -5,13 +5,12 @@ import { getReport } from '@/lib/supabase/reports';
 import { ReportView } from '@/components/reports/ReportView';
 import { DownloadPdfButton } from '@/components/reports/DownloadPdfButton';
 import { createClient as createSupabase } from '@/lib/supabase/server';
-import { decrypt } from '@/lib/utils/encrypt';
 import {
-  fetchMetaConnectedPages,
-  fetchPageFans,
-  fetchIgFollowerHistory,
-} from '@/lib/connectors/meta';
-import type { TopCreative, PeriodTotals, SocialGrowthMetric, Channel } from '@/types';
+  resolveClientMetaToken,
+  captureMetaSocialSnapshots,
+  getSocialGrowthFromSnapshots,
+} from '@/lib/supabase/social-snapshots';
+import type { TopCreative, PeriodTotals, Channel } from '@/types';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -107,91 +106,21 @@ export default async function AdminReporteDetailPage({ params }: PageProps) {
     if (mapped.length) report.top_creatives = mapped;
   }
 
-  // ── 4. Social growth from Meta Page Insights ──────────────────────────────
+  // ── 4. Social growth from our snapshot history ────────────────────────────
+  // Meta deprecated the page_fans Insights metric, so we capture our own daily
+  // snapshots from the live followers_count field and compute growth from them.
   if (!report.social_growth?.length) {
-    try {
-      // Resolve Meta access token
-      let accessToken: string | null = null;
-
-      const { data: credRow } = await supabase
-        .from('cr_channel_credentials')
-        .select('credentials_enc')
-        .eq('client_id', report.client_id)
-        .eq('channel', 'meta_ads')
-        .eq('is_active', true)
-        .single()
-        .then(r => r, () => ({ data: null }));
-
-      if (credRow?.credentials_enc) {
-        const creds = JSON.parse(decrypt(credRow.credentials_enc)) as Record<string, string>;
-        if (creds.access_token) {
-          accessToken = creds.access_token;
-        }
-      }
-
-      // Fallback: agency Meta connection
-      if (!accessToken && user) {
-        const { data: agConn } = await supabase
-          .from('agency_meta_connections')
-          .select('access_token_enc')
-          .eq('admin_user_id', user.id)
-          .single()
-          .then(r => r, () => ({ data: null }));
-        if (agConn?.access_token_enc) {
-          accessToken = decrypt(agConn.access_token_enc);
-        }
-      }
-
-      if (accessToken) {
-        const since = report.period_start;
-        const until = report.period_end;
-
-        const pages = await fetchMetaConnectedPages(accessToken);
-        const growthRows: SocialGrowthMetric[] = [];
-
-        for (const page of pages.slice(0, 3)) {
-          // Page Insights require the page-scoped token, not the user token
-          const pageToken = page.access_token ?? accessToken;
-
-          // Facebook fans
-          try {
-            const fans = await fetchPageFans(page.id, pageToken, since, until);
-            if (fans.length >= 2) {
-              const start = fans[0].value;
-              const end   = fans[fans.length - 1].value;
-              const pct   = start > 0 ? Math.round(((end - start) / start) * 10000) / 100 : 0;
-              growthRows.push({ platform: 'facebook', followers_start: start, followers_end: end, growth_pct: pct });
-            }
-          } catch (err) {
-            console.warn('[social-growth] Facebook page_fans failed:', err instanceof Error ? err.message : err);
-          }
-
-          // Instagram
-          const igId = page.instagram_business_account?.id;
-          if (igId) {
-            try {
-              const igFans = await fetchIgFollowerHistory(igId, pageToken, since, until);
-              if (igFans.length >= 2) {
-                const start = igFans[0].value;
-                const end   = igFans[igFans.length - 1].value;
-                const pct   = start > 0 ? Math.round(((end - start) / start) * 10000) / 100 : 0;
-                growthRows.push({ platform: 'instagram', followers_start: start, followers_end: end, growth_pct: pct });
-              } else if (page.instagram_business_account?.followers_count) {
-                // Fallback: use current count only
-                const cur = page.instagram_business_account.followers_count;
-                growthRows.push({ platform: 'instagram', followers_start: cur, followers_end: cur, growth_pct: 0 });
-              }
-            } catch (err) {
-              console.warn('[social-growth] Instagram follower_count failed:', err instanceof Error ? err.message : err);
-            }
-          }
-        }
-
-        if (growthRows.length) report.social_growth = growthRows;
-      }
-    } catch (err) {
-      console.warn('[social-growth] outer block failed:', err instanceof Error ? err.message : err);
+    const accessToken = await resolveClientMetaToken(supabase, report.client_id, user?.id ?? null);
+    if (accessToken) {
+      await captureMetaSocialSnapshots(supabase, report.client_id, accessToken);
     }
+    const growth = await getSocialGrowthFromSnapshots(
+      supabase,
+      report.client_id,
+      report.period_start,
+      report.period_end,
+    );
+    if (growth.length) report.social_growth = growth;
   }
 
   return (

@@ -3,13 +3,12 @@ import { AutoPrint } from './_components/AutoPrint';
 import { ReportView } from '@/components/reports/ReportView';
 import { getReport } from '@/lib/supabase/reports';
 import { createClient as createSupabase } from '@/lib/supabase/server';
-import { decrypt } from '@/lib/utils/encrypt';
 import {
-  fetchMetaConnectedPages,
-  fetchPageFans,
-  fetchIgFollowerHistory,
-} from '@/lib/connectors/meta';
-import type { TopCreative, PeriodTotals, SocialGrowthMetric, Channel } from '@/types';
+  resolveClientMetaToken,
+  captureMetaSocialSnapshots,
+  getSocialGrowthFromSnapshots,
+} from '@/lib/supabase/social-snapshots';
+import type { TopCreative, PeriodTotals, Channel } from '@/types';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -99,65 +98,19 @@ export default async function PrintPage({ params }: PageProps) {
     if (mapped.length) report.top_creatives = mapped;
   }
 
-  // Social growth (optional)
+  // Social growth via our own snapshot history (Meta page_fans is deprecated)
   if (!report.social_growth?.length) {
-    try {
-      let accessToken: string | null = null;
-      const { data: credRow } = await supabase
-        .from('cr_channel_credentials')
-        .select('credentials_enc')
-        .eq('client_id', report.client_id)
-        .eq('channel', 'meta_ads')
-        .eq('is_active', true)
-        .single()
-        .then(r => r, () => ({ data: null }));
-      if (credRow?.credentials_enc) {
-        const creds = JSON.parse(decrypt(credRow.credentials_enc)) as Record<string, string>;
-        if (creds.access_token) accessToken = creds.access_token;
-      }
-      if (!accessToken && user) {
-        const { data: agConn } = await supabase
-          .from('agency_meta_connections')
-          .select('access_token_enc')
-          .eq('admin_user_id', user.id)
-          .single()
-          .then(r => r, () => ({ data: null }));
-        if (agConn?.access_token_enc) accessToken = decrypt(agConn.access_token_enc);
-      }
-      if (accessToken) {
-        const pages = await fetchMetaConnectedPages(accessToken);
-        const growthRows: SocialGrowthMetric[] = [];
-        for (const page of pages.slice(0, 3)) {
-          const pageToken = page.access_token ?? accessToken;
-          try {
-            const fans = await fetchPageFans(page.id, pageToken, report.period_start, report.period_end);
-            if (fans.length >= 2) {
-              const start = fans[0].value;
-              const end   = fans[fans.length - 1].value;
-              const pct   = start > 0 ? Math.round(((end - start) / start) * 10000) / 100 : 0;
-              growthRows.push({ platform: 'facebook', followers_start: start, followers_end: end, growth_pct: pct });
-            }
-          } catch (err) {
-            console.warn('[print/social-growth] Facebook failed:', err instanceof Error ? err.message : err);
-          }
-          const igId = page.instagram_business_account?.id;
-          if (igId) {
-            try {
-              const igFans = await fetchIgFollowerHistory(igId, pageToken, report.period_start, report.period_end);
-              if (igFans.length >= 2) {
-                const start = igFans[0].value;
-                const end   = igFans[igFans.length - 1].value;
-                const pct   = start > 0 ? Math.round(((end - start) / start) * 10000) / 100 : 0;
-                growthRows.push({ platform: 'instagram', followers_start: start, followers_end: end, growth_pct: pct });
-              }
-            } catch (err) {
-              console.warn('[print/social-growth] Instagram failed:', err instanceof Error ? err.message : err);
-            }
-          }
-        }
-        if (growthRows.length) report.social_growth = growthRows;
-      }
-    } catch { /* social growth is optional */ }
+    const accessToken = await resolveClientMetaToken(supabase, report.client_id, user?.id ?? null);
+    if (accessToken) {
+      await captureMetaSocialSnapshots(supabase, report.client_id, accessToken);
+    }
+    const growth = await getSocialGrowthFromSnapshots(
+      supabase,
+      report.client_id,
+      report.period_start,
+      report.period_end,
+    );
+    if (growth.length) report.social_growth = growth;
   }
 
   return (

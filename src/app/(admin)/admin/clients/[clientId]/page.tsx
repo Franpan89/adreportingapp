@@ -6,6 +6,7 @@ import { DashboardShell } from '@/components/dashboard/DashboardShell';
 import { DeleteClientButton } from './_components/DeleteClientButton';
 import { BusinessTypeSelect } from './_components/BusinessTypeSelect';
 import { ClientLogoEdit } from './_components/ClientLogoEdit';
+import { SocialStatsPanel } from './_components/SocialStatsPanel';
 import { getClientById } from '@/lib/supabase/clients';
 import type { Channel } from '@/types';
 
@@ -57,6 +58,10 @@ export default async function AdminClientDetailPage({ params }: PageProps) {
           <ClientLogoEdit clientId={clientId} initialUrl={client.logo_url} />
         </div>
       </details>
+
+      <div className="px-6 pt-4">
+        <SocialStatsPanel clientId={clientId} />
+      </div>
 
       <DashboardShell
         clientId={clientId}

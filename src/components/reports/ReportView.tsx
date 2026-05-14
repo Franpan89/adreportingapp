@@ -202,12 +202,10 @@ export function ReportView({ report, clientName }: { report: ClientReport; clien
         <Section title="CRECIMIENTO EN REDES SOCIALES" accent={accent}>
           {report.social_growth.length === 0 ? (
             <div className="bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl p-6 text-center space-y-2">
-              <p className="text-sm font-semibold text-[#374151]">Datos de crecimiento orgánico no disponibles</p>
+              <p className="text-sm font-semibold text-[#374151]">Aún no hay historial de seguidores</p>
               <p className="text-xs text-[#6B7280] leading-relaxed max-w-md mx-auto">
-                Para mostrar esta sección, el token de Meta requiere los permisos
-                <span className="font-mono bg-[#E5E7EB] px-1 rounded mx-1">pages_read_engagement</span> e
-                <span className="font-mono bg-[#E5E7EB] px-1 rounded mx-1">instagram_manage_insights</span>,
-                y el usuario debe ser administrador de las páginas en Meta Business Suite.
+                Comenzamos a registrar los seguidores de Facebook e Instagram desde hoy.
+                El próximo reporte mostrará el crecimiento real del período.
               </p>
             </div>
           ) : (

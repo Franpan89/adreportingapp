@@ -210,14 +210,16 @@ export async function verifyMetaToken(access_token: string): Promise<string | nu
 export interface MetaPage {
   id: string;
   name: string;
-  access_token?: string; // page-scoped token — required for Page Insights
+  access_token?: string;        // page-scoped token (legacy — not needed now)
+  followers_count?: number;     // FB live follower count
+  fan_count?: number;           // legacy "page likes" — fallback if followers_count missing
   instagram_business_account?: { id: string; name?: string; followers_count?: number } | null;
 }
 
 /** Pages the token's user manages. Needs pages_read_engagement or pages_show_list. */
 export async function fetchMetaConnectedPages(access_token: string): Promise<MetaPage[]> {
   const params = new URLSearchParams({
-    fields: 'id,name,access_token,instagram_business_account{id,name,followers_count}',
+    fields: 'id,name,access_token,followers_count,fan_count,instagram_business_account{id,name,followers_count}',
     limit: '50',
     access_token,
   });
