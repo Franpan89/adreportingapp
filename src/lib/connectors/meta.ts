@@ -129,7 +129,7 @@ export async function fetchMetaAds(
   access_token: string,
 ): Promise<MetaAd[]> {
   const params = new URLSearchParams({
-    fields: 'id,name,campaign_id,creative{thumbnail_url,object_type,full_picture}',
+    fields: 'id,name,campaign_id,creative{thumbnail_url,object_type}',
     limit: '500',
     access_token,
   });
