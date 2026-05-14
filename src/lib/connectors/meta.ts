@@ -108,6 +108,7 @@ export interface MetaAd {
   creative?: {
     thumbnail_url?: string;
     object_type?: string;
+    full_picture?: string;
   };
 }
 
@@ -128,7 +129,7 @@ export async function fetchMetaAds(
   access_token: string,
 ): Promise<MetaAd[]> {
   const params = new URLSearchParams({
-    fields: 'id,name,campaign_id,creative{thumbnail_url,object_type}',
+    fields: 'id,name,campaign_id,creative{thumbnail_url,object_type,full_picture}',
     limit: '500',
     access_token,
   });

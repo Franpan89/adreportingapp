@@ -1,9 +1,7 @@
 import { notFound } from 'next/navigation';
-import Link from 'next/link';
-import { ChevronLeft } from 'lucide-react';
-import { getReport } from '@/lib/supabase/reports';
+import { AutoPrint } from './_components/AutoPrint';
 import { ReportView } from '@/components/reports/ReportView';
-import { DownloadPdfButton } from '@/components/reports/DownloadPdfButton';
+import { getReport } from '@/lib/supabase/reports';
 import { createClient as createSupabase } from '@/lib/supabase/server';
 import { decrypt } from '@/lib/utils/encrypt';
 import {
@@ -19,7 +17,7 @@ interface PageProps {
 
 type StatRow = { spend?: number; conversions?: number; impressions?: number; clicks?: number };
 
-export default async function AdminReporteDetailPage({ params }: PageProps) {
+export default async function PrintPage({ params }: PageProps) {
   const { id } = await params;
   const report = await getReport(id);
   if (!report) notFound();
@@ -27,16 +25,13 @@ export default async function AdminReporteDetailPage({ params }: PageProps) {
   const supabase = await createSupabase();
   const { data: { user } } = await supabase.auth.getUser();
 
-  // ── 0. Fetch client name for cover/header ──────────────────────────────────
+  // Client name
   const { data: clientRow } = await supabase
-    .from('cr_clients')
-    .select('name')
-    .eq('id', report.client_id)
-    .single()
+    .from('cr_clients').select('name').eq('id', report.client_id).single()
     .then(r => r, () => ({ data: null }));
   const clientName: string | undefined = (clientRow as { name?: string } | null)?.name ?? undefined;
 
-  // ── 1. Always override color + name from current agency settings ───────────
+  // Agency color + name override
   if (user) {
     const { data: ag } = await supabase
       .from('cr_agency_settings')
@@ -48,7 +43,7 @@ export default async function AdminReporteDetailPage({ params }: PageProps) {
     if (ag?.agency_name)   report.agency_name  = ag.agency_name;
   }
 
-  // ── 2. Compute period_totals on the fly if missing ────────────────────────
+  // Period totals (computed on the fly if missing)
   if (!report.period_totals) {
     const { data: stats } = await supabase
       .from('cr_daily_stats')
@@ -56,7 +51,6 @@ export default async function AdminReporteDetailPage({ params }: PageProps) {
       .eq('client_id', report.client_id)
       .gte('date', report.period_start)
       .lte('date', report.period_end);
-
     if (stats?.length) {
       const sum = (key: keyof typeof stats[0]) =>
         stats.reduce((a, r) => a + (Number(r[key]) || 0), 0);
@@ -70,20 +64,18 @@ export default async function AdminReporteDetailPage({ params }: PageProps) {
     }
   }
 
-  // ── 3. Live-fetch ALL creatives for the period (no limit) ─────────────────
+  // Top creatives (live from DB)
   const { data: adRows } = await supabase
     .from('cr_ads')
-    .select('name, channel, thumbnail_url, cr_ad_daily_stats(spend, conversions, impressions, clicks)')
+    .select('name, channel, thumbnail_url, full_picture_url, cr_ad_daily_stats(spend, conversions, impressions, clicks)')
     .eq('client_id', report.client_id)
     .gte('cr_ad_daily_stats.date', report.period_start)
     .lte('cr_ad_daily_stats.date', report.period_end);
 
   if (adRows?.length) {
     const mapped: TopCreative[] = (adRows as Array<{
-      name: string;
-      channel: string;
-      thumbnail_url?: string | null;
-      cr_ad_daily_stats?: StatRow[];
+      name: string; channel: string; thumbnail_url?: string | null;
+      full_picture_url?: string | null; cr_ad_daily_stats?: StatRow[];
     }>)
       .map(ad => {
         const s: StatRow[] = ad.cr_ad_daily_stats ?? [];
@@ -92,27 +84,25 @@ export default async function AdminReporteDetailPage({ params }: PageProps) {
         const impressions = s.reduce((a, r) => a + (Number(r.impressions) || 0), 0);
         const clicks      = s.reduce((a, r) => a + (Number(r.clicks)      || 0), 0);
         return {
-          name:          ad.name,
-          channel:       ad.channel as Channel,
-          thumbnail_url: ad.thumbnail_url ?? null,
-          spend:         Math.round(spend * 100) / 100,
-          conversions:   Math.round(conversions),
+          name:             ad.name,
+          channel:          ad.channel as Channel,
+          thumbnail_url:    ad.thumbnail_url ?? null,
+          full_picture_url: ad.full_picture_url ?? null,
+          spend:            Math.round(spend * 100) / 100,
+          conversions:      Math.round(conversions),
           impressions,
-          ctr:           impressions > 0 ? Math.round((clicks / impressions) * 10000) / 100 : 0,
+          ctr:              impressions > 0 ? Math.round((clicks / impressions) * 10000) / 100 : 0,
         };
       })
       .filter(a => a.spend > 0 || a.conversions > 0)
       .sort((a, b) => b.conversions - a.conversions || b.spend - a.spend);
-
     if (mapped.length) report.top_creatives = mapped;
   }
 
-  // ── 4. Social growth from Meta Page Insights ──────────────────────────────
+  // Social growth (optional)
   if (!report.social_growth?.length) {
     try {
-      // Resolve Meta access token
       let accessToken: string | null = null;
-
       const { data: credRow } = await supabase
         .from('cr_channel_credentials')
         .select('credentials_enc')
@@ -121,15 +111,10 @@ export default async function AdminReporteDetailPage({ params }: PageProps) {
         .eq('is_active', true)
         .single()
         .then(r => r, () => ({ data: null }));
-
       if (credRow?.credentials_enc) {
         const creds = JSON.parse(decrypt(credRow.credentials_enc)) as Record<string, string>;
-        if (creds.access_token) {
-          accessToken = creds.access_token;
-        }
+        if (creds.access_token) accessToken = creds.access_token;
       }
-
-      // Fallback: agency Meta connection
       if (!accessToken && user) {
         const { data: agConn } = await supabase
           .from('agency_meta_connections')
@@ -137,25 +122,15 @@ export default async function AdminReporteDetailPage({ params }: PageProps) {
           .eq('admin_user_id', user.id)
           .single()
           .then(r => r, () => ({ data: null }));
-        if (agConn?.access_token_enc) {
-          accessToken = decrypt(agConn.access_token_enc);
-        }
+        if (agConn?.access_token_enc) accessToken = decrypt(agConn.access_token_enc);
       }
-
       if (accessToken) {
-        const since = report.period_start;
-        const until = report.period_end;
-
         const pages = await fetchMetaConnectedPages(accessToken);
         const growthRows: SocialGrowthMetric[] = [];
-
         for (const page of pages.slice(0, 3)) {
-          // Page Insights require the page-scoped token, not the user token
           const pageToken = page.access_token ?? accessToken;
-
-          // Facebook fans
           try {
-            const fans = await fetchPageFans(page.id, pageToken, since, until);
+            const fans = await fetchPageFans(page.id, pageToken, report.period_start, report.period_end);
             if (fans.length >= 2) {
               const start = fans[0].value;
               const end   = fans[fans.length - 1].value;
@@ -163,53 +138,32 @@ export default async function AdminReporteDetailPage({ params }: PageProps) {
               growthRows.push({ platform: 'facebook', followers_start: start, followers_end: end, growth_pct: pct });
             }
           } catch (err) {
-            console.warn('[social-growth] Facebook page_fans failed:', err instanceof Error ? err.message : err);
+            console.warn('[print/social-growth] Facebook failed:', err instanceof Error ? err.message : err);
           }
-
-          // Instagram
           const igId = page.instagram_business_account?.id;
           if (igId) {
             try {
-              const igFans = await fetchIgFollowerHistory(igId, pageToken, since, until);
+              const igFans = await fetchIgFollowerHistory(igId, pageToken, report.period_start, report.period_end);
               if (igFans.length >= 2) {
                 const start = igFans[0].value;
                 const end   = igFans[igFans.length - 1].value;
                 const pct   = start > 0 ? Math.round(((end - start) / start) * 10000) / 100 : 0;
                 growthRows.push({ platform: 'instagram', followers_start: start, followers_end: end, growth_pct: pct });
-              } else if (page.instagram_business_account?.followers_count) {
-                // Fallback: use current count only
-                const cur = page.instagram_business_account.followers_count;
-                growthRows.push({ platform: 'instagram', followers_start: cur, followers_end: cur, growth_pct: 0 });
               }
             } catch (err) {
-              console.warn('[social-growth] Instagram follower_count failed:', err instanceof Error ? err.message : err);
+              console.warn('[print/social-growth] Instagram failed:', err instanceof Error ? err.message : err);
             }
           }
         }
-
         if (growthRows.length) report.social_growth = growthRows;
       }
-    } catch (err) {
-      console.warn('[social-growth] outer block failed:', err instanceof Error ? err.message : err);
-    }
+    } catch { /* social growth is optional */ }
   }
 
   return (
-    <div className="flex-1 flex flex-col bg-[#F9FAFB]">
-      <div className="print:hidden border-b border-[#E5E7EB] bg-white px-6 py-3 flex items-center justify-between sticky top-0 z-10">
-        <Link
-          href={`/admin/clients/${report.client_id}/reportes`}
-          className="flex items-center gap-1.5 text-sm text-[#6B7280] hover:text-[#111827] transition-colors"
-        >
-          <ChevronLeft className="w-4 h-4" />
-          Volver a reportes
-        </Link>
-        <DownloadPdfButton reportId={report.id} />
-      </div>
-
-      <div id="report-print-area" className="flex-1 px-6 py-8 print:p-0">
-        <ReportView report={report} clientName={clientName} />
-      </div>
+    <div className="bg-white">
+      <AutoPrint />
+      <ReportView report={report} clientName={clientName} />
     </div>
   );
 }

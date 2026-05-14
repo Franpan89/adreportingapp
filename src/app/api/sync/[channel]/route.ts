@@ -153,8 +153,9 @@ async function syncMeta(supabase: any, userId: string, clientId: string, creds: 
             channel:       'meta_ads',
             external_id:   String(ad.id),
             name:          ad.name ?? 'Sin nombre',
-            thumbnail_url: ad.creative?.thumbnail_url ?? null,
-            creative_type: ad.creative?.object_type?.toLowerCase() ?? null,
+            thumbnail_url:    ad.creative?.thumbnail_url ?? null,
+            full_picture_url: ad.creative?.full_picture  ?? null,
+            creative_type:    ad.creative?.object_type?.toLowerCase() ?? null,
             updated_at:    new Date().toISOString(),
           };
         })
@@ -181,6 +182,12 @@ async function syncMeta(supabase: any, userId: string, clientId: string, creds: 
         );
 
         const videoTypes = ['video_view', 'video_thruplay_watched_actions'];
+        // WhatsApp / messaging campaigns measure conversions via this action type
+        const msgConvTypes = [
+          'onsite_conversion.messaging_conversation_started_7d',
+          'offsite_conversion.fb_pixel_lead',
+          'lead',
+        ];
 
         const adStatRows = adInsights
           .map((row: MetaAdInsightRow) => {
@@ -195,6 +202,7 @@ async function syncMeta(supabase: any, userId: string, clientId: string, creds: 
               clicks:      parseInt(row.clicks ?? '0', 10) || 0,
               spend:       parseFloat(row.spend ?? '0') || 0,
               video_views: sumActions(row.actions, videoTypes),
+              conversions: sumActions(row.actions, msgConvTypes),
             };
           })
           .filter(Boolean);

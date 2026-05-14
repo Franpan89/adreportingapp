@@ -69,12 +69,12 @@ export function ReportView({ report, clientName }: { report: ClientReport; clien
         {/* ── 1. RESUMEN EJECUTIVO ── */}
         <Section title="RESUMEN EJECUTIVO" accent={accent}>
           <div className={`grid gap-8 items-start ${topCreative?.thumbnail_url ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1'}`}>
-            {topCreative?.thumbnail_url && (
-              <div className="rounded-xl overflow-hidden border border-[#E5E7EB] shadow-sm">
+            {(topCreative?.full_picture_url ?? topCreative?.thumbnail_url) && (
+              <div className="rounded-xl overflow-hidden border border-[#E5E7EB] shadow-sm bg-[#1a1a1a]">
                 <img
-                  src={topCreative.thumbnail_url}
+                  src={topCreative.full_picture_url ?? topCreative.thumbnail_url!}
                   alt={topCreative.name}
-                  className="w-full object-cover"
+                  className="w-full object-contain"
                   style={{ maxHeight: 320 }}
                   referrerPolicy="no-referrer"
                   loading="eager"
@@ -127,11 +127,11 @@ export function ReportView({ report, clientName }: { report: ClientReport; clien
                         </td>
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-3">
-                            {c.thumbnail_url ? (
+                            {(c.full_picture_url ?? c.thumbnail_url) ? (
                               <img
-                                src={c.thumbnail_url}
+                                src={c.full_picture_url ?? c.thumbnail_url!}
                                 alt=""
-                                className="w-12 h-12 rounded-lg object-cover shrink-0 border border-[#E5E7EB]"
+                                className="w-12 h-12 rounded-lg object-contain shrink-0 border border-[#E5E7EB] bg-[#f3f4f6]"
                                 referrerPolicy="no-referrer"
                                 loading="eager"
                               />
@@ -201,9 +201,14 @@ export function ReportView({ report, clientName }: { report: ClientReport; clien
         {/* ── 4. CRECIMIENTO EN REDES ── */}
         <Section title="CRECIMIENTO EN REDES SOCIALES" accent={accent}>
           {report.social_growth.length === 0 ? (
-            <div className="bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl p-5 text-center">
-              <p className="text-sm text-[#6B7280]">No se encontraron datos de crecimiento de seguidores para este período.</p>
-              <p className="text-xs text-[#9CA3AF] mt-2">Requiere permisos de administrador de página en Meta Business Suite.</p>
+            <div className="bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl p-6 text-center space-y-2">
+              <p className="text-sm font-semibold text-[#374151]">Datos de crecimiento orgánico no disponibles</p>
+              <p className="text-xs text-[#6B7280] leading-relaxed max-w-md mx-auto">
+                Para mostrar esta sección, el token de Meta requiere los permisos
+                <span className="font-mono bg-[#E5E7EB] px-1 rounded mx-1">pages_read_engagement</span> e
+                <span className="font-mono bg-[#E5E7EB] px-1 rounded mx-1">instagram_manage_insights</span>,
+                y el usuario debe ser administrador de las páginas en Meta Business Suite.
+              </p>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -266,13 +271,14 @@ function CoverPage({ report, accent, clientName }: { report: ClientReport; accen
       style={{ background: accent, minHeight: 560 }}
     >
       {report.agency_logo_url ? (
-        <img
-          src={report.agency_logo_url}
-          alt="Logo agencia"
-          className="h-28 max-w-[280px] object-contain mb-10"
-          style={{ filter: 'brightness(0) invert(1)' }}
-          referrerPolicy="no-referrer"
-        />
+        <div className="bg-white rounded-2xl px-8 py-4 mb-10 inline-block shadow-sm">
+          <img
+            src={report.agency_logo_url}
+            alt="Logo agencia"
+            className="h-20 max-w-[220px] object-contain"
+            referrerPolicy="no-referrer"
+          />
+        </div>
       ) : (
         <p className="text-white text-4xl font-bold mb-10 tracking-wide">{report.agency_name ?? ''}</p>
       )}
