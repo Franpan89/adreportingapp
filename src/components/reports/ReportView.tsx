@@ -76,7 +76,6 @@ export function ReportView({ report, clientName }: { report: ClientReport; clien
                   alt={topCreative.name}
                   className="w-full object-contain"
                   style={{ maxHeight: 320 }}
-                  referrerPolicy="no-referrer"
                   loading="eager"
                 />
                 <div className="px-3 py-2 bg-[#F9FAFB] border-t border-[#E5E7EB]">
@@ -132,7 +131,6 @@ export function ReportView({ report, clientName }: { report: ClientReport; clien
                                 src={c.full_picture_url ?? c.thumbnail_url!}
                                 alt=""
                                 className="w-12 h-12 rounded-lg object-contain shrink-0 border border-[#E5E7EB] bg-[#f3f4f6]"
-                                referrerPolicy="no-referrer"
                                 loading="eager"
                               />
                             ) : (
