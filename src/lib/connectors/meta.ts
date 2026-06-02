@@ -106,15 +106,10 @@ export interface MetaAd {
   name?: string;
   campaign_id?: string;
   creative?: {
+    id?: string;
     thumbnail_url?: string;
     object_type?: string;
     full_picture?: string;
-    object_story_spec?: {
-      link_data?: {
-        picture?: string;
-        child_attachments?: Array<{ picture?: string }>;
-      };
-    };
   };
 }
 
@@ -146,8 +141,9 @@ export async function fetchMetaAds(
 
 /**
  * Batch-fetch creative/name data for a specific list of ad IDs.
- * More efficient than fetching all account ads — use when you already know
- * which ad IDs ran (e.g. from an insights response). Chunks into 50-id batches.
+ * Two-step: first fetch Ad nodes to get creative IDs + thumbnail, then fetch
+ * Creative nodes directly (they expose image_url / full_picture for all types
+ * including carousels and videos). Chunks into 50-id batches.
  */
 export async function fetchMetaAdsByIds(
   adIds: string[],
@@ -155,22 +151,62 @@ export async function fetchMetaAdsByIds(
 ): Promise<MetaAd[]> {
   if (adIds.length === 0) return [];
   const results: MetaAd[] = [];
+
   for (let i = 0; i < adIds.length; i += 50) {
     const chunk = adIds.slice(i, i + 50);
-    const params = new URLSearchParams({
+
+    // Step 1: Ad nodes → get creative id + thumbnail
+    const adParams = new URLSearchParams({
       ids:    chunk.join(','),
-      fields: 'id,name,campaign_id,creative{thumbnail_url,object_type,full_picture,object_story_spec{link_data{picture,child_attachments{picture}}}}',
+      fields: 'id,name,campaign_id,creative{id,thumbnail_url,object_type}',
       access_token,
     });
-    const res  = await fetch(`${META_API_BASE}/?${params}`);
-    const json = (await res.json()) as Record<string, MetaAd> & { error?: { message: string } };
-    if (json.error) {
-      console.warn('[meta] batch ad fetch error:', json.error.message);
+    const adRes  = await fetch(`${META_API_BASE}/?${adParams}`);
+    const adJson = (await adRes.json()) as Record<string, MetaAd> & { error?: { message: string } };
+    if (adJson.error) {
+      console.warn('[meta] batch ad fetch error:', adJson.error.message);
       continue;
     }
-    results.push(
-      ...Object.values(json).filter((v): v is MetaAd => typeof v === 'object' && !!v && 'id' in v),
+    const ads = Object.values(adJson).filter(
+      (v): v is MetaAd => typeof v === 'object' && !!v && 'id' in v,
     );
+
+    // Step 2: Creative nodes directly → full-res image fields
+    const creativeIds = ads.map(a => a.creative?.id).filter(Boolean) as string[];
+    const creativeImageMap: Record<string, string> = {};
+    if (creativeIds.length > 0) {
+      const crParams = new URLSearchParams({
+        ids:    creativeIds.join(','),
+        fields: 'image_url,full_picture,object_story_spec{link_data{picture,child_attachments{picture}}}',
+        access_token,
+      });
+      const crRes  = await fetch(`${META_API_BASE}/?${crParams}`);
+      const crJson = (await crRes.json()) as Record<string, {
+        image_url?: string;
+        full_picture?: string;
+        object_story_spec?: { link_data?: { picture?: string; child_attachments?: Array<{ picture?: string }> } };
+      }>;
+      for (const [id, cr] of Object.entries(crJson)) {
+        if (typeof cr !== 'object' || !cr) continue;
+        const spec    = cr.object_story_spec?.link_data;
+        const highRes = cr.full_picture
+          ?? spec?.child_attachments?.[0]?.picture
+          ?? spec?.picture
+          ?? cr.image_url
+          ?? null;
+        if (highRes) creativeImageMap[id] = highRes;
+      }
+    }
+
+    // Merge high-res URL into each ad's creative
+    for (const ad of ads) {
+      const cid = ad.creative?.id;
+      if (cid && creativeImageMap[cid] && ad.creative) {
+        ad.creative.full_picture = creativeImageMap[cid];
+      }
+    }
+
+    results.push(...ads);
   }
   return results;
 }

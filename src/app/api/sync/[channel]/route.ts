@@ -155,10 +155,6 @@ async function syncMeta(supabase: any, userId: string, clientId: string, creds: 
         .map((ad: MetaAd) => {
           const dbCampId = campaignExtToDb.get(String(ad.campaign_id ?? ''));
           if (!dbCampId) return null;
-          // Best image: carousel 1st card → single image full_picture → thumbnail
-          const spec = ad.creative?.object_story_spec?.link_data;
-          const carouselPicture = spec?.child_attachments?.[0]?.picture ?? spec?.picture ?? null;
-          const fullPicture = ad.creative?.full_picture ?? carouselPicture ?? null;
           return {
             client_id:        clientId,
             campaign_id:      dbCampId,
@@ -166,7 +162,7 @@ async function syncMeta(supabase: any, userId: string, clientId: string, creds: 
             external_id:      String(ad.id),
             name:             ad.name ?? 'Sin nombre',
             thumbnail_url:    ad.creative?.thumbnail_url ?? null,
-            full_picture_url: fullPicture,
+            full_picture_url: ad.creative?.full_picture ?? null,
             creative_type:    ad.creative?.object_type?.toLowerCase() ?? null,
             updated_at:       new Date().toISOString(),
           };
