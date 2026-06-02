@@ -1,9 +1,8 @@
 import '@/app/globals.css';
 
 /**
- * Minimal layout for the standalone PDF print page.
- * Overrides the default @page from globals.css to use A4 landscape.
- * No sidebar, no nav — pure ReportView output.
+ * Standalone PDF print layout — no sidebar, no nav.
+ * Format: 1920px wide, continuous long document (no A4 pagination).
  */
 export default function PrintLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -11,18 +10,22 @@ export default function PrintLayout({ children }: { children: React.ReactNode })
       <head>
         <style dangerouslySetInnerHTML={{ __html: `
           @page {
-            size: A4 landscape !important;
-            margin: 10mm 14mm !important;
+            size: 1920px auto;
+            margin: 0;
+          }
+          html, body {
+            width: 1920px;
+            background: #ffffff;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
           }
           @media print {
-            body {
-              -webkit-print-color-adjust: exact !important;
-              print-color-adjust: exact !important;
-            }
+            * { break-inside: auto !important; }
+            .overflow-x-auto { overflow: visible !important; }
           }
         ` }} />
       </head>
-      <body className="bg-white">{children}</body>
+      <body className="bg-white" style={{ width: '1920px' }}>{children}</body>
     </html>
   );
 }

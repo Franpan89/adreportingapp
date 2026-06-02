@@ -62,7 +62,7 @@ export function ReportView({ report, clientName, demographics, campaigns, prevTo
   const topCreative = report.top_creatives[0] ?? null;
 
   return (
-    <article className="report max-w-4xl mx-auto bg-white shadow-[0_8px_40px_rgba(0,0,0,0.10)] overflow-hidden print:shadow-none print:max-w-none">
+    <article className="report w-full max-w-[1920px] mx-auto bg-white shadow-[0_8px_40px_rgba(0,0,0,0.10)] print:shadow-none print:max-w-none">
 
       {/* ══ PORTADA ══ */}
       <CoverPage report={report} accent={accent} clientName={clientName} />
@@ -246,7 +246,7 @@ export function ReportView({ report, clientName, demographics, campaigns, prevTo
         </Section>
 
         {/* ── Footer ── */}
-        <footer className="border-t-4 px-10 py-5 flex items-center justify-between print:break-before-page" style={{ borderColor: accent }}>
+        <footer className="border-t-4 px-10 py-5 flex items-center justify-between" style={{ borderColor: accent }}>
           <span className="text-sm font-semibold text-[#374151]">{report.agency_name ?? 'Web My Money'}</span>
           <span className="text-xs text-[#9CA3AF]">{publishedDate}</span>
         </footer>
@@ -261,7 +261,7 @@ function CoverPage({ report, accent, clientName }: { report: ClientReport; accen
   const displayName = clientName ?? report.title;
   return (
     <div
-      className="flex flex-col items-center justify-center text-center px-12 py-20 print:min-h-screen print:break-after-page"
+      className="flex flex-col items-center justify-center text-center px-12 py-20"
       style={{ background: accent, minHeight: 560 }}
     >
       {report.agency_logo_url ? (
@@ -307,7 +307,7 @@ function PageHeader({ report, accent, clientName }: { report: ClientReport; acce
   const periodLabel = formatPeriodMonth(report.period_start, report.period_end);
   const displayName = clientName ?? report.title;
   return (
-    <div className="flex items-center justify-between px-8 py-4 border-b-4 print:break-inside-avoid" style={{ borderColor: accent }}>
+    <div className="flex items-center justify-between px-8 py-4 border-b-4" style={{ borderColor: accent }}>
       <div className="flex items-center gap-3">
         {report.agency_logo_url ? (
           <img src={report.agency_logo_url} alt="" className="h-12 max-w-[140px] object-contain" referrerPolicy="no-referrer" />
@@ -336,7 +336,7 @@ function Section({
   title: string; children: React.ReactNode; last?: boolean; accent: string;
 }) {
   return (
-    <section className={`px-8 py-8 ${last ? '' : 'border-b border-[#F3F4F6]'} print:break-inside-avoid`}>
+    <section className={`px-8 py-8 ${last ? '' : 'border-b border-[#F3F4F6]'}`}>
       <h2
         className="text-2xl font-black text-[#111827] mb-6 text-center uppercase tracking-wider"
         style={{ fontFamily: 'Oswald, sans-serif', letterSpacing: '0.08em' }}

@@ -236,7 +236,7 @@ export default async function AdminReporteDetailPage({ params }: PageProps) {
         <DownloadPdfButton reportId={report.id} />
       </div>
 
-      <div id="report-print-area" className="flex-1 px-6 py-8 print:p-0">
+      <div id="report-print-area" className="flex-1 print:p-0">
         <ReportView report={report} clientName={clientName} demographics={demographics} campaigns={campaigns} prevTotals={prevTotals} efficiencyMetrics={efficiencyMetrics} />
       </div>
     </div>

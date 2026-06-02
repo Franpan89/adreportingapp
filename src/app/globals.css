@@ -132,53 +132,31 @@ body {
 .channel-tiktok { color: var(--color-tiktok); background: var(--color-tiktok-light); }
 
 /* =====================================================
-   Print styles — used by the client Reportes detail page
-   to let the browser's "Save as PDF" produce a clean file
+   Print styles — used when printing from /admin/reportes/[id]
+   The standalone /reportes/[id]/print page sets its own
+   @page in the (print)/layout.tsx instead.
    ===================================================== */
 @media print {
-  @page {
-    /* Default portrait — overridden by the (print) route layout for landscape PDF */
-    size: A4;
-    margin: 12mm 10mm;
-  }
-
   html, body {
     background: #ffffff !important;
     color: #111827 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
-  /* Hide every chrome element that isn't inside the report */
-  body > div > div > aside,        /* sidebar */
+  /* Hide admin chrome */
+  body > div > div > aside,
   .print\:hidden,
   nav[role="navigation"] {
     display: none !important;
   }
 
-  /* Let the report stretch full-width */
-  main {
-    padding: 0 !important;
-  }
+  main { padding: 0 !important; }
 
   .report {
     max-width: 100% !important;
     box-shadow: none !important;
-    border: 0 !important;
-    border-radius: 0 !important;
   }
 
-  /* Tables must not overflow the page — remove scrollable wrapper */
-  .overflow-x-auto {
-    overflow: visible !important;
-  }
-  table {
-    width: 100% !important;
-    table-layout: auto !important;
-  }
-
-  /* Avoid cutting a section across two pages */
-  .report section,
-  .report header,
-  .report footer {
-    break-inside: avoid;
-  }
+  .overflow-x-auto { overflow: visible !important; }
 }
