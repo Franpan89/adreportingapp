@@ -244,6 +244,10 @@ export interface TopCreative {
   conversions: number;
   thumbnail_url?: string | null;
   full_picture_url?: string | null;
+  campaign_name?: string | null;
+  reach?: number;
+  clicks?: number;
+  video_views?: number;
 }
 
 export interface SpendResult {

@@ -16,7 +16,7 @@ interface PageProps {
   params: Promise<{ id: string }>;
 }
 
-type StatRow = { spend?: number; conversions?: number; impressions?: number; clicks?: number };
+type StatRow = { spend?: number; conversions?: number; impressions?: number; clicks?: number; reach?: number; video_views?: number };
 
 export default async function PrintPage({ params }: PageProps) {
   const { id } = await params;
@@ -68,30 +68,34 @@ export default async function PrintPage({ params }: PageProps) {
   // Top creatives (live from DB)
   const { data: adRows } = await supabase
     .from('cr_ads')
-    .select('name, channel, thumbnail_url, full_picture_url, cr_ad_daily_stats(spend, conversions, impressions, clicks)')
+    .select('name, channel, thumbnail_url, full_picture_url, cr_campaigns(name), cr_ad_daily_stats(spend, conversions, impressions, clicks, reach, video_views)')
     .eq('client_id', report.client_id)
     .gte('cr_ad_daily_stats.date', report.period_start)
     .lte('cr_ad_daily_stats.date', report.period_end);
 
   if (adRows?.length) {
-    const mapped: TopCreative[] = (adRows as Array<{
-      name: string; channel: string; thumbnail_url?: string | null;
-      full_picture_url?: string | null; cr_ad_daily_stats?: StatRow[];
-    }>)
+    type AdRow = { name: string; channel: string; thumbnail_url?: string | null; full_picture_url?: string | null; cr_campaigns?: Array<{ name: string }>; cr_ad_daily_stats?: StatRow[] };
+    const mapped: TopCreative[] = (adRows as unknown as AdRow[])
       .map(ad => {
         const s: StatRow[] = ad.cr_ad_daily_stats ?? [];
         const spend       = s.reduce((a, r) => a + (Number(r.spend)       || 0), 0);
         const conversions = s.reduce((a, r) => a + (Number(r.conversions) || 0), 0);
         const impressions = s.reduce((a, r) => a + (Number(r.impressions) || 0), 0);
         const clicks      = s.reduce((a, r) => a + (Number(r.clicks)      || 0), 0);
+        const reach       = s.reduce((a, r) => a + (Number(r.reach)       || 0), 0);
+        const video_views = s.reduce((a, r) => a + (Number(r.video_views) || 0), 0);
         return {
           name:             ad.name,
           channel:          ad.channel as Channel,
           thumbnail_url:    ad.thumbnail_url ?? null,
           full_picture_url: ad.full_picture_url ?? null,
+          campaign_name:    ad.cr_campaigns?.[0]?.name ?? null,
           spend:            Math.round(spend * 100) / 100,
           conversions:      Math.round(conversions),
           impressions,
+          clicks,
+          reach,
+          video_views,
           ctr:              impressions > 0 ? Math.round((clicks / impressions) * 10000) / 100 : 0,
         };
       })

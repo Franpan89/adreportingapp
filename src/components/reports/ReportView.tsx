@@ -102,81 +102,80 @@ export function ReportView({ report, clientName, demographics, campaigns }: { re
               <table className="w-full text-sm border-collapse">
                 <thead>
                   <tr style={{ background: accent }}>
-                    <th className="text-left text-white text-[11px] font-bold uppercase tracking-wider px-4 py-3 w-10">#</th>
-                    <th className="text-left text-white text-[11px] font-bold uppercase tracking-wider px-4 py-3">Anuncio</th>
-                    <th className="text-right text-white text-[11px] font-bold uppercase tracking-wider px-4 py-3">Impresiones</th>
-                    <th className="text-right text-white text-[11px] font-bold uppercase tracking-wider px-4 py-3">Inversión</th>
-                    <th className="text-right text-white text-[11px] font-bold uppercase tracking-wider px-4 py-3">CPA</th>
-                    <th className="text-right text-white text-[11px] font-bold uppercase tracking-wider px-4 py-3">Conv.</th>
+                    <th className="text-left text-white text-[11px] font-bold uppercase tracking-wider px-3 py-3 w-8">#</th>
+                    <th className="text-left text-white text-[11px] font-bold uppercase tracking-wider px-3 py-3">Campaña</th>
+                    <th className="text-left text-white text-[11px] font-bold uppercase tracking-wider px-3 py-3">Anuncio</th>
+                    <th className="text-right text-white text-[11px] font-bold uppercase tracking-wider px-3 py-3">Impr.</th>
+                    <th className="text-right text-white text-[11px] font-bold uppercase tracking-wider px-3 py-3">Alcance</th>
+                    <th className="text-right text-white text-[11px] font-bold uppercase tracking-wider px-3 py-3">Clics</th>
+                    <th className="text-right text-white text-[11px] font-bold uppercase tracking-wider px-3 py-3">ThruPlay</th>
+                    <th className="text-right text-white text-[11px] font-bold uppercase tracking-wider px-3 py-3">Conv.</th>
+                    <th className="text-right text-white text-[11px] font-bold uppercase tracking-wider px-3 py-3">Inversión</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {report.top_creatives.map((c, i) => {
-                    const ch = CHANNEL_META[c.channel];
-                    const cpa = c.conversions > 0 ? c.spend / c.conversions : 0;
-                    return (
-                      <tr key={i} className={i % 2 === 0 ? 'bg-white' : 'bg-[#F9FAFB]'}>
-                        <td className="px-4 py-3 text-center">
-                          {i < 3 ? (
-                            <span className="w-6 h-6 rounded-full text-white text-[10px] font-bold flex items-center justify-center mx-auto" style={{ background: accent }}>
-                              {i + 1}
-                            </span>
+                  {report.top_creatives.map((c, i) => (
+                    <tr key={i} className={i % 2 === 0 ? 'bg-white' : 'bg-[#F9FAFB]'}>
+                      <td className="px-3 py-3 text-center">
+                        {i < 3 ? (
+                          <span className="w-6 h-6 rounded-full text-white text-[10px] font-bold flex items-center justify-center mx-auto" style={{ background: accent }}>
+                            {i + 1}
+                          </span>
+                        ) : (
+                          <span className="text-[11px] text-[#9CA3AF] font-medium">{i + 1}</span>
+                        )}
+                      </td>
+                      <td className="px-3 py-3 max-w-[120px]">
+                        <p className="text-[10px] text-[#6B7280] line-clamp-2 leading-snug">{c.campaign_name ?? '—'}</p>
+                      </td>
+                      <td className="px-3 py-3">
+                        <div className="flex items-center gap-2">
+                          {(c.full_picture_url ?? c.thumbnail_url) ? (
+                            <img
+                              src={c.full_picture_url ?? c.thumbnail_url!}
+                              alt=""
+                              className="w-10 h-10 rounded-lg object-contain shrink-0 border border-[#E5E7EB] bg-[#f3f4f6]"
+                              loading="eager"
+                            />
                           ) : (
-                            <span className="text-[11px] text-[#9CA3AF] font-medium">{i + 1}</span>
+                            <div className="w-10 h-10 rounded-lg bg-[#F3F4F6] shrink-0 flex items-center justify-center text-[#D1D5DB]">🖼</div>
                           )}
-                        </td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-3">
-                            {(c.full_picture_url ?? c.thumbnail_url) ? (
-                              <img
-                                src={c.full_picture_url ?? c.thumbnail_url!}
-                                alt=""
-                                className="w-12 h-12 rounded-lg object-contain shrink-0 border border-[#E5E7EB] bg-[#f3f4f6]"
-                                loading="eager"
-                              />
-                            ) : (
-                              <div className="w-12 h-12 rounded-lg bg-[#F3F4F6] shrink-0 flex items-center justify-center">
-                                <span className="text-[#D1D5DB] text-lg">🖼</span>
-                              </div>
-                            )}
-                            <div className="min-w-0">
-                              <p className="text-xs font-semibold text-[#111827] line-clamp-2 leading-snug">{c.name}</p>
-                              <span className="inline-block mt-1 text-[9px] font-semibold px-1.5 py-0.5 rounded" style={{ color: ch.color, background: ch.bg }}>
-                                {ch.label}
-                              </span>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 text-right text-xs font-medium text-[#374151] tabular-nums">{fmtNumber(c.impressions)}</td>
-                        <td className="px-4 py-3 text-right text-xs font-medium text-[#374151] tabular-nums">{fmtCurrency(c.spend)}</td>
-                        <td className="px-4 py-3 text-right text-xs font-medium tabular-nums" style={{ color: cpa > 0 ? accent : '#9CA3AF' }}>
-                          {cpa > 0 ? fmtCurrency(cpa) : '—'}
-                        </td>
-                        <td className="px-4 py-3 text-right">
-                          <span className="text-sm font-bold tabular-nums" style={{ color: accent }}>{c.conversions}</span>
-                        </td>
-                      </tr>
-                    );
-                  })}
+                          <p className="text-[10px] font-semibold text-[#111827] line-clamp-2 leading-snug max-w-[120px]">{c.name}</p>
+                        </div>
+                      </td>
+                      <td className="px-3 py-3 text-right text-[11px] tabular-nums text-[#374151]">{fmtCompact(c.impressions)}</td>
+                      <td className="px-3 py-3 text-right text-[11px] tabular-nums text-[#374151]">{fmtCompact(c.reach ?? 0)}</td>
+                      <td className="px-3 py-3 text-right text-[11px] tabular-nums text-[#374151]">{fmtCompact(c.clicks ?? 0)}</td>
+                      <td className="px-3 py-3 text-right text-[11px] tabular-nums text-[#374151]">{fmtCompact(c.video_views ?? 0)}</td>
+                      <td className="px-3 py-3 text-right">
+                        <span className="text-sm font-bold tabular-nums" style={{ color: accent }}>{c.conversions}</span>
+                      </td>
+                      <td className="px-3 py-3 text-right text-[11px] font-semibold tabular-nums text-[#111827]">{fmtCurrency(c.spend)}</td>
+                    </tr>
+                  ))}
                 </tbody>
                 <tfoot>
                   <tr className="border-t-2" style={{ borderColor: accent }}>
-                    <td colSpan={2} className="px-4 py-3 text-xs font-bold text-[#374151]">TOTALES</td>
-                    <td className="px-4 py-3 text-right text-xs font-bold text-[#374151] tabular-nums">
-                      {fmtNumber(report.top_creatives.reduce((a, c) => a + c.impressions, 0))}
+                    <td colSpan={3} className="px-3 py-3 text-xs font-bold text-[#374151]">
+                      TOTALES — {report.top_creatives.length} anuncio{report.top_creatives.length !== 1 ? 's' : ''}
                     </td>
-                    <td className="px-4 py-3 text-right text-xs font-bold text-[#374151] tabular-nums">
-                      {fmtCurrency(report.top_creatives.reduce((a, c) => a + c.spend, 0))}
+                    <td className="px-3 py-3 text-right text-[11px] font-bold tabular-nums text-[#374151]">
+                      {fmtCompact(report.top_creatives.reduce((a, c) => a + c.impressions, 0))}
                     </td>
-                    <td className="px-4 py-3 text-right text-xs font-bold tabular-nums" style={{ color: accent }}>
-                      {(() => {
-                        const totalConv = report.top_creatives.reduce((a, c) => a + c.conversions, 0);
-                        const totalSpend = report.top_creatives.reduce((a, c) => a + c.spend, 0);
-                        return totalConv > 0 ? fmtCurrency(totalSpend / totalConv) : '—';
-                      })()}
+                    <td className="px-3 py-3 text-right text-[11px] font-bold tabular-nums text-[#374151]">
+                      {fmtCompact(report.top_creatives.reduce((a, c) => a + (c.reach ?? 0), 0))}
                     </td>
-                    <td className="px-4 py-3 text-right text-sm font-bold tabular-nums" style={{ color: accent }}>
+                    <td className="px-3 py-3 text-right text-[11px] font-bold tabular-nums text-[#374151]">
+                      {fmtCompact(report.top_creatives.reduce((a, c) => a + (c.clicks ?? 0), 0))}
+                    </td>
+                    <td className="px-3 py-3 text-right text-[11px] font-bold tabular-nums text-[#374151]">
+                      {fmtCompact(report.top_creatives.reduce((a, c) => a + (c.video_views ?? 0), 0))}
+                    </td>
+                    <td className="px-3 py-3 text-right text-sm font-bold tabular-nums" style={{ color: accent }}>
                       {report.top_creatives.reduce((a, c) => a + c.conversions, 0)}
+                    </td>
+                    <td className="px-3 py-3 text-right text-[11px] font-bold tabular-nums text-[#374151]">
+                      {fmtCurrency(report.top_creatives.reduce((a, c) => a + c.spend, 0))}
                     </td>
                   </tr>
                 </tfoot>
