@@ -162,7 +162,7 @@ async function syncMeta(supabase: any, userId: string, clientId: string, creds: 
             external_id:      String(ad.id),
             name:             ad.name ?? 'Sin nombre',
             thumbnail_url:    ad.creative?.thumbnail_url ?? null,
-            full_picture_url: ad.creative?.full_picture ?? null,
+            full_picture_url: ad.creative?.image_url ?? null,
             creative_type:    ad.creative?.object_type?.toLowerCase() ?? null,
             updated_at:       new Date().toISOString(),
           };

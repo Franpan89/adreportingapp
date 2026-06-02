@@ -109,7 +109,7 @@ export interface MetaAd {
     id?: string;
     thumbnail_url?: string;
     object_type?: string;
-    full_picture?: string;
+    image_url?: string;   // high-res image on AdCreative node
   };
 }
 
@@ -171,30 +171,25 @@ export async function fetchMetaAdsByIds(
       (v): v is MetaAd => typeof v === 'object' && !!v && 'id' in v,
     );
 
-    // Step 2: Creative nodes directly → full-res image fields
+    // Step 2: Creative nodes directly → image_url (valid field for all creative types)
     const creativeIds = ads.map(a => a.creative?.id).filter(Boolean) as string[];
     const creativeImageMap: Record<string, string> = {};
     if (creativeIds.length > 0) {
       const crParams = new URLSearchParams({
         ids:    creativeIds.join(','),
-        fields: 'image_url,full_picture,object_story_spec{link_data{picture,child_attachments{picture}}}',
+        fields: 'image_url',
         access_token,
       });
       const crRes  = await fetch(`${META_API_BASE}/?${crParams}`);
-      const crJson = (await crRes.json()) as Record<string, {
-        image_url?: string;
-        full_picture?: string;
-        object_story_spec?: { link_data?: { picture?: string; child_attachments?: Array<{ picture?: string }> } };
-      }>;
-      for (const [id, cr] of Object.entries(crJson)) {
-        if (typeof cr !== 'object' || !cr) continue;
-        const spec    = cr.object_story_spec?.link_data;
-        const highRes = cr.full_picture
-          ?? spec?.child_attachments?.[0]?.picture
-          ?? spec?.picture
-          ?? cr.image_url
-          ?? null;
-        if (highRes) creativeImageMap[id] = highRes;
+      const crJson = (await crRes.json()) as Record<string, unknown>;
+      if (crJson.error && typeof crJson.error === 'object') {
+        console.warn('[meta] creative node fetch error:', (crJson.error as { message?: string }).message);
+      } else {
+        for (const [id, cr] of Object.entries(crJson)) {
+          if (typeof cr === 'object' && cr !== null && 'image_url' in cr && typeof (cr as { image_url?: unknown }).image_url === 'string') {
+            creativeImageMap[id] = (cr as { image_url: string }).image_url;
+          }
+        }
       }
     }
 
@@ -202,7 +197,7 @@ export async function fetchMetaAdsByIds(
     for (const ad of ads) {
       const cid = ad.creative?.id;
       if (cid && creativeImageMap[cid] && ad.creative) {
-        ad.creative.full_picture = creativeImageMap[cid];
+        ad.creative.image_url = creativeImageMap[cid];
       }
     }
 

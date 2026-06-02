@@ -25,22 +25,22 @@ export async function GET(req: NextRequest) {
 
   const token = creds.access_token;
 
-  // Step 1: Ad node with creative expansion
+  // Step 1: Ad node — get creative id + thumbnail
   const adParams = new URLSearchParams({
     ids:    adId,
-    fields: 'id,name,campaign_id,creative{id,thumbnail_url,object_type,image_url,full_picture,object_story_spec{link_data{picture,child_attachments{picture}}}}',
+    fields: 'id,name,campaign_id,creative{id,thumbnail_url,object_type}',
     access_token: token,
   });
   const adRes  = await fetch(`${META_API_BASE}/?${adParams}`);
   const adJson = await adRes.json();
 
-  // Step 2: Creative node directly (if we have a creative id)
+  // Step 2: Creative node directly with image_url
   const creativeId = adJson?.[adId]?.creative?.id;
   let creativeNodeJson = null;
   if (creativeId) {
     const crParams = new URLSearchParams({
       ids:    creativeId,
-      fields: 'id,name,thumbnail_url,image_url,full_picture,object_story_spec{link_data{picture,child_attachments{picture}}}',
+      fields: 'id,name,thumbnail_url,image_url',
       access_token: token,
     });
     const crRes = await fetch(`${META_API_BASE}/?${crParams}`);
