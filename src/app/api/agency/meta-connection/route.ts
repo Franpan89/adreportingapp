@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { getAuthUser } from '@/lib/supabase/auth';
+import { resolveAgencyOwnerId } from '@/lib/supabase/team';
 import { encrypt, decrypt } from '@/lib/utils/encrypt';
 import { verifyMetaToken } from '@/lib/connectors/meta';
 
@@ -8,14 +10,19 @@ export async function GET() {
   const user = await getAuthUser();
   if (!user) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
 
+  // Team members share the agency owner's connection. Read it with the
+  // service-role client (the table stays RLS-scoped to admin_user_id).
   const supabase = await createClient();
-  const { data } = await supabase
+  const ownerId = await resolveAgencyOwnerId(supabase, user.id);
+  const isOwner = ownerId === user.id;
+
+  const { data } = await createAdminClient()
     .from('agency_meta_connections')
     .select('id, connected_at, verified_at, access_token_enc')
-    .eq('admin_user_id', user.id)
-    .single();
+    .eq('admin_user_id', ownerId)
+    .maybeSingle();
 
-  if (!data) return NextResponse.json({ connected: false });
+  if (!data) return NextResponse.json({ connected: false, is_owner: isOwner });
 
   let tokenPreview = '';
   try {
@@ -30,6 +37,7 @@ export async function GET() {
     connected_at: data.connected_at,
     verified_at: data.verified_at,
     token_preview: tokenPreview,
+    is_owner: isOwner,
   });
 }
 
@@ -37,6 +45,12 @@ export async function POST(request: NextRequest) {
   const user = await getAuthUser();
   if (!user) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
   const supabase = await createClient();
+
+  // Only the agency owner can change the shared Meta connection.
+  const ownerId = await resolveAgencyOwnerId(supabase, user.id);
+  if (ownerId !== user.id) {
+    return NextResponse.json({ error: 'Solo el propietario de la agencia puede modificar la conexión Meta.' }, { status: 403 });
+  }
 
   const body = await request.json().catch(() => ({}));
   const { access_token } = body as { access_token?: string };
@@ -80,6 +94,11 @@ export async function DELETE() {
   const user = await getAuthUser();
   if (!user) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
   const supabase = await createClient();
+
+  const ownerId = await resolveAgencyOwnerId(supabase, user.id);
+  if (ownerId !== user.id) {
+    return NextResponse.json({ error: 'Solo el propietario de la agencia puede modificar la conexión Meta.' }, { status: 403 });
+  }
 
   await supabase
     .from('agency_meta_connections')

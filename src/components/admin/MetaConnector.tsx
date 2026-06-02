@@ -8,6 +8,7 @@ interface ConnectionStatus {
   connected: boolean;
   connected_at?: string;
   token_preview?: string;
+  is_owner?: boolean;
 }
 
 export function MetaConnector() {
@@ -90,6 +91,8 @@ export function MetaConnector() {
   if (status === null) {
     return <div className="h-12 bg-[#F3F4F6] rounded-lg animate-pulse" />;
   }
+
+  const isOwner = status.is_owner !== false; // undefined (legacy) treated as owner
 
   return (
     <div className="space-y-4">
@@ -184,15 +187,24 @@ export function MetaConnector() {
             )}
           </div>
 
-          <Button
-            variant="outline"
-            size="sm"
-            icon={<Unlink className="w-3.5 h-3.5" />}
-            loading={disconnecting}
-            onClick={handleDisconnect}
-          >
-            Desconectar Meta
-          </Button>
+          {isOwner ? (
+            <Button
+              variant="outline"
+              size="sm"
+              icon={<Unlink className="w-3.5 h-3.5" />}
+              loading={disconnecting}
+              onClick={handleDisconnect}
+            >
+              Desconectar Meta
+            </Button>
+          ) : (
+            <p className="text-xs text-[#6B7280]">Conexión gestionada por el propietario de la agencia.</p>
+          )}
+        </div>
+      ) : !isOwner ? (
+        <div className="flex items-center gap-2.5 px-4 py-3 bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg">
+          <Link2 className="w-4 h-4 text-[#9CA3AF] shrink-0" />
+          <p className="text-sm text-[#6B7280]">El propietario de la agencia aún no ha conectado Meta.</p>
         </div>
       ) : (
         <form onSubmit={handleConnect} className="space-y-3">

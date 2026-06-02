@@ -9,6 +9,8 @@
  */
 import { fetchMetaConnectedPages } from '@/lib/connectors/meta';
 import { decrypt } from '@/lib/utils/encrypt';
+import { resolveAgencyOwnerId } from '@/lib/supabase/team';
+import { createAdminClient } from '@/lib/supabase/admin';
 import type { SocialGrowthMetric } from '@/types';
 
 type Platform = 'facebook' | 'instagram';
@@ -64,12 +66,15 @@ export async function resolveClientMetaCredentials(
 
   if (!userId) return null;
 
-  const { data: agConn } = await supabase
+  // Agency-level connection: resolve the agency owner so team members share the
+  // owner's Meta token. Read with the service-role client because the SaaS-bound
+  // agency_meta_connections table is still RLS-scoped to admin_user_id = auth.uid().
+  const ownerId = await resolveAgencyOwnerId(supabase, userId);
+  const { data: agConn } = await createAdminClient()
     .from('agency_meta_connections')
     .select('access_token_enc')
-    .eq('admin_user_id', userId)
-    .single()
-    .then((r: unknown) => r, () => ({ data: null }));
+    .eq('admin_user_id', ownerId)
+    .maybeSingle();
 
   if (agConn?.access_token_enc) {
     try { return { access_token: decrypt(agConn.access_token_enc), account_id: null }; } catch { /* ignore */ }

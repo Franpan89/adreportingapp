@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { getAuthUser } from '@/lib/supabase/auth';
+import { resolveAgencyOwnerId } from '@/lib/supabase/team';
 import { decrypt } from '@/lib/utils/encrypt';
 import { fetchMetaAdAccounts } from '@/lib/connectors/meta';
 
@@ -9,11 +11,13 @@ export async function GET() {
   if (!user) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
   const supabase = await createClient();
 
-  const { data: conn } = await supabase
+  // Share the agency owner's connection with team members.
+  const ownerId = await resolveAgencyOwnerId(supabase, user.id);
+  const { data: conn } = await createAdminClient()
     .from('agency_meta_connections')
     .select('access_token_enc')
-    .eq('admin_user_id', user.id)
-    .single();
+    .eq('admin_user_id', ownerId)
+    .maybeSingle();
 
   if (!conn) return NextResponse.json({ error: 'Meta no conectado' }, { status: 404 });
 
