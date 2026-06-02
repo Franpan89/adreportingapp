@@ -44,7 +44,7 @@ export default function MetricsClient({ clientId, clientName, initialConfig }: P
         <Link href={`/admin/clients/${clientId}`} className="flex items-center gap-1.5 text-sm text-[#6B7280] hover:text-[#111827] mb-2">
           <ArrowLeft className="w-3.5 h-3.5" /> Volver a {clientName}
         </Link>
-        <h1 className="text-xl font-bold text-[#111827] font-[Oswald] tracking-wide">
+        <h1 className="text-xl font-bold text-[#111827] font-[Roboto] tracking-wide">
           Configuración de Métricas
         </h1>
         <p className="text-sm text-[#9CA3AF] mt-0.5">

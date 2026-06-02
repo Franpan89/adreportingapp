@@ -1,16 +1,7 @@
 'use client';
 import { useState } from 'react';
-import { BarChart3, Eye, EyeOff, Zap } from 'lucide-react';
+import { BarChart3, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-
-/* -------------------------------------------------------
-   Demo accounts — work without a real Supabase project
-------------------------------------------------------- */
-const DEMO_ACCOUNTS: Record<string, { password: string; dest: string; role: string; cookieRole: string }> = {
-  'admin@demo.com':         { password: 'demo1234', dest: '/admin/dashboard',      role: 'Admin Agencia', cookieRole: 'admin'       },
-  'client@demo.com':        { password: 'demo1234', dest: '/dashboard',            role: 'Cliente',       cookieRole: 'client'      },
-  'superadmin@adpulse.com': { password: 'demo1234', dest: '/superadmin/dashboard', role: 'Super Admin',   cookieRole: 'super_admin' },
-};
 
 const IS_PLACEHOLDER_SUPABASE =
   typeof window === 'undefined'
@@ -29,18 +20,9 @@ export default function LoginPage() {
     setLoading(true);
     setError('');
 
-    // ── Demo mode shortcut ──────────────────────────────────────────
-    const demo = DEMO_ACCOUNTS[email.toLowerCase().trim()];
-    if (demo && password === demo.password) {
-      // Store a lightweight session cookie so the proxy knows who we are
-      document.cookie = `demo_role=${demo.cookieRole}; path=/; max-age=86400`;
-      window.location.href = demo.dest;
-      return;
-    }
-
     // ── Real Supabase auth ──────────────────────────────────────────
     if (IS_PLACEHOLDER_SUPABASE) {
-      setError('Modo demo: usa admin@demo.com / demo1234 o client@demo.com / demo1234');
+      setError('El servicio de autenticación no está configurado.');
       setLoading(false);
       return;
     }
@@ -56,15 +38,9 @@ export default function LoginPage() {
         window.location.href = '/';
       }
     } catch {
-      setError('Servicio de autenticación no disponible. Usa las credenciales demo.');
+      setError('Servicio de autenticación no disponible.');
       setLoading(false);
     }
-  }
-
-  function fillDemo(email: string) {
-    setEmail(email);
-    setPassword('demo1234');
-    setError('');
   }
 
   return (
@@ -139,41 +115,6 @@ export default function LoginPage() {
           <p className="text-center text-xs text-white/30 mt-4">
             ¿No tienes cuenta? Contacta al administrador de tu agencia.
           </p>
-        </div>
-
-        {/* Demo quick-access */}
-        <div className="mt-4 p-4 bg-white/5 rounded-xl border border-white/10">
-          <div className="flex items-center gap-1.5 text-white/60 mb-3">
-            <Zap className="w-3.5 h-3.5 text-[#00BD7D]" />
-            <span className="text-xs font-semibold">Cuentas demo</span>
-          </div>
-          <div className="grid grid-cols-3 gap-2">
-            <button
-              type="button"
-              onClick={() => fillDemo('admin@demo.com')}
-              className="flex flex-col items-start px-3 py-2.5 bg-[#111827] rounded-lg border border-white/10 hover:border-[#00BD7D]/40 hover:bg-[#00BD7D]/5 transition-colors text-left"
-            >
-              <span className="text-xs font-semibold text-white/80">Admin</span>
-              <span className="text-[10px] text-white/30 mt-0.5">admin@demo.com</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => fillDemo('client@demo.com')}
-              className="flex flex-col items-start px-3 py-2.5 bg-[#111827] rounded-lg border border-white/10 hover:border-[#1877F2]/40 hover:bg-[#1877F2]/5 transition-colors text-left"
-            >
-              <span className="text-xs font-semibold text-white/80">Cliente</span>
-              <span className="text-[10px] text-white/30 mt-0.5">client@demo.com</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => fillDemo('superadmin@adpulse.com')}
-              className="flex flex-col items-start px-3 py-2.5 bg-[#111827] rounded-lg border border-white/10 hover:border-[#7C3AED]/40 hover:bg-[#7C3AED]/5 transition-colors text-left"
-            >
-              <span className="text-xs font-semibold text-white/80">Super Admin</span>
-              <span className="text-[10px] text-white/30 mt-0.5">superadmin@adpulse.com</span>
-            </button>
-          </div>
-          <p className="text-[10px] text-white/20 text-center mt-2">Contraseña: demo1234 · Clic para rellenar</p>
         </div>
       </div>
     </div>

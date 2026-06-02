@@ -1,18 +1,24 @@
 import { Card, CardHeader, CardTitle } from '@/components/ui/Card';
 import { MetaConnector } from '@/components/admin/MetaConnector';
 import { AgencyLogoSetting } from './_components/AgencyLogoSetting';
+import { TeamMembers } from './_components/TeamMembers';
 
 export default function SettingsPage() {
   return (
     <div className="flex-1 flex flex-col">
       <div className="border-b border-[#E5E7EB] bg-white px-6 py-4">
-        <h1 className="text-xl font-bold text-[#111827] font-[Oswald] tracking-wide">Configuración</h1>
+        <h1 className="text-xl font-bold text-[#111827] font-[Roboto] tracking-wide">Configuración</h1>
         <p className="text-sm text-[#9CA3AF] mt-0.5">Configuración general de la agencia</p>
       </div>
       <div className="flex-1 px-6 py-5 max-w-xl space-y-4">
         <Card>
           <CardHeader><CardTitle>Perfil de Agencia</CardTitle></CardHeader>
           <AgencyLogoSetting />
+        </Card>
+
+        <Card>
+          <CardHeader><CardTitle>Equipo</CardTitle></CardHeader>
+          <TeamMembers />
         </Card>
 
         <Card>

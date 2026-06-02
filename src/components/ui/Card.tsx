@@ -9,17 +9,17 @@ interface CardProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 const depthClasses: Record<Depth, string> = {
-  flat: 'shadow-[var(--shadow-card)]',
-  sm:   'shadow-[var(--shadow-perspective-sm)]',
-  md:   'shadow-[var(--shadow-perspective-md)] hover:-translate-y-0.5 hover:shadow-[var(--shadow-perspective-lg)] transition-all duration-150',
-  lg:   'shadow-[var(--shadow-perspective-lg)] hover:-translate-y-1 hover:shadow-[var(--shadow-perspective-xl)] transition-all duration-150',
+  flat: 'neu-inset-sm',
+  sm:   'neu-raised-sm',
+  md:   'neu-raised',
+  lg:   'neu-raised',
 };
 
 export function Card({ depth = 'flat', padding = true, className, children, ...props }: CardProps) {
   return (
     <div
       className={cn(
-        'bg-[#FFFFFF] border border-[#E5E7EB] rounded-xl',
+        'rounded-xl',
         depthClasses[depth],
         padding && 'p-5',
         className
@@ -41,7 +41,7 @@ export function CardHeader({ className, children, ...props }: HTMLAttributes<HTM
 
 export function CardTitle({ className, children, ...props }: HTMLAttributes<HTMLHeadingElement>) {
   return (
-    <h3 className={cn('text-sm font-semibold text-[#111827]', className)} {...props}>
+    <h3 className={cn('text-sm font-semibold text-[#1E2938]', className)} {...props}>
       {children}
     </h3>
   );

@@ -12,7 +12,7 @@ export default async function ClientsPage() {
       <div className="border-b border-[#E5E7EB] bg-white px-6 py-4">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-bold text-[#111827] font-[Oswald] tracking-wide">Clientes</h1>
+            <h1 className="text-xl font-bold text-[#111827] font-[Roboto] tracking-wide">Clientes</h1>
             <p className="text-sm text-[#9CA3AF] mt-0.5">{clients.length} clientes gestionados</p>
           </div>
           <Link href="/admin/clients/new">

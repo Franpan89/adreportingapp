@@ -63,7 +63,7 @@ export default function NewClientPage() {
         <Link href="/admin/clients" className="flex items-center gap-1.5 text-sm text-[#6B7280] hover:text-[#111827] mb-3">
           <ArrowLeft className="w-4 h-4" /> Volver a clientes
         </Link>
-        <h1 className="text-xl font-bold text-[#111827] font-[Oswald] tracking-wide">Agregar nuevo cliente</h1>
+        <h1 className="text-xl font-bold text-[#111827] font-[Roboto] tracking-wide">Agregar nuevo cliente</h1>
       </div>
 
       <div className="flex-1 px-6 py-5 max-w-lg">

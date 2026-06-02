@@ -8,7 +8,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const storyEngineEnabled = license?.addons?.story_engine === true;
 
   return (
-    <div className="flex min-h-screen bg-[#F9FAFB]">
+    <div className="neu flex min-h-screen">
       <AdminSidebar storyEngineEnabled={storyEngineEnabled} />
       <main className="flex-1 flex flex-col min-w-0">
         {children}

@@ -14,7 +14,7 @@ export default async function AdminDashboardPage() {
       <div className="border-b border-[#E5E7EB] bg-white px-6 py-4">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-bold text-[#111827] font-[Oswald] tracking-wide">Resumen de Agencia</h1>
+            <h1 className="text-xl font-bold text-[#111827] font-[Roboto] tracking-wide">Resumen de Agencia</h1>
             <p className="text-sm text-[#9CA3AF] mt-0.5">Todos los clientes</p>
           </div>
           <div className="flex items-center gap-2">

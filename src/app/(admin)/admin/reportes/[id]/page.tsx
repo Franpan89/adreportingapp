@@ -12,6 +12,7 @@ import {
   getSocialGrowthFromSnapshots,
 } from '@/lib/supabase/social-snapshots';
 import { fetchMetaDemographics } from '@/lib/connectors/meta';
+import { resolveAgencyOwnerId } from '@/lib/supabase/team';
 import type { TopCreative, PeriodTotals, Channel, DemographicData, CampaignSummary } from '@/types';
 
 type EfficiencyMetrics = { cpm: number; ctr: number; cpa: number; clicks: number };
@@ -41,10 +42,11 @@ export default async function AdminReporteDetailPage({ params }: PageProps) {
 
   // ── 1. Always override color + name from current agency settings ───────────
   if (user) {
+    const ownerId = await resolveAgencyOwnerId(supabase, user.id);
     const { data: ag } = await supabase
       .from('cr_agency_settings')
       .select('primary_color, agency_name')
-      .eq('admin_user_id', user.id)
+      .eq('admin_user_id', ownerId)
       .single()
       .then(r => r, () => ({ data: null }));
     if (ag?.primary_color) report.accent_color = ag.primary_color;
@@ -224,7 +226,7 @@ export default async function AdminReporteDetailPage({ params }: PageProps) {
   }
 
   return (
-    <div className="flex-1 flex flex-col bg-[#F9FAFB]">
+    <div className="report-keep flex-1 flex flex-col bg-[#F9FAFB]">
       <div className="print:hidden border-b border-[#E5E7EB] bg-white px-6 py-3 flex items-center justify-between sticky top-0 z-10">
         <Link
           href={`/admin/clients/${report.client_id}/reportes`}

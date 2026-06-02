@@ -108,7 +108,7 @@ export function DashboardShell({
         <div className="sticky top-0 z-30 bg-[#F9FAFB] border-b border-[#E5E7EB] px-6 py-3">
           <div className="flex items-center justify-between flex-wrap gap-3">
             <div>
-              <h1 className="text-lg font-bold text-[#111827] font-[Oswald] tracking-wide">{clientName}</h1>
+              <h1 className="text-lg font-bold text-[#111827] font-[Roboto] tracking-wide">{clientName}</h1>
               <p className="text-xs text-[#9CA3AF]">
                 {active === 'consolidated' ? 'Vista consolidada' : 'Vista de fuente'}
               </p>

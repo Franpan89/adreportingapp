@@ -2,7 +2,7 @@
    PERSPECTIVE DESIGN SYSTEM — Global Tokens
    Fonts: Poppins (primary), Oswald (display), JetBrains Mono (mono)
    ===================================================== */
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;500;600;700;800;900&family=Oswald:wght@200;300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;500;600;700;800;900&family=Oswald:wght@200;300;400;500;600;700&family=Roboto:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap');
 @import "tailwindcss";
 
 @theme {
@@ -36,9 +36,21 @@
   --color-tiktok-light: #F0F0F0;
 
   /* Fonts */
-  --font-sans: 'Poppins', sans-serif;
-  --font-display: 'Oswald', sans-serif;
+  --font-sans: 'Roboto', sans-serif;
+  --font-display: 'Roboto', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
+  --font-space-mono: 'Roboto', sans-serif;
+
+  /* ── Neumorphism palette (SKILL.md) — app chrome only, scoped to .neu ── */
+  --color-neu-primary: #006666;
+  --color-neu-primary-soft: #0a7d7d;
+  --color-neu-secondary: #F1F2F5;
+  --color-neu-success: #00A63D;
+  --color-neu-warning: #FE9900;
+  --color-neu-danger: #FF2157;
+  --color-neu-surface: #E7E5E4;
+  --color-neu-text: #1E2938;
+  --color-neu-text-soft: #5a6472;
 
   /* Perspective shadow (3D-like depth offset) */
   --shadow-perspective-xs: 1px 2px 0px 0px rgba(0,0,0,0.12);
@@ -108,6 +120,74 @@ body {
 .perspective-card-depth:hover {
   transform: translateY(-2px);
   box-shadow: var(--shadow-perspective-md);
+}
+
+/* =====================================================
+   NEUMORPHISM (SKILL.md) — scoped to .neu (app chrome only)
+   Soft extruded / inset surfaces on a single monochrome
+   surface. The report view opts OUT via .report-keep so it
+   stays on the Perspective design system.
+   ===================================================== */
+:root {
+  /* dual shadow stops derived from the #E7E5E4 surface */
+  --neu-light: rgba(255, 255, 255, 0.9);
+  --neu-dark:  rgba(170, 167, 165, 0.55);
+}
+
+.neu {
+  background: var(--color-neu-surface);
+  color: var(--color-neu-text);
+  font-family: var(--font-space-mono);
+}
+
+/* Raised (extruded) — default card/control surface */
+.neu-raised {
+  background: var(--color-neu-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: 5px 5px 10px var(--neu-dark), -5px -5px 10px var(--neu-light);
+}
+.neu-raised-sm {
+  background: var(--color-neu-surface);
+  border-radius: var(--radius-md);
+  box-shadow: 3px 3px 6px var(--neu-dark), -3px -3px 6px var(--neu-light);
+}
+
+/* Inset (pressed/sunken) — inputs, active states, wells */
+.neu-inset {
+  background: var(--color-neu-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: inset 3px 3px 6px var(--neu-dark), inset -3px -3px 6px var(--neu-light);
+}
+.neu-inset-sm {
+  background: var(--color-neu-surface);
+  border-radius: var(--radius-md);
+  box-shadow: inset 2px 2px 4px var(--neu-dark), inset -2px -2px 4px var(--neu-light);
+}
+
+/* Pressable — raised at rest, sinks on press */
+.neu-pressable {
+  background: var(--color-neu-surface);
+  border-radius: var(--radius-md);
+  box-shadow: 4px 4px 8px var(--neu-dark), -4px -4px 8px var(--neu-light);
+  transition: box-shadow 120ms ease, transform 120ms ease;
+}
+.neu-pressable:hover { box-shadow: 5px 5px 10px var(--neu-dark), -5px -5px 10px var(--neu-light); }
+.neu-pressable:active {
+  box-shadow: inset 3px 3px 6px var(--neu-dark), inset -3px -3px 6px var(--neu-light);
+  transform: translateY(1px);
+}
+
+/* WCAG 2.2 AA visible focus — applies to any neu control */
+.neu :where(button, a, [role="switch"], select, input, [tabindex]):focus-visible {
+  outline: 2px solid var(--color-neu-primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* Report opt-out: restore Perspective typography + surface inside .neu */
+.report-keep {
+  font-family: var(--font-sans);
+  color: var(--color-ink);
 }
 
 /* =====================================================

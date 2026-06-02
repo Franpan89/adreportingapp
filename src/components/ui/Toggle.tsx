@@ -25,20 +25,20 @@ export function Toggle({ checked, onChange, label, disabled, size = 'md' }: Togg
         onClick={() => !disabled && onChange(!checked)}
         onKeyDown={e => e.key === 'Enter' && !disabled && onChange(!checked)}
         className={cn(
-          'relative rounded-full transition-colors duration-200',
+          'relative rounded-full transition-colors duration-200 neu-inset-sm',
           s.track,
-          checked ? 'bg-[#00BD7D]' : 'bg-[#D1D5DB]'
+          checked ? 'bg-[#006666]' : 'bg-[#E7E5E4]'
         )}
       >
         <span
           className={cn(
-            'absolute top-0.5 left-0.5 rounded-full bg-white shadow transition-transform duration-200',
+            'absolute top-0.5 left-0.5 rounded-full bg-[#F1F2F5] shadow-[1px_1px_2px_rgba(170,167,165,0.7)] transition-transform duration-200',
             s.thumb,
             checked && s.offset
           )}
         />
       </div>
-      {label && <span className="text-sm text-[#374151]">{label}</span>}
+      {label && <span className="text-sm text-[#1E2938]">{label}</span>}
     </label>
   );
 }

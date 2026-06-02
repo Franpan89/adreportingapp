@@ -26,20 +26,20 @@ export function KpiCard({
     : direction === 'down';
 
   const deltaColor = direction === 'flat'
-    ? 'text-[#6B7280]'
-    : isGood ? 'text-[#16A34A]' : 'text-[#DC2626]';
+    ? 'text-[#5a6472]'
+    : isGood ? 'text-[#00A63D]' : 'text-[#c2153f]';
 
   const deltaBg = direction === 'flat'
-    ? 'bg-[#F3F4F6]'
-    : isGood ? 'bg-[#dcfce7]' : 'bg-[#fee2e2]';
+    ? 'bg-[#F1F2F5]'
+    : isGood ? 'bg-[#d6f5e1]' : 'bg-[#ffdce4]';
 
   return (
-    <div className="bg-white border border-[#E5E7EB] rounded-xl p-5 shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-card-hover)] hover:-translate-y-0.5 transition-all duration-150">
+    <div className="neu-raised p-5">
       {/* Label */}
-      <p className="text-xs font-medium text-[#6B7280] mb-3 uppercase tracking-wide">{label}</p>
+      <p className="text-xs font-medium text-[#5a6472] mb-3 uppercase tracking-wide">{label}</p>
 
       {/* Primary value */}
-      <p className="text-2xl font-bold text-[#111827] font-[Poppins] leading-none mb-3">
+      <p className="text-2xl font-bold text-[#1E2938] font-[Roboto] leading-none mb-3">
         {formatMetric(value, unit)}
       </p>
 
@@ -55,7 +55,7 @@ export function KpiCard({
             </span>
           </div>
           {compareValue !== undefined && (
-            <span className="text-xs text-[#9CA3AF]">
+            <span className="text-xs text-[#5a6472]">
               vs {formatMetric(compareValue, unit)}
             </span>
           )}

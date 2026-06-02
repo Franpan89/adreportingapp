@@ -33,11 +33,11 @@ const sourceVariants: Record<SourceKey, string> = {
 };
 
 const variants: Record<Variant, string> = {
-  default:    'bg-[#F3F4F6] text-[#374151]',
-  primary:    'bg-[#e6f9f4] text-[#00BD7D]',
-  success:    'bg-[#dcfce7] text-[#16A34A]',
-  warning:    'bg-[#fef3c7] text-[#D97706]',
-  danger:     'bg-[#fee2e2] text-[#DC2626]',
+  default:    'bg-[#F1F2F5] text-[#5a6472]',
+  primary:    'bg-[#d9ecec] text-[#006666]',
+  success:    'bg-[#d6f5e1] text-[#00A63D]',
+  warning:    'bg-[#fff0d6] text-[#b86e00]',
+  danger:     'bg-[#ffdce4] text-[#c2153f]',
   ...sourceVariants,
 };
 
