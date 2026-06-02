@@ -90,6 +90,7 @@ export function ReportView({ report, clientName, demographics, campaigns, prevTo
                   className="w-full object-contain"
                   style={{ maxHeight: 320 }}
                   loading="eager"
+                  referrerPolicy="no-referrer"
                 />
                 <div className="px-3 py-2 bg-[#F9FAFB] border-t border-[#E5E7EB]">
                   <p className="text-[10px] uppercase tracking-wider text-[#9CA3AF] mb-0.5">Anuncio destacado</p>
@@ -155,6 +156,7 @@ export function ReportView({ report, clientName, demographics, campaigns, prevTo
                               alt=""
                               className="w-10 h-10 rounded-lg object-contain shrink-0 border border-[#E5E7EB] bg-[#f3f4f6]"
                               loading="eager"
+                              referrerPolicy="no-referrer"
                             />
                           ) : (
                             <div className="w-10 h-10 rounded-lg bg-[#F3F4F6] shrink-0 flex items-center justify-center text-[#D1D5DB]">🖼</div>
@@ -648,6 +650,7 @@ function Top3Podium({ creatives, accent }: { creatives: TopCreative[]; accent: s
                   alt={c.name}
                   className="w-full h-full object-contain"
                   loading="eager"
+                  referrerPolicy="no-referrer"
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-5xl text-[#D1D5DB]">🖼</div>

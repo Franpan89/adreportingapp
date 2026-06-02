@@ -90,8 +90,9 @@ export async function proxy(request: NextRequest) {
   const role = profile?.role ?? 'admin';
 
   // Dead client-portal paths (removed) → admin dashboard.
+  // Exception: /reportes/*/print is the standalone PDF print page (no admin layout).
   if (path === '/dashboard' || path.startsWith('/dashboard/') ||
-      path === '/reportes'  || path.startsWith('/reportes/')) {
+      path === '/reportes'  || (path.startsWith('/reportes/') && !path.endsWith('/print'))) {
     return NextResponse.redirect(new URL('/admin/dashboard', request.url));
   }
 
