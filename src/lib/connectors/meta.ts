@@ -109,6 +109,12 @@ export interface MetaAd {
     thumbnail_url?: string;
     object_type?: string;
     full_picture?: string;
+    object_story_spec?: {
+      link_data?: {
+        picture?: string;
+        child_attachments?: Array<{ picture?: string }>;
+      };
+    };
   };
 }
 
@@ -153,7 +159,7 @@ export async function fetchMetaAdsByIds(
     const chunk = adIds.slice(i, i + 50);
     const params = new URLSearchParams({
       ids:    chunk.join(','),
-      fields: 'id,name,campaign_id,creative{thumbnail_url,object_type,full_picture}',
+      fields: 'id,name,campaign_id,creative{thumbnail_url,object_type,full_picture,object_story_spec{link_data{picture,child_attachments{picture}}}}',
       access_token,
     });
     const res  = await fetch(`${META_API_BASE}/?${params}`);
