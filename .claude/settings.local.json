@@ -24,7 +24,24 @@
       "Bash(git push:*)",
       "Bash(git fetch:*)",
       "Bash(git rebase:*)",
-      "Bash(git stash:*)"
+      "Bash(git stash:*)",
+      "mcp__a8b9bd7a-df8d-416c-8b20-432cc41ba53d__list_projects",
+      "mcp__a8b9bd7a-df8d-416c-8b20-432cc41ba53d__list_migrations",
+      "mcp__a8b9bd7a-df8d-416c-8b20-432cc41ba53d__execute_sql",
+      "WebFetch(domain:ylkluoandvtgxjjyfwea.supabase.co)",
+      "Bash(curl -s -o /dev/null -w '%{http_code}' 'https://ylkluoandvtgxjjyfwea.supabase.co/rest/v1/cr_clients?limit=1' -H 'apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlsa2x1b2FuZHZ0Z3hqanlmd2VhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5ODAzMjQsImV4cCI6MjA5MjU1NjMyNH0.sEWA9H7NBkuszcz-4-V9UhBkhhaH6E08iKBR6-9TqxY' -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlsa2x1b2FuZHZ0Z3hqanlmd2VhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5ODAzMjQsImV4cCI6MjA5MjU1NjMyNH0.sEWA9H7NBkuszcz-4-V9UhBkhhaH6E08iKBR6-9TqxY')",
+      "Bash(xargs grep *)",
+      "Bash(gh pr *)",
+      "mcp__Claude_in_Chrome__tabs_context_mcp",
+      "mcp__plugin_pdf-viewer_pdf__display_pdf",
+      "mcp__plugin_pdf-viewer_pdf__interact",
+      "PowerShell(Add-Type -AssemblyName System.IO.Compression.FileSystem; $pdfPath = \"C:\\\\Users\\\\fandr\\\\OneDrive\\\\Documentos\\\\WMM\\\\ads-reporting\\\\.claude\\\\worktrees\\\\interesting-grothendieck-638deb\\\\informe-pekes-nov25.pdf\"; $bytes = [System.IO.File]::ReadAllBytes\\($pdfPath\\); $text = [System.Text.Encoding]::Latin1.GetString\\($bytes\\); $matches = [regex]::Matches\\($text, 'BT[\\\\s\\\\S]{0,2000}?ET'\\); $extracted = $matches | ForEach-Object { $_.Value -replace '[\\\\x00-\\\\x1F]',' ' }; $extracted[0..30] -join \"`n\" | Out-String)",
+      "mcp__plugin_pdf-viewer_pdf__read_pdf_bytes",
+      "PowerShell(python3 --version 2>&1)",
+      "PowerShell(node --version 2>&1)",
+      "Bash(node extract-pdf.mjs)",
+      "PowerShell(Get-NetTCPConnection -LocalPort 3020 -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess | ForEach-Object { Stop-Process -Id $_ -Force -ErrorAction SilentlyContinue }; Write-Host \"Done\")",
+      "Bash(netstat -ano)"
     ]
   }
 }

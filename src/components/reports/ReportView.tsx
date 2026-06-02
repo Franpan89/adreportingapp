@@ -30,159 +30,320 @@ const PLATFORM_LABELS: Record<SocialGrowthMetric['platform'], string> = {
 
 function parseRecommendations(text: string): string[] {
   if (!text?.trim()) return [];
-  const parts = text.split(/(?=\n?\s*\d+[.)]\s+)/);
+  const str = text.trim();
+  if (str.startsWith('[')) {
+    try {
+      const arr = JSON.parse(str);
+      if (Array.isArray(arr)) {
+        return arr.map(s => String(s).replace(/^\s*\d+[.)]\s+/, '').trim()).filter(Boolean);
+      }
+    } catch { /* fall through */ }
+  }
+  const parts = str.split(/(?=\n\s*\d+[.)]\s+)/);
   const cleaned = parts.map(s => s.replace(/^\s*\d+[.)]\s+/, '').trim()).filter(Boolean);
-  return cleaned.length > 1 ? cleaned : [text.trim()];
+  return cleaned.length > 1 ? cleaned : [str];
 }
 
-export function ReportView({ report }: { report: ClientReport }) {
+export function ReportView({ report, clientName }: { report: ClientReport; clientName?: string }) {
   const accent = report.accent_color ?? '#00BD7D';
-  const accentLight = accent + '18'; // ~10% opacity hex approximation
   const publishedDate = new Date(report.published_at ?? report.created_at)
     .toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' });
-
   const recs = parseRecommendations(report.recommendations);
+  const topCreative = report.top_creatives[0] ?? null;
 
   return (
-    <article className="report max-w-4xl mx-auto bg-white border border-[#E5E7EB] rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.08)] overflow-hidden print:shadow-none print:border-0 print:rounded-none print:max-w-none">
+    <article className="report max-w-4xl mx-auto bg-white shadow-[0_8px_40px_rgba(0,0,0,0.10)] overflow-hidden print:shadow-none print:max-w-none">
 
-      {/* ── Accent top bar ── */}
-      <div style={{ background: accent, height: 5 }} />
+      {/* ══ PORTADA ══ */}
+      <CoverPage report={report} accent={accent} clientName={clientName} />
 
-      {/* ── Cover ── */}
-      <header className="px-10 pt-10 pb-8 border-b border-[#F3F4F6] print:break-after-page">
-        {/* Logo row */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-3">
-            {report.agency_logo_url ? (
-              <img src={report.agency_logo_url} alt="Logo agencia" className="h-10 max-w-[140px] object-contain" referrerPolicy="no-referrer" />
-            ) : (
-              <div className="h-10 flex items-center">
-                <span className="text-sm font-semibold text-[#9CA3AF]">{report.agency_name ?? ''}</span>
+      {/* ══ PÁGINAS DE CONTENIDO ══ */}
+      <div className="bg-white">
+
+        {/* Header strip on each content page */}
+        <PageHeader report={report} accent={accent} clientName={clientName} />
+
+        {/* ── KPI Strip ── */}
+        {report.period_totals && <KpiStrip totals={report.period_totals} accent={accent} />}
+
+        {/* ── 1. RESUMEN EJECUTIVO ── */}
+        <Section title="RESUMEN EJECUTIVO" accent={accent}>
+          <div className={`grid gap-8 items-start ${topCreative?.thumbnail_url ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1'}`}>
+            {(topCreative?.full_picture_url ?? topCreative?.thumbnail_url) && (
+              <div className="rounded-xl overflow-hidden border border-[#E5E7EB] shadow-sm bg-[#1a1a1a]">
+                <img
+                  src={topCreative.full_picture_url ?? topCreative.thumbnail_url!}
+                  alt={topCreative.name}
+                  className="w-full object-contain"
+                  style={{ maxHeight: 320 }}
+                  loading="eager"
+                />
+                <div className="px-3 py-2 bg-[#F9FAFB] border-t border-[#E5E7EB]">
+                  <p className="text-[10px] uppercase tracking-wider text-[#9CA3AF] mb-0.5">Anuncio destacado</p>
+                  <p className="text-xs font-semibold text-[#111827] line-clamp-2">{topCreative.name}</p>
+                </div>
               </div>
             )}
+            <div>
+              <p className="text-base leading-relaxed text-[#374151] whitespace-pre-line" style={{ color: accent === '#00BD7D' ? '#374151' : undefined }}>
+                {report.executive_summary}
+              </p>
+            </div>
           </div>
-          {report.client_logo_url && (
-            <img src={report.client_logo_url} alt="Logo cliente" className="h-20 max-w-[200px] object-contain" referrerPolicy="no-referrer" />
+        </Section>
+
+        {/* ── 2. INFORME DE ANUNCIOS ── */}
+        <Section title="INFORME DE ANUNCIOS" accent={accent}>
+          {report.top_creatives.length === 0 ? (
+            <EmptyNote>No hay datos de anuncios para este período.</EmptyNote>
+          ) : (
+            <div className="overflow-x-auto rounded-xl border border-[#E5E7EB]">
+              <table className="w-full text-sm border-collapse">
+                <thead>
+                  <tr style={{ background: accent }}>
+                    <th className="text-left text-white text-[11px] font-bold uppercase tracking-wider px-4 py-3 w-10">#</th>
+                    <th className="text-left text-white text-[11px] font-bold uppercase tracking-wider px-4 py-3">Anuncio</th>
+                    <th className="text-right text-white text-[11px] font-bold uppercase tracking-wider px-4 py-3">Impresiones</th>
+                    <th className="text-right text-white text-[11px] font-bold uppercase tracking-wider px-4 py-3">Inversión</th>
+                    <th className="text-right text-white text-[11px] font-bold uppercase tracking-wider px-4 py-3">CPA</th>
+                    <th className="text-right text-white text-[11px] font-bold uppercase tracking-wider px-4 py-3">Conv.</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {report.top_creatives.map((c, i) => {
+                    const ch = CHANNEL_META[c.channel];
+                    const cpa = c.conversions > 0 ? c.spend / c.conversions : 0;
+                    return (
+                      <tr key={i} className={i % 2 === 0 ? 'bg-white' : 'bg-[#F9FAFB]'}>
+                        <td className="px-4 py-3 text-center">
+                          {i < 3 ? (
+                            <span className="w-6 h-6 rounded-full text-white text-[10px] font-bold flex items-center justify-center mx-auto" style={{ background: accent }}>
+                              {i + 1}
+                            </span>
+                          ) : (
+                            <span className="text-[11px] text-[#9CA3AF] font-medium">{i + 1}</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-3">
+                            {(c.full_picture_url ?? c.thumbnail_url) ? (
+                              <img
+                                src={c.full_picture_url ?? c.thumbnail_url!}
+                                alt=""
+                                className="w-12 h-12 rounded-lg object-contain shrink-0 border border-[#E5E7EB] bg-[#f3f4f6]"
+                                loading="eager"
+                              />
+                            ) : (
+                              <div className="w-12 h-12 rounded-lg bg-[#F3F4F6] shrink-0 flex items-center justify-center">
+                                <span className="text-[#D1D5DB] text-lg">🖼</span>
+                              </div>
+                            )}
+                            <div className="min-w-0">
+                              <p className="text-xs font-semibold text-[#111827] line-clamp-2 leading-snug">{c.name}</p>
+                              <span className="inline-block mt-1 text-[9px] font-semibold px-1.5 py-0.5 rounded" style={{ color: ch.color, background: ch.bg }}>
+                                {ch.label}
+                              </span>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-right text-xs font-medium text-[#374151] tabular-nums">{fmtNumber(c.impressions)}</td>
+                        <td className="px-4 py-3 text-right text-xs font-medium text-[#374151] tabular-nums">{fmtCurrency(c.spend)}</td>
+                        <td className="px-4 py-3 text-right text-xs font-medium tabular-nums" style={{ color: cpa > 0 ? accent : '#9CA3AF' }}>
+                          {cpa > 0 ? fmtCurrency(cpa) : '—'}
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <span className="text-sm font-bold tabular-nums" style={{ color: accent }}>{c.conversions}</span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+                <tfoot>
+                  <tr className="border-t-2" style={{ borderColor: accent }}>
+                    <td colSpan={2} className="px-4 py-3 text-xs font-bold text-[#374151]">TOTALES</td>
+                    <td className="px-4 py-3 text-right text-xs font-bold text-[#374151] tabular-nums">
+                      {fmtNumber(report.top_creatives.reduce((a, c) => a + c.impressions, 0))}
+                    </td>
+                    <td className="px-4 py-3 text-right text-xs font-bold text-[#374151] tabular-nums">
+                      {fmtCurrency(report.top_creatives.reduce((a, c) => a + c.spend, 0))}
+                    </td>
+                    <td className="px-4 py-3 text-right text-xs font-bold tabular-nums" style={{ color: accent }}>
+                      {(() => {
+                        const totalConv = report.top_creatives.reduce((a, c) => a + c.conversions, 0);
+                        const totalSpend = report.top_creatives.reduce((a, c) => a + c.spend, 0);
+                        return totalConv > 0 ? fmtCurrency(totalSpend / totalConv) : '—';
+                      })()}
+                    </td>
+                    <td className="px-4 py-3 text-right text-sm font-bold tabular-nums" style={{ color: accent }}>
+                      {report.top_creatives.reduce((a, c) => a + c.conversions, 0)}
+                    </td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
           )}
-        </div>
+        </Section>
 
-        <p className="text-[11px] font-bold uppercase tracking-[0.2em] mb-2" style={{ color: accent }}>
-          Informe de Rendimiento
-        </p>
-        <h1
-          className="text-4xl font-bold text-[#111827] leading-tight mb-3"
-          style={{ fontFamily: 'Oswald, sans-serif', letterSpacing: '0.02em' }}
-        >
-          {report.title}
-        </h1>
-        <p className="text-sm text-[#6B7280]">
-          Período: <span className="font-semibold text-[#374151]">{formatPeriod(report.period_start, report.period_end)}</span>
-        </p>
-      </header>
-
-      {/* ── KPI Strip ── */}
-      {report.period_totals && <KpiStrip totals={report.period_totals} accent={accent} />}
-
-      {/* ── 1. Resumen Ejecutivo ── */}
-      <Section number={1} title="Resumen Ejecutivo" accent={accent}>
-        <p className="text-sm leading-relaxed text-[#374151] whitespace-pre-line">
-          {report.executive_summary}
-        </p>
-      </Section>
-
-      {/* ── 2. Mejores Creativos ── */}
-      <Section number={2} title="Mejores Creativos" accent={accent}>
-        {report.top_creatives.length === 0 ? (
-          <EmptyNote>No hay datos de creativos para este período.</EmptyNote>
-        ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-            {report.top_creatives.map((c, i) => <CreativeCard key={i} creative={c} accent={accent} rank={i + 1} />)}
-          </div>
+        {/* ── 3. INVERSIÓN POR CANAL ── */}
+        {report.spend_vs_results.length > 0 && (
+          <Section title="INVERSIÓN Y RESULTADOS POR CANAL" accent={accent}>
+            <div className="space-y-3">
+              {report.spend_vs_results.map((r, i) => (
+                <SpendResultBar key={i} row={r} max={maxSpend(report.spend_vs_results)} accent={accent} />
+              ))}
+              <SpendResultTotals rows={report.spend_vs_results} accent={accent} />
+            </div>
+          </Section>
         )}
-      </Section>
 
-      {/* ── 3. Inversión y Resultados ── */}
-      <Section number={3} title="Inversión y Resultados por Canal" accent={accent}>
-        {report.spend_vs_results.length === 0 ? (
-          <EmptyNote>No hay datos de inversión para este período.</EmptyNote>
-        ) : (
-          <div className="space-y-3">
-            {report.spend_vs_results.map((r, i) => (
-              <SpendResultBar key={i} row={r} max={maxSpend(report.spend_vs_results)} accent={accent} />
-            ))}
-            <SpendResultTotals rows={report.spend_vs_results} accent={accent} />
-          </div>
-        )}
-      </Section>
+        {/* ── 4. CRECIMIENTO EN REDES ── */}
+        <Section title="CRECIMIENTO EN REDES SOCIALES" accent={accent}>
+          {report.social_growth.length === 0 ? (
+            <div className="bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl p-6 text-center space-y-2">
+              <p className="text-sm font-semibold text-[#374151]">Aún no hay historial de seguidores</p>
+              <p className="text-xs text-[#6B7280] leading-relaxed max-w-md mx-auto">
+                Comenzamos a registrar los seguidores de Facebook e Instagram desde hoy.
+                El próximo reporte mostrará el crecimiento real del período.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {report.social_growth.map((s, i) => <SocialCard key={i} metric={s} accent={accent} />)}
+            </div>
+          )}
+        </Section>
 
-      {/* ── 4. Audiencias ── */}
-      <Section number={4} title="Audiencias" accent={accent}>
-        {report.audiences.length === 0 ? (
-          <EmptyNote>No hay datos de audiencias para este período.</EmptyNote>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {report.audiences.map((a, i) => <AudienceCard key={i} audience={a} accent={accent} />)}
-          </div>
-        )}
-      </Section>
+        {/* ── 5. PÚBLICO / AUDIENCIAS ── */}
+        <Section title="PÚBLICO Y AUDIENCIAS" accent={accent}>
+          {report.audiences.length === 0 ? (
+            <div className="bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl p-5 text-center">
+              <p className="text-sm text-[#6B7280]">No hay datos de audiencias disponibles para este período.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {report.audiences.map((a, i) => <AudienceCard key={i} audience={a} accent={accent} />)}
+            </div>
+          )}
+        </Section>
 
-      {/* ── 5. Crecimiento en Redes ── */}
-      <Section number={5} title="Crecimiento en Redes Sociales" accent={accent}>
-        {report.social_growth.length === 0 ? (
-          <EmptyNote>No hay datos de crecimiento de seguidores para este período.</EmptyNote>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {report.social_growth.map((s, i) => <SocialCard key={i} metric={s} accent={accent} />)}
-          </div>
-        )}
-      </Section>
+        {/* ── 6. CONCLUSIONES Y RECOMENDACIONES ── */}
+        <Section title="CONCLUSIONES Y RECOMENDACIONES" accent={accent} last>
+          {recs.length === 0 ? (
+            <EmptyNote>Sin recomendaciones registradas.</EmptyNote>
+          ) : (
+            <ol className="space-y-4">
+              {recs.map((rec, i) => (
+                <li key={i} className="flex gap-4 items-start">
+                  <span
+                    className="shrink-0 w-8 h-8 rounded-full text-white text-sm font-bold flex items-center justify-center mt-0.5 shadow-sm"
+                    style={{ background: accent }}
+                  >
+                    {i + 1}
+                  </span>
+                  <p className="text-sm text-[#374151] leading-relaxed pt-1">{rec}</p>
+                </li>
+              ))}
+            </ol>
+          )}
+        </Section>
 
-      {/* ── 6. Recomendaciones ── */}
-      <Section number={6} title="Conclusiones y Recomendaciones" accent={accent} last>
-        {recs.length === 0 ? (
-          <EmptyNote>Sin recomendaciones registradas.</EmptyNote>
-        ) : (
-          <ol className="space-y-3">
-            {recs.map((rec, i) => (
-              <li key={i} className="flex gap-3 items-start">
-                <span
-                  className="shrink-0 w-6 h-6 rounded-full text-white text-xs font-bold flex items-center justify-center mt-0.5"
-                  style={{ background: accent }}
-                >
-                  {i + 1}
-                </span>
-                <p className="text-sm text-[#374151] leading-relaxed">{rec}</p>
-              </li>
-            ))}
-          </ol>
-        )}
-      </Section>
-
-      {/* ── Footer ── */}
-      <footer className="border-t-4 px-10 py-5 flex items-center justify-between" style={{ borderColor: accent }}>
-        <span className="text-sm font-semibold text-[#374151]">
-          {report.agency_name ?? 'Web My Money'}
-        </span>
-        <span className="text-xs text-[#9CA3AF]">{publishedDate}</span>
-      </footer>
+        {/* ── Footer ── */}
+        <footer className="border-t-4 px-10 py-5 flex items-center justify-between print:break-before-page" style={{ borderColor: accent }}>
+          <span className="text-sm font-semibold text-[#374151]">{report.agency_name ?? 'Web My Money'}</span>
+          <span className="text-xs text-[#9CA3AF]">{publishedDate}</span>
+        </footer>
+      </div>
     </article>
+  );
+}
+
+/* ─────────────── Cover Page ─────────────── */
+function CoverPage({ report, accent, clientName }: { report: ClientReport; accent: string; clientName?: string }) {
+  const periodLabel = formatPeriodMonth(report.period_start, report.period_end);
+  const displayName = clientName ?? report.title;
+  return (
+    <div
+      className="flex flex-col items-center justify-center text-center px-12 py-20 print:min-h-screen print:break-after-page"
+      style={{ background: accent, minHeight: 560 }}
+    >
+      {report.agency_logo_url ? (
+        <div className="bg-white rounded-2xl px-8 py-4 mb-10 inline-block shadow-sm">
+          <img
+            src={report.agency_logo_url}
+            alt="Logo agencia"
+            className="h-20 max-w-[220px] object-contain"
+            referrerPolicy="no-referrer"
+          />
+        </div>
+      ) : (
+        <p className="text-white text-4xl font-bold mb-10 tracking-wide">{report.agency_name ?? ''}</p>
+      )}
+
+      <h1 className="text-white text-5xl font-black uppercase tracking-wider mb-3" style={{ fontFamily: 'Oswald, sans-serif' }}>
+        Informe de Pautaje
+      </h1>
+      <p className="text-white/80 text-2xl mb-14" style={{ fontFamily: 'Oswald, sans-serif' }}>
+        {periodLabel}
+      </p>
+
+      <div className="text-white">
+        <p className="text-xs font-bold uppercase tracking-[0.25em] text-white/60 mb-2">Cliente</p>
+        {report.client_logo_url ? (
+          <img
+            src={report.client_logo_url}
+            alt="Logo cliente"
+            className="h-16 max-w-[200px] object-contain mx-auto mt-2"
+            style={{ filter: 'brightness(0) invert(1)' }}
+            referrerPolicy="no-referrer"
+          />
+        ) : (
+          <p className="text-white text-3xl font-semibold">{displayName}</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────── Page Header ─────────────── */
+function PageHeader({ report, accent, clientName }: { report: ClientReport; accent: string; clientName?: string }) {
+  const periodLabel = formatPeriodMonth(report.period_start, report.period_end);
+  const displayName = clientName ?? report.title;
+  return (
+    <div className="flex items-center justify-between px-8 py-4 border-b-4 print:break-inside-avoid" style={{ borderColor: accent }}>
+      <div className="flex items-center gap-3">
+        {report.agency_logo_url ? (
+          <img src={report.agency_logo_url} alt="" className="h-12 max-w-[140px] object-contain" referrerPolicy="no-referrer" />
+        ) : (
+          <span className="text-base font-bold" style={{ color: accent }}>{report.agency_name ?? ''}</span>
+        )}
+      </div>
+      <div className="text-right text-sm">
+        <p className="text-[#374151]">
+          <span className="font-bold">Informe de Pautaje: </span>
+          <span style={{ color: accent }}>{periodLabel}</span>
+        </p>
+        <p className="text-[#374151]">
+          <span className="font-bold">Cliente: </span>
+          <span style={{ color: accent }}>{displayName}</span>
+        </p>
+      </div>
+    </div>
   );
 }
 
 /* ─────────────── KPI Strip ─────────────── */
 function KpiStrip({ totals, accent }: { totals: PeriodTotals; accent: string }) {
   const kpis = [
-    { label: 'Inversión total', value: fmtCurrency(totals.spend) },
-    { label: 'Conversiones',    value: fmtNumber(totals.conversions) },
-    { label: 'Impresiones',     value: fmtCompact(totals.impressions) },
-    { label: 'Alcance',         value: fmtCompact(totals.reach) },
-    { label: 'Interacciones',   value: fmtCompact(totals.interactions) },
+    { label: 'Inversión total',  value: fmtCurrency(totals.spend) },
+    { label: 'Conversiones',     value: fmtNumber(totals.conversions) },
+    { label: 'Impresiones',      value: fmtCompact(totals.impressions) },
+    { label: 'Alcance',          value: fmtCompact(totals.reach) },
+    { label: 'Interacciones',    value: fmtCompact(totals.interactions) },
   ];
   return (
-    <div className="grid grid-cols-5 divide-x divide-[#F3F4F6] border-b border-[#F3F4F6] print:break-inside-avoid">
+    <div className="grid grid-cols-5 divide-x divide-[#F3F4F6] border-b border-[#F3F4F6]">
       {kpis.map(({ label, value }) => (
-        <div key={label} className="px-5 py-5 text-center">
+        <div key={label} className="px-4 py-5 text-center">
           <p className="text-xl font-bold text-[#111827] tabular-nums" style={{ fontFamily: 'Oswald, sans-serif' }}>
             {value}
           </p>
@@ -196,93 +357,25 @@ function KpiStrip({ totals, accent }: { totals: PeriodTotals; accent: string }) 
 
 /* ─────────────── Section shell ─────────────── */
 function Section({
-  number, title, children, last, accent,
+  title, children, last, accent,
 }: {
-  number: number; title: string; children: React.ReactNode; last?: boolean; accent: string;
+  title: string; children: React.ReactNode; last?: boolean; accent: string;
 }) {
   return (
-    <section className={`px-10 py-8 ${last ? '' : 'border-b border-[#F3F4F6]'} print:break-inside-avoid`}>
-      <div className="flex items-center gap-3 mb-5">
-        <span
-          className="w-7 h-7 rounded-full text-white text-xs font-bold flex items-center justify-center shrink-0"
-          style={{ background: accent }}
-        >
-          {number}
-        </span>
-        <h2
-          className="text-xl font-bold text-[#111827]"
-          style={{ fontFamily: 'Oswald, sans-serif', letterSpacing: '0.03em' }}
-        >
-          {title}
-        </h2>
-      </div>
+    <section className={`px-8 py-8 ${last ? '' : 'border-b border-[#F3F4F6]'} print:break-inside-avoid`}>
+      <h2
+        className="text-2xl font-black text-[#111827] mb-6 text-center uppercase tracking-wider"
+        style={{ fontFamily: 'Oswald, sans-serif', letterSpacing: '0.08em' }}
+      >
+        {title}
+      </h2>
       {children}
     </section>
   );
 }
 
 function EmptyNote({ children }: { children: React.ReactNode }) {
-  return <p className="text-sm text-[#9CA3AF] italic">{children}</p>;
-}
-
-/* ─────────────── Creative card ─────────────── */
-function CreativeCard({ creative, accent, rank }: { creative: TopCreative; accent: string; rank: number }) {
-  const ch = CHANNEL_META[creative.channel];
-  return (
-    <div className="rounded-xl overflow-hidden border border-[#E5E7EB] shadow-sm hover:shadow-md transition-shadow">
-      {/* Image */}
-      <div className="relative bg-[#1a1a1a] aspect-square overflow-hidden">
-        {creative.thumbnail_url ? (
-          <img
-            src={creative.thumbnail_url}
-            alt={creative.name}
-            className="w-full h-full object-contain"
-            referrerPolicy="no-referrer"
-            style={{ imageRendering: 'auto' }}
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center bg-[#F3F4F6]">
-            <span className="text-4xl text-[#D1D5DB]">🖼</span>
-          </div>
-        )}
-        {/* Rank badge */}
-        {rank <= 3 && (
-          <span
-            className="absolute top-2 left-2 w-6 h-6 rounded-full text-white text-[10px] font-bold flex items-center justify-center shadow"
-            style={{ background: accent }}
-          >
-            #{rank}
-          </span>
-        )}
-        {/* Channel badge */}
-        <span
-          className="absolute bottom-2 right-2 px-2 py-0.5 rounded text-[10px] font-semibold"
-          style={{ color: ch.color, background: ch.bg }}
-        >
-          {ch.label}
-        </span>
-      </div>
-
-      {/* Body */}
-      <div className="p-3">
-        <p className="text-xs font-semibold text-[#111827] leading-snug line-clamp-2 mb-2">{creative.name}</p>
-        <div className="grid grid-cols-3 gap-1 text-center">
-          <div>
-            <p className="text-[9px] uppercase tracking-wider text-[#9CA3AF]">Inversión</p>
-            <p className="text-xs font-bold text-[#111827] tabular-nums">{fmtCurrencyCompact(creative.spend)}</p>
-          </div>
-          <div>
-            <p className="text-[9px] uppercase tracking-wider text-[#9CA3AF]">Conv.</p>
-            <p className="text-xs font-bold tabular-nums" style={{ color: accent }}>{creative.conversions}</p>
-          </div>
-          <div>
-            <p className="text-[9px] uppercase tracking-wider text-[#9CA3AF]">CTR</p>
-            <p className="text-xs font-bold text-[#111827] tabular-nums">{creative.ctr.toFixed(1)}%</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+  return <p className="text-sm text-[#9CA3AF] italic text-center">{children}</p>;
 }
 
 /* ─────────────── Spend vs results ─────────────── */
@@ -298,7 +391,7 @@ function SpendResultBar({ row, max, accent }: { row: SpendResult; max: number; a
         </span>
       </div>
       <div className="h-1.5 bg-[#E5E7EB] rounded-full overflow-hidden mb-3">
-        <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: ch.color }} />
+        <div className="h-full rounded-full" style={{ width: `${pct}%`, background: ch.color }} />
       </div>
       <div className="grid grid-cols-2 gap-4 text-xs">
         <div>
@@ -307,7 +400,7 @@ function SpendResultBar({ row, max, accent }: { row: SpendResult; max: number; a
         </div>
         <div>
           <p className="text-[10px] uppercase tracking-wider text-[#9CA3AF]">CPA</p>
-          <p className="mt-0.5 font-bold text-[#111827] tabular-nums">{fmtCurrency(row.cpa)}</p>
+          <p className="mt-0.5 font-bold text-[#111827] tabular-nums">{row.cpa > 0 ? fmtCurrency(row.cpa) : '—'}</p>
         </div>
       </div>
     </div>
@@ -320,19 +413,19 @@ function SpendResultTotals({ rows, accent }: { rows: SpendResult[]; accent: stri
   const cpa   = conv > 0 ? spend / conv : 0;
   return (
     <div className="flex items-center justify-between px-5 py-4 rounded-xl text-white" style={{ background: accent }}>
-      <div className="flex items-center gap-6 text-xs">
+      <div className="flex items-center gap-8 text-xs">
         <div>
           <p className="text-white/70 uppercase tracking-wider text-[10px]">Total inversión</p>
-          <p className="font-bold mt-0.5">{fmtCurrency(spend)}</p>
+          <p className="font-bold mt-0.5 text-sm">{fmtCurrency(spend)}</p>
         </div>
         <div>
           <p className="text-white/70 uppercase tracking-wider text-[10px]">Total conversiones</p>
-          <p className="font-bold mt-0.5">{conv}</p>
+          <p className="font-bold mt-0.5 text-sm">{conv}</p>
         </div>
       </div>
       <div className="text-xs text-right">
         <p className="text-white/70 uppercase tracking-wider text-[10px]">CPA promedio</p>
-        <p className="font-bold mt-0.5">{fmtCurrency(cpa)}</p>
+        <p className="font-bold mt-0.5 text-sm">{cpa > 0 ? fmtCurrency(cpa) : '—'}</p>
       </div>
     </div>
   );
@@ -341,11 +434,11 @@ function SpendResultTotals({ rows, accent }: { rows: SpendResult[]; accent: stri
 /* ─────────────── Audiences ─────────────── */
 function AudienceCard({ audience, accent }: { audience: AudienceSegment; accent: string }) {
   return (
-    <div className="bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl p-4">
-      <p className="text-sm font-semibold text-[#111827] mb-3">{audience.name}</p>
-      <div className="grid grid-cols-2 gap-3 text-xs">
+    <div className="bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl p-5">
+      <p className="text-sm font-bold text-[#111827] mb-3">{audience.name}</p>
+      <div className="grid grid-cols-2 gap-3 text-xs mb-3">
         <div>
-          <p className="text-[10px] uppercase tracking-wider text-[#9CA3AF]">Alcance</p>
+          <p className="text-[10px] uppercase tracking-wider text-[#9CA3AF]">Alcance estimado</p>
           <p className="mt-0.5 font-bold tabular-nums text-[#111827]">{fmtNumber(audience.reach)}</p>
         </div>
         <div>
@@ -354,7 +447,7 @@ function AudienceCard({ audience, accent }: { audience: AudienceSegment; accent:
         </div>
       </div>
       {audience.notes && (
-        <p className="text-[11px] text-[#6B7280] mt-3 pt-3 border-t border-[#E5E7EB] italic">{audience.notes}</p>
+        <p className="text-[11px] text-[#6B7280] pt-3 border-t border-[#E5E7EB] italic leading-relaxed">{audience.notes}</p>
       )}
     </div>
   );
@@ -365,22 +458,35 @@ function SocialCard({ metric, accent }: { metric: SocialGrowthMetric; accent: st
   const positive = metric.growth_pct >= 0;
   const diff = metric.followers_end - metric.followers_start;
   return (
-    <div className="bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl p-4">
-      <div className="flex items-center justify-between mb-3">
-        <p className="text-sm font-semibold text-[#111827]">{PLATFORM_LABELS[metric.platform]}</p>
+    <div className="bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl p-5">
+      <div className="flex items-center justify-between mb-4">
+        <p className="text-base font-bold text-[#111827]">{PLATFORM_LABELS[metric.platform]}</p>
         <span
-          className="text-xs font-bold tabular-nums px-2 py-0.5 rounded-full"
+          className="text-sm font-bold tabular-nums px-3 py-1 rounded-full"
           style={positive
-            ? { background: accent + '18', color: accent }
+            ? { background: accent + '20', color: accent }
             : { background: '#fee2e2', color: '#DC2626' }}
         >
-          {positive ? '+' : ''}{metric.growth_pct.toFixed(1)}%
+          {positive ? '↑' : '↓'} {Math.abs(metric.growth_pct).toFixed(1)}%
         </span>
       </div>
-      <p className="text-2xl font-bold tabular-nums text-[#111827]">{fmtNumber(metric.followers_end)}</p>
-      <p className="text-xs text-[#9CA3AF] mt-0.5">
-        seguidores · {positive ? '+' : ''}{fmtNumber(diff)} vs inicio
-      </p>
+      <div className="grid grid-cols-2 gap-4 text-xs">
+        <div>
+          <p className="text-[10px] uppercase tracking-wider text-[#9CA3AF]">Seguidores actuales</p>
+          <p className="text-2xl font-bold tabular-nums text-[#111827] mt-0.5">{fmtNumber(metric.followers_end)}</p>
+        </div>
+        <div>
+          <p className="text-[10px] uppercase tracking-wider text-[#9CA3AF]">Variación del período</p>
+          <p className="text-2xl font-bold tabular-nums mt-0.5" style={{ color: positive ? accent : '#DC2626' }}>
+            {positive ? '+' : ''}{fmtNumber(diff)}
+          </p>
+        </div>
+      </div>
+      {metric.followers_start > 0 && (
+        <p className="text-[10px] text-[#9CA3AF] mt-3 pt-3 border-t border-[#E5E7EB]">
+          Inicio del período: {fmtNumber(metric.followers_start)} seguidores
+        </p>
+      )}
     </div>
   );
 }
@@ -391,12 +497,7 @@ function maxSpend(rows: SpendResult[]) {
 }
 
 function fmtCurrency(n: number) {
-  return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n);
-}
-
-function fmtCurrencyCompact(n: number) {
-  if (n >= 1000) return `$${(n / 1000).toFixed(1)}k`;
-  return fmtCurrency(n);
+  return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 }).format(n);
 }
 
 function fmtNumber(n: number) {
@@ -409,8 +510,15 @@ function fmtCompact(n: number) {
   return String(n);
 }
 
-function formatPeriod(start: string, end: string) {
-  const s = new Date(start + 'T12:00:00').toLocaleDateString('es-MX', { day: 'numeric', month: 'long' });
-  const e = new Date(end   + 'T12:00:00').toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' });
-  return `${s} — ${e}`;
+function formatPeriodMonth(start: string, end: string) {
+  const s = new Date(start + 'T12:00:00');
+  const e = new Date(end   + 'T12:00:00');
+  // Same month → "Noviembre 2025"
+  if (s.getMonth() === e.getMonth() && s.getFullYear() === e.getFullYear()) {
+    return s.toLocaleDateString('es-MX', { month: 'long', year: 'numeric' })
+      .replace(/^\w/, c => c.toUpperCase());
+  }
+  const sLabel = s.toLocaleDateString('es-MX', { month: 'short' });
+  const eLabel = e.toLocaleDateString('es-MX', { month: 'short', year: 'numeric' });
+  return `${sLabel} — ${eLabel}`;
 }

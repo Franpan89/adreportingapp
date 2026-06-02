@@ -243,6 +243,7 @@ export interface TopCreative {
   ctr: number;
   conversions: number;
   thumbnail_url?: string | null;
+  full_picture_url?: string | null;
 }
 
 export interface SpendResult {
