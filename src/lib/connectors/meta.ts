@@ -277,3 +277,147 @@ export async function fetchIgFollowerHistory(
   if (json.error) return [];
   return json.data?.find(d => d.name === 'follower_count')?.values ?? [];
 }
+
+/* ─── Demographic Insights ─────────────────────────────────────────────────── */
+
+interface MetaDemoRow {
+  impressions?: string;
+  reach?: string;
+  spend?: string;
+  age?: string;
+  gender?: string;
+  country?: string;
+  region?: string;
+}
+
+interface MetaDemoResponse {
+  data?: MetaDemoRow[];
+  error?: { message: string };
+  paging?: { next?: string };
+}
+
+async function fetchBreakdown(
+  account_id: string,
+  access_token: string,
+  since: string,
+  until: string,
+  breakdowns: string,
+): Promise<MetaDemoRow[]> {
+  const params = new URLSearchParams({
+    fields:     'impressions,reach,spend',
+    breakdowns,
+    time_range: JSON.stringify({ since, until }),
+    level:      'account',
+    limit:      '100',
+    access_token,
+  });
+  const url = `${META_API_BASE}/${normalizeAdAccountId(account_id)}/insights?${params}`;
+  const res  = await fetch(url);
+  const json = (await res.json()) as MetaDemoResponse;
+  if (json.error) throw new Error(json.error.message);
+  return json.data ?? [];
+}
+
+import type { DemographicData, DemographicBreakdownRow } from '@/types';
+
+function toRows(
+  raw: MetaDemoRow[],
+  labelKey: keyof MetaDemoRow,
+  labelMap?: Record<string, string>,
+): DemographicBreakdownRow[] {
+  const totalReach = raw.reduce((a, r) => a + (parseInt(r.reach ?? '0', 10) || 0), 0);
+  return raw
+    .map(r => ({
+      label:       labelMap?.[r[labelKey] ?? ''] ?? (r[labelKey] ?? '—'),
+      impressions: parseInt(r.impressions ?? '0', 10) || 0,
+      reach:       parseInt(r.reach       ?? '0', 10) || 0,
+      spend:       parseFloat(r.spend     ?? '0')      || 0,
+      pct:         totalReach > 0
+        ? Math.round(((parseInt(r.reach ?? '0', 10) || 0) / totalReach) * 1000) / 10
+        : 0,
+    }))
+    .filter(r => r.reach > 0)
+    .sort((a, b) => b.reach - a.reach);
+}
+
+const GENDER_LABELS: Record<string, string> = {
+  male:    'Hombres',
+  female:  'Mujeres',
+  unknown: 'No especificado',
+};
+
+/**
+ * Fetch real demographic breakdowns from Meta Insights for an ad account.
+ * Requires the token to have `ads_read` permission (standard for any Meta Ads integration).
+ */
+export async function fetchMetaDemographics(
+  account_id: string,
+  access_token: string,
+  since: string,
+  until: string,
+): Promise<DemographicData> {
+  const [genderAge, countries, regions] = await Promise.allSettled([
+    fetchBreakdown(account_id, access_token, since, until, 'age,gender'),
+    fetchBreakdown(account_id, access_token, since, until, 'country'),
+    fetchBreakdown(account_id, access_token, since, until, 'region'),
+  ]);
+
+  const genderAgeData = genderAge.status === 'fulfilled' ? genderAge.value : [];
+  const countriesData = countries.status === 'fulfilled' ? countries.value : [];
+  const regionsData   = regions.status   === 'fulfilled' ? regions.value   : [];
+
+  // Aggregate gender across all age ranges
+  const genderMap = new Map<string, { impressions: number; reach: number; spend: number }>();
+  for (const r of genderAgeData) {
+    const key = r.gender ?? 'unknown';
+    const cur = genderMap.get(key) ?? { impressions: 0, reach: 0, spend: 0 };
+    cur.impressions += parseInt(r.impressions ?? '0', 10) || 0;
+    cur.reach       += parseInt(r.reach       ?? '0', 10) || 0;
+    cur.spend       += parseFloat(r.spend     ?? '0')      || 0;
+    genderMap.set(key, cur);
+  }
+  const totalGenderReach = Array.from(genderMap.values()).reduce((a, v) => a + v.reach, 0);
+  const gender: DemographicBreakdownRow[] = Array.from(genderMap.entries())
+    .map(([key, v]) => ({
+      label:       GENDER_LABELS[key] ?? key,
+      impressions: v.impressions,
+      reach:       v.reach,
+      spend:       v.spend,
+      pct:         totalGenderReach > 0 ? Math.round((v.reach / totalGenderReach) * 1000) / 10 : 0,
+    }))
+    .filter(r => r.reach > 0)
+    .sort((a, b) => b.reach - a.reach);
+
+  // Aggregate age across all genders
+  const ageMap = new Map<string, { impressions: number; reach: number; spend: number }>();
+  for (const r of genderAgeData) {
+    const key = r.age ?? '?';
+    const cur = ageMap.get(key) ?? { impressions: 0, reach: 0, spend: 0 };
+    cur.impressions += parseInt(r.impressions ?? '0', 10) || 0;
+    cur.reach       += parseInt(r.reach       ?? '0', 10) || 0;
+    cur.spend       += parseFloat(r.spend     ?? '0')      || 0;
+    ageMap.set(key, cur);
+  }
+  const totalAgeReach = Array.from(ageMap.values()).reduce((a, v) => a + v.reach, 0);
+  const age: DemographicBreakdownRow[] = Array.from(ageMap.entries())
+    .map(([key, v]) => ({
+      label:       key,
+      impressions: v.impressions,
+      reach:       v.reach,
+      spend:       v.spend,
+      pct:         totalAgeReach > 0 ? Math.round((v.reach / totalAgeReach) * 1000) / 10 : 0,
+    }))
+    .filter(r => r.reach > 0)
+    .sort((a, b) => {
+      const aStart = parseInt(a.label.split('-')[0] ?? a.label, 10);
+      const bStart = parseInt(b.label.split('-')[0] ?? b.label, 10);
+      return aStart - bStart;
+    });
+
+  return {
+    gender,
+    age,
+    countries: toRows(countriesData, 'country').slice(0, 8),
+    regions:   toRows(regionsData,   'region').slice(0, 8),
+  };
+}

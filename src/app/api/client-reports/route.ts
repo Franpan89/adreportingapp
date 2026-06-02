@@ -47,7 +47,7 @@ export async function POST(req: Request) {
         recommendations:   content.recommendations,
         spend_vs_results:  content.spend_vs_results,
         top_creatives:     content.top_creatives,
-        audiences:         content.audiences,
+        audiences:         [],
         social_growth:     [],
         period_totals:     content.period_totals,
         agency_name:       agencyData?.agency_name ?? null,

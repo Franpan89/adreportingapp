@@ -33,6 +33,19 @@ export async function resolveClientMetaToken(
   clientId: string,
   userId: string | null,
 ): Promise<string | null> {
+  const creds = await resolveClientMetaCredentials(supabase, clientId, userId);
+  return creds?.access_token ?? null;
+}
+
+/**
+ * Resolve both access_token and account_id for a client's Meta Ads connection.
+ */
+export async function resolveClientMetaCredentials(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabase: any,
+  clientId: string,
+  userId: string | null,
+): Promise<{ access_token: string; account_id: string | null } | null> {
   const { data: credRow } = await supabase
     .from('cr_channel_credentials')
     .select('credentials_enc')
@@ -45,7 +58,7 @@ export async function resolveClientMetaToken(
   if (credRow?.credentials_enc) {
     try {
       const creds = JSON.parse(decrypt(credRow.credentials_enc)) as Record<string, string>;
-      if (creds.access_token) return creds.access_token;
+      if (creds.access_token) return { access_token: creds.access_token, account_id: creds.account_id ?? null };
     } catch { /* fall through */ }
   }
 
@@ -59,7 +72,7 @@ export async function resolveClientMetaToken(
     .then((r: unknown) => r, () => ({ data: null }));
 
   if (agConn?.access_token_enc) {
-    try { return decrypt(agConn.access_token_enc); } catch { /* ignore */ }
+    try { return { access_token: decrypt(agConn.access_token_enc), account_id: null }; } catch { /* ignore */ }
   }
   return null;
 }

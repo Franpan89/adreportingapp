@@ -5,10 +5,12 @@ import { getReport } from '@/lib/supabase/reports';
 import { createClient as createSupabase } from '@/lib/supabase/server';
 import {
   resolveClientMetaToken,
+  resolveClientMetaCredentials,
   captureMetaSocialSnapshots,
   getSocialGrowthFromSnapshots,
 } from '@/lib/supabase/social-snapshots';
-import type { TopCreative, PeriodTotals, Channel } from '@/types';
+import { fetchMetaDemographics } from '@/lib/connectors/meta';
+import type { TopCreative, PeriodTotals, Channel, DemographicData } from '@/types';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -113,10 +115,26 @@ export default async function PrintPage({ params }: PageProps) {
     if (growth.length) report.social_growth = growth;
   }
 
+  // Demographics from Meta Insights
+  let demographics: DemographicData | null = null;
+  try {
+    const metaCreds = await resolveClientMetaCredentials(supabase, report.client_id, user?.id ?? null);
+    if (metaCreds?.access_token && metaCreds?.account_id) {
+      demographics = await fetchMetaDemographics(
+        metaCreds.account_id,
+        metaCreds.access_token,
+        report.period_start,
+        report.period_end,
+      );
+    }
+  } catch (err) {
+    console.warn('[demographics] fetch failed:', err instanceof Error ? err.message : err);
+  }
+
   return (
     <div className="bg-white">
       <AutoPrint />
-      <ReportView report={report} clientName={clientName} />
+      <ReportView report={report} clientName={clientName} demographics={demographics} />
     </div>
   );
 }

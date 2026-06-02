@@ -1,6 +1,6 @@
 import type {
   ClientReport, TopCreative, SpendResult, AudienceSegment,
-  SocialGrowthMetric, Channel, PeriodTotals,
+  SocialGrowthMetric, Channel, PeriodTotals, DemographicData, DemographicBreakdownRow,
 } from '@/types';
 
 const CHANNEL_META: Record<Channel, { label: string; color: string; bg: string }> = {
@@ -44,7 +44,7 @@ function parseRecommendations(text: string): string[] {
   return cleaned.length > 1 ? cleaned : [str];
 }
 
-export function ReportView({ report, clientName }: { report: ClientReport; clientName?: string }) {
+export function ReportView({ report, clientName, demographics }: { report: ClientReport; clientName?: string; demographics?: DemographicData | null }) {
   const accent = report.accent_color ?? '#00BD7D';
   const publishedDate = new Date(report.published_at ?? report.created_at)
     .toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' });
@@ -213,17 +213,9 @@ export function ReportView({ report, clientName }: { report: ClientReport; clien
           )}
         </Section>
 
-        {/* ── 5. PÚBLICO / AUDIENCIAS ── */}
-        <Section title="PÚBLICO Y AUDIENCIAS" accent={accent}>
-          {report.audiences.length === 0 ? (
-            <div className="bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl p-5 text-center">
-              <p className="text-sm text-[#6B7280]">No hay datos de audiencias disponibles para este período.</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {report.audiences.map((a, i) => <AudienceCard key={i} audience={a} accent={accent} />)}
-            </div>
-          )}
+        {/* ── 5. AUDIENCIA Y DEMOGRAFÍA ── */}
+        <Section title="AUDIENCIA Y DEMOGRAFÍA" accent={accent}>
+          <DemographicsSection demographics={demographics ?? null} accent={accent} />
         </Section>
 
         {/* ── 6. CONCLUSIONES Y RECOMENDACIONES ── */}
@@ -431,7 +423,110 @@ function SpendResultTotals({ rows, accent }: { rows: SpendResult[]; accent: stri
   );
 }
 
-/* ─────────────── Audiences ─────────────── */
+/* ─────────────── Demographics ─────────────── */
+function DemographicsSection({ demographics, accent }: { demographics: DemographicData | null; accent: string }) {
+  const hasData = demographics && (
+    demographics.gender.length > 0 || demographics.age.length > 0 ||
+    demographics.countries.length > 0 || demographics.regions.length > 0
+  );
+
+  if (!hasData) {
+    return (
+      <div className="bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl p-6 text-center">
+        <p className="text-sm text-[#6B7280]">
+          No hay datos demográficos disponibles para este período. Asegúrate de que la cuenta de Meta Ads esté sincronizada.
+        </p>
+      </div>
+    );
+  }
+
+  const { gender, age, countries, regions } = demographics!;
+  const maxAge     = Math.max(...age.map(r => r.reach), 1);
+  const maxCountry = Math.max(...countries.map(r => r.reach), 1);
+  const maxRegion  = Math.max(...regions.map(r => r.reach), 1);
+
+  return (
+    <div className="space-y-6">
+      {/* Gender + Age row */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+
+        {/* Género */}
+        {gender.length > 0 && (
+          <div className="bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl p-5">
+            <p className="text-[10px] uppercase tracking-wider text-[#9CA3AF] font-semibold mb-4">Género</p>
+            <div className="space-y-3">
+              {gender.map(g => (
+                <DemoBar key={g.label} row={g} max={100} usePercent accent={accent} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Edad */}
+        {age.length > 0 && (
+          <div className="bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl p-5">
+            <p className="text-[10px] uppercase tracking-wider text-[#9CA3AF] font-semibold mb-4">Rango de edad</p>
+            <div className="space-y-2">
+              {age.map(a => (
+                <DemoBar key={a.label} row={a} max={maxAge} accent={accent} />
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Countries + Regions row */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+
+        {/* Países */}
+        {countries.length > 0 && (
+          <div className="bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl p-5">
+            <p className="text-[10px] uppercase tracking-wider text-[#9CA3AF] font-semibold mb-4">Países</p>
+            <div className="space-y-2">
+              {countries.map(c => (
+                <DemoBar key={c.label} row={c} max={maxCountry} accent={accent} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Regiones / Ciudades */}
+        {regions.length > 0 && (
+          <div className="bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl p-5">
+            <p className="text-[10px] uppercase tracking-wider text-[#9CA3AF] font-semibold mb-4">Regiones / Ciudades</p>
+            <div className="space-y-2">
+              {regions.map(r => (
+                <DemoBar key={r.label} row={r} max={maxRegion} accent={accent} />
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function DemoBar({
+  row, max, accent, usePercent,
+}: {
+  row: DemographicBreakdownRow; max: number; accent: string; usePercent?: boolean;
+}) {
+  const barPct = max > 0 ? Math.max(2, Math.round((usePercent ? row.pct : row.reach) / max * 100)) : 0;
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-1">
+        <span className="text-xs font-medium text-[#374151]">{row.label}</span>
+        <span className="text-xs font-bold tabular-nums" style={{ color: accent }}>{row.pct.toFixed(1)}%</span>
+      </div>
+      <div className="h-1.5 bg-[#E5E7EB] rounded-full overflow-hidden">
+        <div className="h-full rounded-full transition-all" style={{ width: `${barPct}%`, background: accent }} />
+      </div>
+      <p className="text-[10px] text-[#9CA3AF] mt-0.5 tabular-nums">{fmtNumber(row.reach)} personas</p>
+    </div>
+  );
+}
+
+/* ─────────────── Audiences (legacy — kept for backwards compat) ─────────────── */
 function AudienceCard({ audience, accent }: { audience: AudienceSegment; accent: string }) {
   return (
     <div className="bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl p-5">

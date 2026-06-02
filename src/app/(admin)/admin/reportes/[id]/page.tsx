@@ -7,10 +7,12 @@ import { DownloadPdfButton } from '@/components/reports/DownloadPdfButton';
 import { createClient as createSupabase } from '@/lib/supabase/server';
 import {
   resolveClientMetaToken,
+  resolveClientMetaCredentials,
   captureMetaSocialSnapshots,
   getSocialGrowthFromSnapshots,
 } from '@/lib/supabase/social-snapshots';
-import type { TopCreative, PeriodTotals, Channel } from '@/types';
+import { fetchMetaDemographics } from '@/lib/connectors/meta';
+import type { TopCreative, PeriodTotals, Channel, DemographicData } from '@/types';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -107,8 +109,6 @@ export default async function AdminReporteDetailPage({ params }: PageProps) {
   }
 
   // ── 4. Social growth from our snapshot history ────────────────────────────
-  // Meta deprecated the page_fans Insights metric, so we capture our own daily
-  // snapshots from the live followers_count field and compute growth from them.
   if (!report.social_growth?.length) {
     const accessToken = await resolveClientMetaToken(supabase, report.client_id, user?.id ?? null);
     if (accessToken) {
@@ -121,6 +121,22 @@ export default async function AdminReporteDetailPage({ params }: PageProps) {
       report.period_end,
     );
     if (growth.length) report.social_growth = growth;
+  }
+
+  // ── 5. Real demographic data from Meta Insights ───────────────────────────
+  let demographics: DemographicData | null = null;
+  try {
+    const metaCreds = await resolveClientMetaCredentials(supabase, report.client_id, user?.id ?? null);
+    if (metaCreds?.access_token && metaCreds?.account_id) {
+      demographics = await fetchMetaDemographics(
+        metaCreds.account_id,
+        metaCreds.access_token,
+        report.period_start,
+        report.period_end,
+      );
+    }
+  } catch (err) {
+    console.warn('[demographics] fetch failed:', err instanceof Error ? err.message : err);
   }
 
   return (
@@ -137,7 +153,7 @@ export default async function AdminReporteDetailPage({ params }: PageProps) {
       </div>
 
       <div id="report-print-area" className="flex-1 px-6 py-8 print:p-0">
-        <ReportView report={report} clientName={clientName} />
+        <ReportView report={report} clientName={clientName} demographics={demographics} />
       </div>
     </div>
   );

@@ -1,12 +1,11 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { SpendResult, TopCreative, AudienceSegment, Channel, PeriodTotals } from '@/types';
+import type { SpendResult, TopCreative, Channel, PeriodTotals } from '@/types';
 
 export interface GeneratedContent {
   executive_summary: string;
   recommendations: string;
   spend_vs_results: SpendResult[];
   top_creatives: TopCreative[];
-  audiences: AudienceSegment[];
   period_totals: PeriodTotals;
 }
 
@@ -104,7 +103,6 @@ export async function generateReportContent(
 
   let executive_summary = '';
   let recommendations   = '';
-  let audiences: AudienceSegment[] = [];
 
   if (apiKey && hasMetrics) {
     const totalConv  = period_totals.conversions;
@@ -144,11 +142,7 @@ export async function generateReportContent(
       `Responde ÚNICAMENTE con JSON válido:\n` +
       `{\n` +
       `  "executive_summary": "3 párrafos. Párrafo 1: resultados generales con números exactos (inversión, conversiones totales, CPA). Párrafo 2: destacar el anuncio con mejor performance mencionando su nombre, conversiones y CPA. Párrafo 3: conclusión sobre el rendimiento general y oportunidades. Tono profesional.",\n` +
-      `  "recommendations": "5 recomendaciones numeradas separadas por \\n. Cada una DEBE ser específica y referenciar datos del período. Formato: '1. [Acción concreta basada en los datos]'. Sin ROAS.",\n` +
-      `  "audiences": [\n` +
-      `    {"name": "Nombre descriptivo del segmento", "reach": 50000, "engagement_rate": 4.2, "notes": "Descripción del perfil: género dominante, rango de edad, comportamiento de compra, por qué este segmento convierte bien para este tipo de campaña"},\n` +
-      `    ... (genera 4 segmentos relevantes para campañas de conversión/mensajes en Meta Ads)\n` +
-      `  ]\n` +
+      `  "recommendations": "5 recomendaciones numeradas separadas por \\n. Cada una DEBE ser específica y referenciar datos del período. Formato: '1. [Acción concreta basada en los datos]'. Sin ROAS."\n` +
       `}`;
 
     try {
@@ -175,7 +169,6 @@ export async function generateReportContent(
         const parsed = JSON.parse(clean) as {
           executive_summary?: string;
           recommendations?: string;
-          audiences?: AudienceSegment[];
         };
         executive_summary = parsed.executive_summary ?? '';
         // AI sometimes returns recommendations as an array despite the prompt asking for a string
@@ -186,7 +179,6 @@ export async function generateReportContent(
         } else {
           recommendations = parsed.recommendations ?? '';
         }
-        audiences         = Array.isArray(parsed.audiences) ? parsed.audiences : [];
       }
     } catch {
       // Fall through to defaults
@@ -209,7 +201,7 @@ export async function generateReportContent(
     recommendations = 'Revisar métricas del período, ajustar presupuesto según canales con mejor rendimiento y renovar creativos según sea necesario.';
   }
 
-  return { executive_summary, recommendations, spend_vs_results, top_creatives, audiences, period_totals };
+  return { executive_summary, recommendations, spend_vs_results, top_creatives, period_totals };
 }
 
 function round2(n: number) {

@@ -254,6 +254,22 @@ export interface SpendResult {
   roas: number;
 }
 
+/** Real demographic breakdown fetched live from Meta Insights API */
+export interface DemographicBreakdownRow {
+  label: string;       // e.g. "Hombres", "18-24", "México", "Ciudad de México"
+  impressions: number;
+  reach: number;
+  spend: number;
+  pct: number;         // % of total reach
+}
+
+export interface DemographicData {
+  gender:    DemographicBreakdownRow[];
+  age:       DemographicBreakdownRow[];
+  countries: DemographicBreakdownRow[];
+  regions:   DemographicBreakdownRow[];
+}
+
 export interface AudienceSegment {
   name: string;
   reach: number;
