@@ -24,7 +24,7 @@ export async function GET(
       thumbnail_url,
       creative_type,
       cr_campaigns!inner ( name ),
-      cr_ad_daily_stats ( impressions, reach, clicks, spend, video_views )
+      cr_ad_daily_stats ( impressions, reach, clicks, spend, video_views, conversions )
     `)
     .eq('client_id', clientId)
     .eq('channel', channel)

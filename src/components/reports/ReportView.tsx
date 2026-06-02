@@ -1,6 +1,7 @@
 import type {
   ClientReport, TopCreative, SpendResult, AudienceSegment,
   SocialGrowthMetric, Channel, PeriodTotals, DemographicData, DemographicBreakdownRow,
+  CampaignSummary,
 } from '@/types';
 
 const CHANNEL_META: Record<Channel, { label: string; color: string; bg: string }> = {
@@ -44,7 +45,7 @@ function parseRecommendations(text: string): string[] {
   return cleaned.length > 1 ? cleaned : [str];
 }
 
-export function ReportView({ report, clientName, demographics }: { report: ClientReport; clientName?: string; demographics?: DemographicData | null }) {
+export function ReportView({ report, clientName, demographics, campaigns }: { report: ClientReport; clientName?: string; demographics?: DemographicData | null; campaigns?: CampaignSummary[] }) {
   const accent = report.accent_color ?? '#00BD7D';
   const publishedDate = new Date(report.published_at ?? report.created_at)
     .toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' });
@@ -184,7 +185,14 @@ export function ReportView({ report, clientName, demographics }: { report: Clien
           )}
         </Section>
 
-        {/* ── 3. INVERSIÓN POR CANAL ── */}
+        {/* ── 3. DESGLOSE DE CAMPAÑAS ── */}
+        {(campaigns?.length ?? 0) > 0 && (
+          <Section title="DESGLOSE DE CAMPAÑAS" accent={accent}>
+            <CampaignBreakdownSection campaigns={campaigns!} accent={accent} />
+          </Section>
+        )}
+
+        {/* ── 4. INVERSIÓN POR CANAL ── */}
         {report.spend_vs_results.length > 0 && (
           <Section title="INVERSIÓN Y RESULTADOS POR CANAL" accent={accent}>
             <div className="space-y-3">
@@ -196,7 +204,7 @@ export function ReportView({ report, clientName, demographics }: { report: Clien
           </Section>
         )}
 
-        {/* ── 4. CRECIMIENTO EN REDES ── */}
+        {/* ── 5. CRECIMIENTO EN REDES ── */}
         <Section title="CRECIMIENTO EN REDES SOCIALES" accent={accent}>
           {report.social_growth.length === 0 ? (
             <div className="bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl p-6 text-center space-y-2">
@@ -213,12 +221,12 @@ export function ReportView({ report, clientName, demographics }: { report: Clien
           )}
         </Section>
 
-        {/* ── 5. AUDIENCIA Y DEMOGRAFÍA ── */}
+        {/* ── 6. AUDIENCIA Y DEMOGRAFÍA ── */}
         <Section title="AUDIENCIA Y DEMOGRAFÍA" accent={accent}>
           <DemographicsSection demographics={demographics ?? null} accent={accent} />
         </Section>
 
-        {/* ── 6. CONCLUSIONES Y RECOMENDACIONES ── */}
+        {/* ── 7. CONCLUSIONES Y RECOMENDACIONES ── */}
         <Section title="CONCLUSIONES Y RECOMENDACIONES" accent={accent} last>
           {recs.length === 0 ? (
             <EmptyNote>Sin recomendaciones registradas.</EmptyNote>
@@ -582,6 +590,106 @@ function SocialCard({ metric, accent }: { metric: SocialGrowthMetric; accent: st
           Inicio del período: {fmtNumber(metric.followers_start)} seguidores
         </p>
       )}
+    </div>
+  );
+}
+
+/* ─────────────── Campaign Breakdown ─────────────── */
+const OBJECTIVE_LABELS: Record<string, string> = {
+  OUTCOME_ENGAGEMENT:               'Interacción',
+  OUTCOME_ENGAGEMENT_CONVERSATIONS: 'Mensajes',
+  OUTCOME_TRAFFIC:                  'Tráfico',
+  OUTCOME_LEADS:                    'Leads',
+  OUTCOME_SALES:                    'Ventas',
+  OUTCOME_AWARENESS:                'Reconocimiento',
+  OUTCOME_APP_PROMOTION:            'App',
+  CONVERSIONS:                      'Conversiones',
+  MESSAGES:                         'Mensajes',
+  LINK_CLICKS:                      'Clics al enlace',
+  REACH:                            'Alcance',
+  BRAND_AWARENESS:                  'Reconocimiento',
+  PAGE_LIKES:                       'Me gusta',
+  VIDEO_VIEWS:                      'Vídeo',
+  LEAD_GENERATION:                  'Generación de leads',
+};
+
+const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
+  ACTIVE:   { label: 'Activo',   color: '#059669', bg: '#D1FAE5' },
+  PAUSED:   { label: 'Pausado',  color: '#D97706', bg: '#FEF3C7' },
+  ARCHIVED: { label: 'Archivado', color: '#6B7280', bg: '#F3F4F6' },
+  DELETED:  { label: 'Eliminado', color: '#DC2626', bg: '#FEE2E2' },
+};
+
+function CampaignBreakdownSection({ campaigns, accent }: { campaigns: CampaignSummary[]; accent: string }) {
+  const totalSpend = campaigns.reduce((a, c) => a + (c.spend ?? 0), 0);
+  const totalConv  = campaigns.reduce((a, c) => a + (c.conversions ?? 0), 0);
+  const totalImpr  = campaigns.reduce((a, c) => a + (c.impressions ?? 0), 0);
+  const totalAvgCpa = totalConv > 0 ? totalSpend / totalConv : 0;
+
+  return (
+    <div className="overflow-x-auto rounded-xl border border-[#E5E7EB]">
+      <table className="w-full text-sm border-collapse">
+        <thead>
+          <tr style={{ background: accent }}>
+            <th className="text-left text-white text-[11px] font-bold uppercase tracking-wider px-4 py-3">Campaña</th>
+            <th className="text-left text-white text-[11px] font-bold uppercase tracking-wider px-4 py-3">Objetivo</th>
+            <th className="text-left text-white text-[11px] font-bold uppercase tracking-wider px-4 py-3">Estado</th>
+            <th className="text-right text-white text-[11px] font-bold uppercase tracking-wider px-4 py-3">Impresiones</th>
+            <th className="text-right text-white text-[11px] font-bold uppercase tracking-wider px-4 py-3">Inversión</th>
+            <th className="text-right text-white text-[11px] font-bold uppercase tracking-wider px-4 py-3">Conv.</th>
+            <th className="text-right text-white text-[11px] font-bold uppercase tracking-wider px-4 py-3">CPA</th>
+            <th className="text-right text-white text-[11px] font-bold uppercase tracking-wider px-4 py-3">CTR</th>
+          </tr>
+        </thead>
+        <tbody>
+          {campaigns.map((c, i) => {
+            const statusCfg = STATUS_CONFIG[c.status?.toUpperCase() ?? ''] ?? { label: c.status ?? '—', color: '#6B7280', bg: '#F3F4F6' };
+            const objectiveLabel = OBJECTIVE_LABELS[c.objective?.toUpperCase() ?? ''] ?? (c.objective ? c.objective.replace(/_/g, ' ').toLowerCase().replace(/^\w/, ch => ch.toUpperCase()) : '—');
+            return (
+              <tr key={c.id} className={i % 2 === 0 ? 'bg-white' : 'bg-[#F9FAFB]'}>
+                <td className="px-4 py-3 text-xs font-semibold text-[#111827] max-w-[180px]">
+                  <p className="line-clamp-2 leading-snug">{c.name}</p>
+                </td>
+                <td className="px-4 py-3">
+                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap" style={{ background: accent + '18', color: accent }}>
+                    {objectiveLabel}
+                  </span>
+                </td>
+                <td className="px-4 py-3">
+                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap" style={{ background: statusCfg.bg, color: statusCfg.color }}>
+                    {statusCfg.label}
+                  </span>
+                </td>
+                <td className="px-4 py-3 text-right text-xs tabular-nums text-[#374151]">{fmtCompact(c.impressions ?? 0)}</td>
+                <td className="px-4 py-3 text-right text-xs font-semibold tabular-nums text-[#111827]">{fmtCurrency(c.spend ?? 0)}</td>
+                <td className="px-4 py-3 text-right">
+                  <span className="text-sm font-bold tabular-nums" style={{ color: accent }}>{c.conversions ?? 0}</span>
+                </td>
+                <td className="px-4 py-3 text-right text-xs tabular-nums" style={{ color: (c.cpa ?? 0) > 0 ? '#374151' : '#9CA3AF' }}>
+                  {(c.cpa ?? 0) > 0 ? fmtCurrency(c.cpa!) : '—'}
+                </td>
+                <td className="px-4 py-3 text-right text-xs tabular-nums text-[#374151]">
+                  {(c.ctr ?? 0) > 0 ? `${(c.ctr!).toFixed(2)}%` : '—'}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+        <tfoot>
+          <tr className="border-t-2" style={{ borderColor: accent }}>
+            <td colSpan={3} className="px-4 py-3 text-xs font-bold text-[#374151]">
+              TOTALES — {campaigns.length} campaña{campaigns.length !== 1 ? 's' : ''}
+            </td>
+            <td className="px-4 py-3 text-right text-xs font-bold text-[#374151] tabular-nums">{fmtCompact(totalImpr)}</td>
+            <td className="px-4 py-3 text-right text-xs font-bold text-[#374151] tabular-nums">{fmtCurrency(totalSpend)}</td>
+            <td className="px-4 py-3 text-right text-sm font-bold tabular-nums" style={{ color: accent }}>{totalConv}</td>
+            <td className="px-4 py-3 text-right text-xs font-bold tabular-nums" style={{ color: accent }}>
+              {totalAvgCpa > 0 ? fmtCurrency(totalAvgCpa) : '—'}
+            </td>
+            <td />
+          </tr>
+        </tfoot>
+      </table>
     </div>
   );
 }

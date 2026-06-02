@@ -10,7 +10,7 @@ import {
   getSocialGrowthFromSnapshots,
 } from '@/lib/supabase/social-snapshots';
 import { fetchMetaDemographics } from '@/lib/connectors/meta';
-import type { TopCreative, PeriodTotals, Channel, DemographicData } from '@/types';
+import type { TopCreative, PeriodTotals, Channel, DemographicData, CampaignSummary } from '@/types';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -115,6 +115,44 @@ export default async function PrintPage({ params }: PageProps) {
     if (growth.length) report.social_growth = growth;
   }
 
+  // Campaign breakdown for the period
+  type CampStatRow = { spend?: number; conversions?: number; impressions?: number; clicks?: number };
+  const campaigns: CampaignSummary[] = [];
+  try {
+    const { data: campRows } = await supabase
+      .from('cr_campaigns')
+      .select('id, name, channel, status, objective, external_id, cr_daily_stats(spend, conversions, impressions, clicks)')
+      .eq('client_id', report.client_id)
+      .gte('cr_daily_stats.date', report.period_start)
+      .lte('cr_daily_stats.date', report.period_end);
+
+    for (const c of (campRows ?? []) as Array<{ id: string; name: string; channel: string; status: string | null; objective: string | null; external_id: string; cr_daily_stats?: CampStatRow[] }>) {
+      const s: CampStatRow[] = c.cr_daily_stats ?? [];
+      const spend       = s.reduce((a, r) => a + (Number(r.spend)       || 0), 0);
+      const conversions = s.reduce((a, r) => a + (Number(r.conversions) || 0), 0);
+      const impressions = s.reduce((a, r) => a + (Number(r.impressions) || 0), 0);
+      const clicks      = s.reduce((a, r) => a + (Number(r.clicks)      || 0), 0);
+      if (spend === 0 && conversions === 0) continue;
+      campaigns.push({
+        id:          c.id,
+        name:        c.name,
+        channel:     c.channel as Channel,
+        status:      c.status ?? '',
+        external_id: c.external_id,
+        objective:   c.objective,
+        spend:       Math.round(spend * 100) / 100,
+        conversions: Math.round(conversions),
+        impressions,
+        clicks,
+        ctr:         impressions > 0 ? Math.round((clicks / impressions) * 10000) / 100 : 0,
+        cpa:         conversions > 0 ? Math.round((spend / conversions) * 100) / 100 : 0,
+      });
+    }
+    campaigns.sort((a, b) => (b.spend ?? 0) - (a.spend ?? 0));
+  } catch (err) {
+    console.warn('[campaigns] fetch failed:', err instanceof Error ? err.message : err);
+  }
+
   // Demographics from Meta Insights
   let demographics: DemographicData | null = null;
   try {
@@ -134,7 +172,7 @@ export default async function PrintPage({ params }: PageProps) {
   return (
     <div className="bg-white">
       <AutoPrint />
-      <ReportView report={report} clientName={clientName} demographics={demographics} />
+      <ReportView report={report} clientName={clientName} demographics={demographics} campaigns={campaigns} />
     </div>
   );
 }
