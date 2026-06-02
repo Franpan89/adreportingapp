@@ -34,14 +34,16 @@ export async function GET(req: NextRequest) {
   const adRes  = await fetch(`${META_API_BASE}/?${adParams}`);
   const adJson = await adRes.json();
 
-  // Step 2: Creative node directly with image_url
+  // Step 2: Creative node — try thumbnail_url with larger dimensions
   const creativeId = adJson?.[adId]?.creative?.id;
   let creativeNodeJson = null;
   if (creativeId) {
     const crParams = new URLSearchParams({
-      ids:    creativeId,
-      fields: 'id,name,thumbnail_url,image_url',
-      access_token: token,
+      ids:              creativeId,
+      fields:           'id,name,thumbnail_url,image_url',
+      thumbnail_width:  '1080',
+      thumbnail_height: '1080',
+      access_token:     token,
     });
     const crRes = await fetch(`${META_API_BASE}/?${crParams}`);
     creativeNodeJson = await crRes.json();
