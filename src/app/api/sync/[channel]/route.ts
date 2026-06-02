@@ -5,7 +5,7 @@ import { getConversionActionTypes, getRevenueActionTypes } from '@/lib/utils/obj
 import {
   fetchMetaCampaigns,
   fetchMetaInsights,
-  fetchMetaAds,
+  fetchMetaAdsByIds,
   fetchMetaAdInsights,
   resolveObjectiveKey,
   sumActions,
@@ -131,14 +131,22 @@ async function syncMeta(supabase: any, userId: string, clientId: string, creds: 
 
   console.log(`[sync:meta] stats rows upserted: ${statsRows.length}`);
 
-  // 7. Fetch ads + thumbnails and store in cr_ads.
+  // 7. Fetch ad-level daily insights for the period first (date-filtered — fast).
   let adRowsUpserted = 0;
   try {
-    const metaAds: MetaAd[] = await fetchMetaAds(account_id, access_token);
-    console.log(`[sync:meta] ads fetched: ${metaAds.length}`);
+    const adInsights: MetaAdInsightRow[] = await fetchMetaAdInsights(account_id, access_token, since, until);
+    console.log(`[sync:meta] ad insight rows fetched: ${adInsights.length}`);
 
-    if (metaAds.length > 0) {
-      // Map campaign external_id → db campaign id
+    if (adInsights.length > 0) {
+      // 8. Batch-lookup creative data only for the ad IDs that appear in the insights.
+      //    This avoids fetching all historical ads (which can be thousands for old accounts).
+      const uniqueAdIds = [...new Set(adInsights.map(r => String(r.ad_id)))];
+      console.log(`[sync:meta] unique ad IDs in period: ${uniqueAdIds.length}`);
+
+      const metaAds: MetaAd[] = await fetchMetaAdsByIds(uniqueAdIds, access_token);
+      console.log(`[sync:meta] ad creative data fetched: ${metaAds.length}`);
+
+      // Map campaign external_id → db campaign id (reuse dbCamps from earlier)
       const campaignExtToDb = new Map<string, string>(
         (dbCamps ?? []).map((c: { id: string; external_id: string }) => [c.external_id, c.id]),
       );
@@ -153,69 +161,66 @@ async function syncMeta(supabase: any, userId: string, clientId: string, creds: 
             channel:       'meta_ads',
             external_id:   String(ad.id),
             name:          ad.name ?? 'Sin nombre',
-            thumbnail_url:    ad.creative?.thumbnail_url ?? null,
-            creative_type:    ad.creative?.object_type?.toLowerCase() ?? null,
+            thumbnail_url: ad.creative?.thumbnail_url ?? null,
+            creative_type: ad.creative?.object_type?.toLowerCase() ?? null,
             updated_at:    new Date().toISOString(),
           };
         })
         .filter(Boolean);
 
       if (adUpsertRows.length > 0) {
-        await supabase.from('cr_ads').upsert(adUpsertRows, { onConflict: 'client_id,channel,external_id' });
-      }
-
-      // 8. Fetch ad-level daily insights and store in cr_ad_daily_stats.
-      const adInsights: MetaAdInsightRow[] = await fetchMetaAdInsights(account_id, access_token, since, until);
-      console.log(`[sync:meta] ad insight rows fetched: ${adInsights.length}`);
-
-      if (adInsights.length > 0) {
-        // Build ad external_id → db ad id map
-        const { data: dbAds } = await supabase
+        const { error } = await supabase
           .from('cr_ads')
-          .select('id, external_id')
-          .eq('client_id', clientId)
-          .eq('channel', 'meta_ads');
-
-        const adExtToDb = new Map<string, string>(
-          (dbAds ?? []).map((a: { id: string; external_id: string }) => [a.external_id, a.id]),
-        );
-
-        const videoTypes = ['video_view', 'video_thruplay_watched_actions'];
-        // WhatsApp / messaging campaigns measure conversions via this action type
-        const msgConvTypes = [
-          'onsite_conversion.messaging_conversation_started_7d',
-          'offsite_conversion.fb_pixel_lead',
-          'lead',
-        ];
-
-        const adStatRows = adInsights
-          .map((row: MetaAdInsightRow) => {
-            const dbAdId = adExtToDb.get(String(row.ad_id));
-            if (!dbAdId) return null;
-            return {
-              ad_id:       dbAdId,
-              client_id:   clientId,
-              date:        row.date_start,
-              impressions: parseInt(row.impressions ?? '0', 10) || 0,
-              reach:       parseInt(row.reach ?? '0', 10) || 0,
-              clicks:      parseInt(row.clicks ?? '0', 10) || 0,
-              spend:       parseFloat(row.spend ?? '0') || 0,
-              video_views: sumActions(row.actions, videoTypes),
-              conversions: sumActions(row.actions, msgConvTypes),
-            };
-          })
-          .filter(Boolean);
-
-        for (let i = 0; i < adStatRows.length; i += 500) {
-          const { error } = await supabase
-            .from('cr_ad_daily_stats')
-            .upsert(adStatRows.slice(i, i + 500), { onConflict: 'ad_id,date' });
-          if (error) console.error(`[sync:meta] ad stats upsert error: ${error.message}`);
-        }
-
-        adRowsUpserted = adStatRows.length;
-        console.log(`[sync:meta] ad stat rows upserted: ${adRowsUpserted}`);
+          .upsert(adUpsertRows, { onConflict: 'client_id,channel,external_id' });
+        if (error) console.error(`[sync:meta] cr_ads upsert error: ${error.message}`);
       }
+
+      // 9. Build cr_ad_daily_stats rows using the freshly upserted ad IDs.
+      const { data: dbAds } = await supabase
+        .from('cr_ads')
+        .select('id, external_id')
+        .eq('client_id', clientId)
+        .eq('channel', 'meta_ads');
+
+      const adExtToDb = new Map<string, string>(
+        (dbAds ?? []).map((a: { id: string; external_id: string }) => [a.external_id, a.id]),
+      );
+
+      const videoTypes = ['video_view', 'video_thruplay_watched_actions'];
+      // WhatsApp / messaging campaigns measure conversions via this action type
+      const msgConvTypes = [
+        'onsite_conversion.messaging_conversation_started_7d',
+        'offsite_conversion.fb_pixel_lead',
+        'lead',
+      ];
+
+      const adStatRows = adInsights
+        .map((row: MetaAdInsightRow) => {
+          const dbAdId = adExtToDb.get(String(row.ad_id));
+          if (!dbAdId) return null;
+          return {
+            ad_id:       dbAdId,
+            client_id:   clientId,
+            date:        row.date_start,
+            impressions: parseInt(row.impressions ?? '0', 10) || 0,
+            reach:       parseInt(row.reach ?? '0', 10) || 0,
+            clicks:      parseInt(row.clicks ?? '0', 10) || 0,
+            spend:       parseFloat(row.spend ?? '0') || 0,
+            video_views: sumActions(row.actions, videoTypes),
+            conversions: sumActions(row.actions, msgConvTypes),
+          };
+        })
+        .filter(Boolean);
+
+      for (let i = 0; i < adStatRows.length; i += 500) {
+        const { error } = await supabase
+          .from('cr_ad_daily_stats')
+          .upsert(adStatRows.slice(i, i + 500), { onConflict: 'ad_id,date' });
+        if (error) console.error(`[sync:meta] ad stats upsert error: ${error.message}`);
+      }
+
+      adRowsUpserted = adStatRows.length;
+      console.log(`[sync:meta] ad stat rows upserted: ${adRowsUpserted}`);
     }
   } catch (e) {
     console.error('[sync:meta] ad-level sync failed (non-fatal):', e);

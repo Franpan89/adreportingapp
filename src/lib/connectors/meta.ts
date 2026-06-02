@@ -138,6 +138,37 @@ export async function fetchMetaAds(
   );
 }
 
+/**
+ * Batch-fetch creative/name data for a specific list of ad IDs.
+ * More efficient than fetching all account ads — use when you already know
+ * which ad IDs ran (e.g. from an insights response). Chunks into 50-id batches.
+ */
+export async function fetchMetaAdsByIds(
+  adIds: string[],
+  access_token: string,
+): Promise<MetaAd[]> {
+  if (adIds.length === 0) return [];
+  const results: MetaAd[] = [];
+  for (let i = 0; i < adIds.length; i += 50) {
+    const chunk = adIds.slice(i, i + 50);
+    const params = new URLSearchParams({
+      ids:    chunk.join(','),
+      fields: 'id,name,campaign_id,creative{thumbnail_url,object_type}',
+      access_token,
+    });
+    const res  = await fetch(`${META_API_BASE}/?${params}`);
+    const json = (await res.json()) as Record<string, MetaAd> & { error?: { message: string } };
+    if (json.error) {
+      console.warn('[meta] batch ad fetch error:', json.error.message);
+      continue;
+    }
+    results.push(
+      ...Object.values(json).filter((v): v is MetaAd => typeof v === 'object' && !!v && 'id' in v),
+    );
+  }
+  return results;
+}
+
 /** Daily ad-level insights for [since, until]. */
 export async function fetchMetaAdInsights(
   account_id: string,
