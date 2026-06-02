@@ -137,6 +137,7 @@ body {
    ===================================================== */
 @media print {
   @page {
+    /* Default portrait — overridden by the (print) route layout for landscape PDF */
     size: A4;
     margin: 12mm 10mm;
   }
@@ -163,6 +164,15 @@ body {
     box-shadow: none !important;
     border: 0 !important;
     border-radius: 0 !important;
+  }
+
+  /* Tables must not overflow the page — remove scrollable wrapper */
+  .overflow-x-auto {
+    overflow: visible !important;
+  }
+  table {
+    width: 100% !important;
+    table-layout: auto !important;
   }
 
   /* Avoid cutting a section across two pages */
