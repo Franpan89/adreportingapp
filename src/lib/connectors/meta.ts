@@ -171,13 +171,15 @@ export async function fetchMetaAdsByIds(
       (v): v is MetaAd => typeof v === 'object' && !!v && 'id' in v,
     );
 
-    // Step 2: Creative nodes directly → image_url (valid field for all creative types)
+    // Step 2: Creative nodes with thumbnail_width/height → returns 1080px thumbnail for all types
     const creativeIds = ads.map(a => a.creative?.id).filter(Boolean) as string[];
     const creativeImageMap: Record<string, string> = {};
     if (creativeIds.length > 0) {
       const crParams = new URLSearchParams({
-        ids:    creativeIds.join(','),
-        fields: 'image_url',
+        ids:              creativeIds.join(','),
+        fields:           'thumbnail_url',
+        thumbnail_width:  '1080',
+        thumbnail_height: '1080',
         access_token,
       });
       const crRes  = await fetch(`${META_API_BASE}/?${crParams}`);
@@ -186,8 +188,8 @@ export async function fetchMetaAdsByIds(
         console.warn('[meta] creative node fetch error:', (crJson.error as { message?: string }).message);
       } else {
         for (const [id, cr] of Object.entries(crJson)) {
-          if (typeof cr === 'object' && cr !== null && 'image_url' in cr && typeof (cr as { image_url?: unknown }).image_url === 'string') {
-            creativeImageMap[id] = (cr as { image_url: string }).image_url;
+          if (typeof cr === 'object' && cr !== null && 'thumbnail_url' in cr && typeof (cr as { thumbnail_url?: unknown }).thumbnail_url === 'string') {
+            creativeImageMap[id] = (cr as { thumbnail_url: string }).thumbnail_url;
           }
         }
       }
