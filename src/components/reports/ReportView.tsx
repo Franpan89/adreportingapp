@@ -203,30 +203,8 @@ export function ReportView({ report, clientName, demographics, campaigns }: { re
           </Section>
         )}
 
-        {/* ── 5. CRECIMIENTO EN REDES ── */}
-        <Section title="CRECIMIENTO EN REDES SOCIALES" accent={accent}>
-          {report.social_growth.length === 0 ? (
-            <div className="bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl p-6 text-center space-y-2">
-              <p className="text-sm font-semibold text-[#374151]">Aún no hay historial de seguidores</p>
-              <p className="text-xs text-[#6B7280] leading-relaxed max-w-md mx-auto">
-                Comenzamos a registrar los seguidores de Facebook e Instagram desde hoy.
-                El próximo reporte mostrará el crecimiento real del período.
-              </p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {report.social_growth.map((s, i) => <SocialCard key={i} metric={s} accent={accent} />)}
-            </div>
-          )}
-        </Section>
-
-        {/* ── 6. AUDIENCIA Y DEMOGRAFÍA ── */}
-        <Section title="AUDIENCIA Y DEMOGRAFÍA" accent={accent}>
-          <DemographicsSection demographics={demographics ?? null} accent={accent} />
-        </Section>
-
-        {/* ── 7. CONCLUSIONES Y RECOMENDACIONES ── */}
-        <Section title="CONCLUSIONES Y RECOMENDACIONES" accent={accent} last>
+        {/* ── 5. CONCLUSIONES Y RECOMENDACIONES ── */}
+        <Section title="CONCLUSIONES Y RECOMENDACIONES" accent={accent} last={true}>
           {recs.length === 0 ? (
             <EmptyNote>Sin recomendaciones registradas.</EmptyNote>
           ) : (
