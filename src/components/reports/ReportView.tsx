@@ -45,7 +45,16 @@ function parseRecommendations(text: string): string[] {
   return cleaned.length > 1 ? cleaned : [str];
 }
 
-export function ReportView({ report, clientName, demographics, campaigns }: { report: ClientReport; clientName?: string; demographics?: DemographicData | null; campaigns?: CampaignSummary[] }) {
+type EfficiencyMetrics = { cpm: number; ctr: number; cpa: number; clicks: number };
+
+export function ReportView({ report, clientName, demographics, campaigns, prevTotals, efficiencyMetrics }: {
+  report: ClientReport;
+  clientName?: string;
+  demographics?: DemographicData | null;
+  campaigns?: CampaignSummary[];
+  prevTotals?: PeriodTotals | null;
+  efficiencyMetrics?: EfficiencyMetrics | null;
+}) {
   const accent = report.accent_color ?? '#00BD7D';
   const publishedDate = new Date(report.published_at ?? report.created_at)
     .toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' });
@@ -64,8 +73,11 @@ export function ReportView({ report, clientName, demographics, campaigns }: { re
         {/* Header strip on each content page */}
         <PageHeader report={report} accent={accent} clientName={clientName} />
 
-        {/* ── KPI Strip ── */}
-        {report.period_totals && <KpiStrip totals={report.period_totals} accent={accent} />}
+        {/* ── KPI Strip (with period comparison) ── */}
+        {report.period_totals && <KpiStrip totals={report.period_totals} prev={prevTotals} accent={accent} />}
+
+        {/* ── Efficiency Strip ── */}
+        {efficiencyMetrics && <EfficiencyStrip metrics={efficiencyMetrics} accent={accent} />}
 
         {/* ── 1. RESUMEN EJECUTIVO ── */}
         <Section title="RESUMEN EJECUTIVO" accent={accent}>
@@ -93,7 +105,14 @@ export function ReportView({ report, clientName, demographics, campaigns }: { re
           </div>
         </Section>
 
-        {/* ── 2. INFORME DE ANUNCIOS ── */}
+        {/* ── 2. CREATIVOS GANADORES (top 3 podium) ── */}
+        {report.top_creatives.length > 0 && (
+          <Section title="CREATIVOS GANADORES" accent={accent}>
+            <Top3Podium creatives={report.top_creatives} accent={accent} />
+          </Section>
+        )}
+
+        {/* ── 3. INFORME COMPLETO DE ANUNCIOS ── */}
         <Section title="INFORME DE ANUNCIOS" accent={accent}>
           {report.top_creatives.length === 0 ? (
             <EmptyNote>No hay datos de anuncios para este período.</EmptyNote>
@@ -304,30 +323,6 @@ function PageHeader({ report, accent, clientName }: { report: ClientReport; acce
           <span style={{ color: accent }}>{displayName}</span>
         </p>
       </div>
-    </div>
-  );
-}
-
-/* ─────────────── KPI Strip ─────────────── */
-function KpiStrip({ totals, accent }: { totals: PeriodTotals; accent: string }) {
-  const kpis = [
-    { label: 'Inversión total',  value: fmtCurrency(totals.spend) },
-    { label: 'Conversiones',     value: fmtNumber(totals.conversions) },
-    { label: 'Impresiones',      value: fmtCompact(totals.impressions) },
-    { label: 'Alcance',          value: fmtCompact(totals.reach) },
-    { label: 'Interacciones',    value: fmtCompact(totals.interactions) },
-  ];
-  return (
-    <div className="grid grid-cols-5 divide-x divide-[#F3F4F6] border-b border-[#F3F4F6]">
-      {kpis.map(({ label, value }) => (
-        <div key={label} className="px-4 py-5 text-center">
-          <p className="text-xl font-bold text-[#111827] tabular-nums" style={{ fontFamily: 'Oswald, sans-serif' }}>
-            {value}
-          </p>
-          <p className="text-[10px] uppercase tracking-wider text-[#9CA3AF] mt-1 font-medium">{label}</p>
-          <div className="mt-2 h-0.5 w-8 mx-auto rounded-full" style={{ background: accent }} />
-        </div>
-      ))}
     </div>
   );
 }
@@ -567,6 +562,129 @@ function SocialCard({ metric, accent }: { metric: SocialGrowthMetric; accent: st
           Inicio del período: {fmtNumber(metric.followers_start)} seguidores
         </p>
       )}
+    </div>
+  );
+}
+
+/* ─────────────── KPI Strip ─────────────── */
+function KpiStrip({ totals, prev, accent }: { totals: PeriodTotals; prev?: PeriodTotals | null; accent: string }) {
+  function delta(curr: number, p: number | undefined, lowerBetter = false) {
+    if (!prev || !p || p === 0) return null;
+    const pct = Math.round(((curr - p) / p) * 100);
+    const positive = lowerBetter ? pct <= 0 : pct >= 0;
+    return { pct, positive };
+  }
+  const kpis = [
+    { label: 'Inversión total',  value: fmtCurrency(totals.spend),            d: delta(totals.spend,        prev?.spend,        true) },
+    { label: 'Conversiones',     value: fmtNumber(totals.conversions),         d: delta(totals.conversions,  prev?.conversions)        },
+    { label: 'Impresiones',      value: fmtCompact(totals.impressions),        d: delta(totals.impressions,  prev?.impressions)        },
+    { label: 'Alcance',          value: fmtCompact(totals.reach),              d: delta(totals.reach,        prev?.reach)              },
+    { label: 'Interacciones',    value: fmtCompact(totals.interactions),       d: delta(totals.interactions, prev?.interactions)       },
+  ];
+  return (
+    <div className="grid grid-cols-5 divide-x divide-[#F3F4F6] border-b border-[#F3F4F6]">
+      {kpis.map(({ label, value, d }) => (
+        <div key={label} className="px-4 py-5 text-center">
+          <p className="text-xl font-bold text-[#111827] tabular-nums" style={{ fontFamily: 'Oswald, sans-serif' }}>
+            {value}
+          </p>
+          {d !== null && (
+            <p className="text-[10px] font-bold mt-0.5 tabular-nums" style={{ color: d.positive ? '#059669' : '#DC2626' }}>
+              {d.positive ? '▲' : '▼'} {Math.abs(d.pct)}% vs período ant.
+            </p>
+          )}
+          <p className={`text-[10px] uppercase tracking-wider text-[#9CA3AF] font-medium ${d !== null ? 'mt-0.5' : 'mt-1'}`}>{label}</p>
+          <div className="mt-2 h-0.5 w-8 mx-auto rounded-full" style={{ background: accent }} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ─────────────── Efficiency Strip ─────────────── */
+function EfficiencyStrip({ metrics, accent }: { metrics: EfficiencyMetrics; accent: string }) {
+  const items = [
+    { label: 'CPM',          value: fmtCurrency(metrics.cpm),                    desc: 'Costo por mil impresiones' },
+    { label: 'CTR',          value: `${metrics.ctr.toFixed(2)}%`,                desc: 'Clics / Impresiones' },
+    { label: 'CPA',          value: metrics.cpa > 0 ? fmtCurrency(metrics.cpa) : '—', desc: 'Costo por conversión' },
+    { label: 'Clics totales', value: fmtNumber(metrics.clicks),                  desc: 'Total de clics en el período' },
+  ];
+  return (
+    <div className="mx-8 mb-2 rounded-xl border border-[#E5E7EB] overflow-hidden">
+      <div className="grid grid-cols-4 divide-x divide-[#E5E7EB]" style={{ background: accent + '0D' }}>
+        {items.map(({ label, value, desc }) => (
+          <div key={label} className="px-4 py-4 text-center">
+            <p className="text-[10px] uppercase tracking-wider font-bold mb-1" style={{ color: accent }}>{label}</p>
+            <p className="text-lg font-black text-[#111827] tabular-nums" style={{ fontFamily: 'Oswald, sans-serif' }}>{value}</p>
+            <p className="text-[9px] text-[#9CA3AF] mt-0.5">{desc}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────── Top 3 Podium ─────────────── */
+function Top3Podium({ creatives, accent }: { creatives: TopCreative[]; accent: string }) {
+  const top = creatives.slice(0, 3);
+  const medals = ['🥇', '🥈', '🥉'];
+  const cols = top.length === 1 ? 'grid-cols-1 max-w-xs mx-auto' : top.length === 2 ? 'grid-cols-2' : 'grid-cols-3';
+  return (
+    <div className={`grid gap-4 ${cols}`}>
+      {top.map((c, i) => {
+        const cpa = c.conversions > 0 ? c.spend / c.conversions : 0;
+        const isWinner = i === 0;
+        return (
+          <div
+            key={i}
+            className="rounded-xl overflow-hidden"
+            style={{ border: `${isWinner ? 2 : 1}px solid ${isWinner ? accent : '#E5E7EB'}` }}
+          >
+            {/* Image */}
+            <div className="relative bg-[#F3F4F6]" style={{ aspectRatio: '1 / 1' }}>
+              {(c.full_picture_url ?? c.thumbnail_url) ? (
+                <img
+                  src={c.full_picture_url ?? c.thumbnail_url!}
+                  alt={c.name}
+                  className="w-full h-full object-contain"
+                  loading="eager"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-5xl text-[#D1D5DB]">🖼</div>
+              )}
+              <span className="absolute top-2 left-2 text-xl leading-none">{medals[i]}</span>
+              {isWinner && (
+                <span className="absolute top-2 right-2 text-[9px] font-bold px-2 py-0.5 rounded-full text-white" style={{ background: accent }}>
+                  #1
+                </span>
+              )}
+            </div>
+            {/* Info */}
+            <div className="p-3 bg-white">
+              {c.campaign_name && (
+                <p className="text-[9px] text-[#9CA3AF] truncate mb-0.5">{c.campaign_name}</p>
+              )}
+              <p className="text-[11px] font-bold text-[#111827] line-clamp-2 leading-snug mb-3">{c.name}</p>
+              <div className="grid grid-cols-2 gap-1.5">
+                <div className="rounded-lg px-2 py-2 text-center" style={{ background: accent + '12' }}>
+                  <p className="text-[8px] text-[#9CA3AF] uppercase tracking-wider">Conversiones</p>
+                  <p className="text-base font-black tabular-nums" style={{ color: accent }}>{c.conversions}</p>
+                </div>
+                <div className="bg-[#F9FAFB] rounded-lg px-2 py-2 text-center">
+                  <p className="text-[8px] text-[#9CA3AF] uppercase tracking-wider">Inversión</p>
+                  <p className="text-xs font-bold tabular-nums text-[#374151]">{fmtCurrency(c.spend)}</p>
+                </div>
+              </div>
+              {cpa > 0 && (
+                <div className="mt-1.5 bg-[#F9FAFB] rounded-lg px-2 py-1.5 text-center">
+                  <p className="text-[8px] text-[#9CA3AF] uppercase tracking-wider">CPA</p>
+                  <p className="text-xs font-bold tabular-nums text-[#374151]">{fmtCurrency(cpa)}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }

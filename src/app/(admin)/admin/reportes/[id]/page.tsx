@@ -14,6 +14,8 @@ import {
 import { fetchMetaDemographics } from '@/lib/connectors/meta';
 import type { TopCreative, PeriodTotals, Channel, DemographicData, CampaignSummary } from '@/types';
 
+type EfficiencyMetrics = { cpm: number; ctr: number; cpa: number; clicks: number };
+
 interface PageProps {
   params: Promise<{ id: string }>;
 }
@@ -49,11 +51,12 @@ export default async function AdminReporteDetailPage({ params }: PageProps) {
     if (ag?.agency_name)   report.agency_name  = ag.agency_name;
   }
 
-  // ── 2. Compute period_totals on the fly if missing ────────────────────────
-  if (!report.period_totals) {
+  // ── 2. Period stats: totals + efficiency metrics ─────────────────────────
+  let efficiencyMetrics: EfficiencyMetrics | null = null;
+  {
     const { data: stats } = await supabase
       .from('cr_daily_stats')
-      .select('spend, conversions, impressions, reach, link_clicks, video_views')
+      .select('spend, conversions, impressions, reach, link_clicks, video_views, clicks')
       .eq('client_id', report.client_id)
       .gte('date', report.period_start)
       .lte('date', report.period_end);
@@ -61,13 +64,54 @@ export default async function AdminReporteDetailPage({ params }: PageProps) {
     if (stats?.length) {
       const sum = (key: keyof typeof stats[0]) =>
         stats.reduce((a, r) => a + (Number(r[key]) || 0), 0);
-      report.period_totals = {
+      if (!report.period_totals) {
+        report.period_totals = {
+          spend:        Math.round(sum('spend') * 100) / 100,
+          conversions:  Math.round(sum('conversions')),
+          impressions:  Math.round(sum('impressions')),
+          reach:        Math.round(sum('reach')),
+          interactions: Math.round(sum('link_clicks') + sum('video_views')),
+        } satisfies PeriodTotals;
+      }
+      const totalClicks = Math.round(sum('clicks'));
+      const totalImpr   = sum('impressions');
+      const totalSpend  = sum('spend');
+      const totalConv   = sum('conversions');
+      efficiencyMetrics = {
+        clicks: totalClicks,
+        cpm:    totalImpr > 0 ? Math.round((totalSpend / totalImpr) * 1000 * 100) / 100 : 0,
+        ctr:    totalImpr > 0 ? Math.round((totalClicks / totalImpr) * 10000) / 100 : 0,
+        cpa:    totalConv > 0 ? Math.round((totalSpend / totalConv) * 100) / 100 : 0,
+      };
+    }
+  }
+
+  // ── 2b. Previous period totals (same duration, immediately before) ────────
+  let prevTotals: PeriodTotals | null = null;
+  {
+    const start = new Date(report.period_start + 'T12:00:00');
+    const end   = new Date(report.period_end   + 'T12:00:00');
+    const days  = Math.round((end.getTime() - start.getTime()) / 86_400_000);
+    const prevEnd   = new Date(start); prevEnd.setDate(prevEnd.getDate() - 1);
+    const prevStart = new Date(prevEnd); prevStart.setDate(prevStart.getDate() - days);
+
+    const { data: prev } = await supabase
+      .from('cr_daily_stats')
+      .select('spend, conversions, impressions, reach, link_clicks, video_views')
+      .eq('client_id', report.client_id)
+      .gte('date', prevStart.toISOString().slice(0, 10))
+      .lte('date', prevEnd.toISOString().slice(0, 10));
+
+    if (prev?.length) {
+      const sum = (key: keyof typeof prev[0]) =>
+        prev.reduce((a, r) => a + (Number(r[key]) || 0), 0);
+      prevTotals = {
         spend:        Math.round(sum('spend') * 100) / 100,
         conversions:  Math.round(sum('conversions')),
         impressions:  Math.round(sum('impressions')),
         reach:        Math.round(sum('reach')),
         interactions: Math.round(sum('link_clicks') + sum('video_views')),
-      } satisfies PeriodTotals;
+      };
     }
   }
 
@@ -193,7 +237,7 @@ export default async function AdminReporteDetailPage({ params }: PageProps) {
       </div>
 
       <div id="report-print-area" className="flex-1 px-6 py-8 print:p-0">
-        <ReportView report={report} clientName={clientName} demographics={demographics} campaigns={campaigns} />
+        <ReportView report={report} clientName={clientName} demographics={demographics} campaigns={campaigns} prevTotals={prevTotals} efficiencyMetrics={efficiencyMetrics} />
       </div>
     </div>
   );
