@@ -153,7 +153,7 @@ export async function fetchMetaAdsByIds(
     const chunk = adIds.slice(i, i + 50);
     const params = new URLSearchParams({
       ids:    chunk.join(','),
-      fields: 'id,name,campaign_id,creative{thumbnail_url,object_type}',
+      fields: 'id,name,campaign_id,creative{thumbnail_url,object_type,full_picture}',
       access_token,
     });
     const res  = await fetch(`${META_API_BASE}/?${params}`);
