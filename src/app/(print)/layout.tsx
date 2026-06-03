@@ -10,7 +10,7 @@ export default function PrintLayout({ children }: { children: React.ReactNode })
       <head>
         <style dangerouslySetInnerHTML={{ __html: `
           @page {
-            size: 1920px auto;
+            size: 1920px 99999px;
             margin: 0;
           }
           html, body {
