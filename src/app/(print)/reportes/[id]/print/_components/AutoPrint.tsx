@@ -4,13 +4,16 @@ import { Download } from 'lucide-react';
 
 const STYLE_ID = '__report-page-size__';
 
+// Chrome's print engine max is ~200 inches (19200px at 96dpi). Cap at 18000px.
+const CHROME_MAX_PX = 18000;
+
 /** Measures the full content height and injects a matching @page size so
  *  Chrome saves the entire report as a single continuous sheet. */
 function injectPageSize() {
   const prev = document.getElementById(STYLE_ID);
   if (prev) prev.remove();
 
-  const heightPx = document.body.scrollHeight;
+  const heightPx = Math.min(document.body.scrollHeight + 40, CHROME_MAX_PX);
   const style = document.createElement('style');
   style.id = STYLE_ID;
   // Keep 1920px width; use measured height so content fits on exactly one page.
