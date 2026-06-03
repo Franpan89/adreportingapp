@@ -5,16 +5,16 @@ export async function POST(request: NextRequest) {
   const user = await getAuthUser();
   if (!user) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey) {
     return NextResponse.json(
-      { error: 'ANTHROPIC_API_KEY no configurada en el servidor.' },
+      { error: 'OPENROUTER_API_KEY no configurada en el servidor.' },
       { status: 500 },
     );
   }
 
   const body = await request.json().catch(() => ({}));
-  const { system, user: userMessage, model = 'claude-sonnet-4-6', max_tokens = 6000 } = body as {
+  const { system, user: userMessage, model = 'anthropic/claude-sonnet-4-6', max_tokens = 6000 } = body as {
     system: string;
     user: string;
     model?: string;
@@ -25,28 +25,31 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'system y user son requeridos' }, { status: 400 });
   }
 
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
+  const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
+      Authorization: `Bearer ${apiKey}`,
+      'HTTP-Referer': process.env.NEXT_PUBLIC_SITE_URL ?? 'https://wmm-client-reporting.vercel.app',
+      'X-Title': 'wmm-client-reporting',
     },
     body: JSON.stringify({
       model,
       max_tokens,
-      system,
-      messages: [{ role: 'user', content: userMessage }],
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: userMessage },
+      ],
     }),
   });
 
   const data = await res.json();
   if (!res.ok) {
     return NextResponse.json(
-      { error: data.error?.message ?? 'Error de API Anthropic' },
+      { error: data.error?.message ?? 'Error de OpenRouter' },
       { status: res.status },
     );
   }
 
-  return NextResponse.json({ text: data.content?.[0]?.text ?? '' });
+  return NextResponse.json({ text: data.choices?.[0]?.message?.content ?? '' });
 }
