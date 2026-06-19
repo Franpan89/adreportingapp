@@ -8,6 +8,7 @@ import { BusinessTypeSelect } from './_components/BusinessTypeSelect';
 import { ClientLogoEdit } from './_components/ClientLogoEdit';
 import { SocialStatsPanel } from './_components/SocialStatsPanel';
 import { getClientById } from '@/lib/supabase/clients';
+import { ClientUsers } from './_components/ClientUsers';
 import type { Channel } from '@/types';
 
 interface PageProps {
@@ -61,6 +62,10 @@ export default async function AdminClientDetailPage({ params }: PageProps) {
 
       <div className="px-6 pt-4">
         <SocialStatsPanel clientId={clientId} />
+      </div>
+
+      <div className="px-6 py-4">
+        <ClientUsers clientId={clientId} />
       </div>
 
       <DashboardShell

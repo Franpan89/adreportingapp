@@ -68,6 +68,7 @@ export async function createClient(input: {
   slug: string;
   timezone?: string;
   logo_url?: string | null;
+  created_by?: string;   // agency owner's user ID — required for multi-agency scoping
 }): Promise<ClientRow> {
   if (!isSupabaseConfigured()) {
     return {
@@ -86,7 +87,13 @@ export async function createClient(input: {
   const supabase = await getSupabase();
   const { data, error } = await supabase
     .from('cr_clients')
-    .insert({ name: input.name, slug: input.slug, timezone: input.timezone ?? 'UTC', logo_url: input.logo_url ?? null })
+    .insert({
+      name:       input.name,
+      slug:       input.slug,
+      timezone:   input.timezone ?? 'UTC',
+      logo_url:   input.logo_url ?? null,
+      created_by: input.created_by ?? null,
+    })
     .select(SELECT)
     .single();
   if (error || !data) throw new Error(error?.message ?? 'Error al crear cliente');

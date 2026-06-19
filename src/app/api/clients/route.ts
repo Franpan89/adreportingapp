@@ -31,7 +31,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'name y slug son requeridos' }, { status: 400 });
     }
 
-    const client = await createClient({ name, slug, timezone, logo_url });
+    // agency_owner_id() resolves to the owner even for team members.
+    // We call it via RPC so the RLS engine can set created_by correctly.
+    const { data: ownerRow } = await supabase.rpc('agency_owner_id');
+    const agencyOwnerId: string = ownerRow ?? user.id;
+
+    const client = await createClient({ name, slug, timezone, logo_url, created_by: agencyOwnerId });
 
     if (meta_account_id) {
       let credentials_enc: string;

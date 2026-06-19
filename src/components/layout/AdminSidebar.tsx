@@ -3,12 +3,13 @@ import { cn } from '@/lib/utils/cn';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  LayoutDashboard, Users, Settings, LogOut, BarChart3, ChevronRight, Zap, Sparkles
+  LayoutDashboard, Users, Settings, LogOut, BarChart3, ChevronRight, Zap, Sparkles, MessageSquare
 } from 'lucide-react';
 
 const baseNav = [
   { href: '/admin/dashboard', label: 'Resumen',       icon: LayoutDashboard },
   { href: '/admin/clients',   label: 'Clientes',      icon: Users },
+  { href: '/admin/whatsapp',  label: 'WhatsApp',      icon: MessageSquare },
   { href: '/admin/settings',  label: 'Configuración', icon: Settings },
 ];
 

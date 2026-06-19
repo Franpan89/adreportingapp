@@ -6,7 +6,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 // and stays in /superadmin/*.
 const DEMO_ROLE_ROUTES: Record<string, string> = {
   admin: '/admin/dashboard',
-  client: '/admin/dashboard',
+  client: '/dashboard',
   super_admin: '/superadmin/dashboard',
 };
 
@@ -69,6 +69,11 @@ export async function proxy(request: NextRequest) {
     return supabaseResponse;
   }
 
+  // WhatsApp webhook must be public — Meta calls it without a user session
+  if (path === '/api/whatsapp/webhook') {
+    return supabaseResponse;
+  }
+
   // API and auth routes handle their own logic — skip role redirects
   if (path.startsWith('/api/') || path.startsWith('/auth/')) {
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -89,11 +94,16 @@ export async function proxy(request: NextRequest) {
 
   const role = profile?.role ?? 'admin';
 
-  // Dead client-portal paths (removed) → admin dashboard.
+  // /dashboard and /reportes are the client portal — only redirect admins away from them.
   // Exception: /reportes/*/print is the standalone PDF print page (no admin layout).
-  if (path === '/dashboard' || path.startsWith('/dashboard/') ||
-      path === '/reportes'  || (path.startsWith('/reportes/') && !path.endsWith('/print'))) {
-    return NextResponse.redirect(new URL('/admin/dashboard', request.url));
+  if (role !== 'client') {
+    if (path === '/dashboard' || path.startsWith('/dashboard/') ||
+        path === '/whatsapp'  || path.startsWith('/whatsapp/')) {
+      return NextResponse.redirect(new URL('/admin/dashboard', request.url));
+    }
+    if (path === '/reportes' || (path.startsWith('/reportes/') && !path.endsWith('/print'))) {
+      return NextResponse.redirect(new URL('/admin/dashboard', request.url));
+    }
   }
 
   // Root → redirect based on role
